@@ -28,7 +28,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 loadingOverlay.style.opacity = '0';
                 setTimeout(() => {
                     loadingOverlay.style.display = 'none';
-                    instructions.style.display = 'block';
                     setTimeout(() => {
                         instructions.style.opacity = '1';
                     }, 100);
@@ -41,6 +40,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('start-experience').addEventListener('click', () => {
         // Hide instructions
         instructions.style.opacity = '0';
+        instructions.style.display = 'none';
         setTimeout(() => {
             instructions.style.display = 'none';
             

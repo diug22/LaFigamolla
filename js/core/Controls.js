@@ -32,6 +32,10 @@ export class Controls {
         this.pinchCurrent = 0;
         this.pinchDelta = 0;
         
+        // Camera controls
+        this.cameraRotation = { x: 0, y: 0 };
+        this.cameraZoom = 1;
+        
         // Gyroscope
         this.gyro = {
             alpha: 0,
@@ -44,17 +48,28 @@ export class Controls {
         this.swipeTimeout = null;
         this.swipeDirection = null;
         
+        // Initial camera position/target for resets
+        this.initialCameraPosition = new THREE.Vector3(0, 0, 5);
+        this.initialLookAtPosition = new THREE.Vector3(0, 0, 0);
+        
+        // Add debugging
+        this.debug = window.location.hash === '#debug';
+        
         // Event callbacks
         this.callbacks = {};
         
         // Setup
         this.setupEventListeners();
+        
+        console.log('Controls initialized');
     }
     
     /**
      * Setup event listeners for user interactions
      */
     setupEventListeners() {
+        if (this.debug) console.log('Setting up event listeners');
+        
         // Touch events
         this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
         this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
@@ -114,6 +129,8 @@ export class Controls {
         
         event.preventDefault();
         
+        if (this.debug) console.log('Touch start:', event.touches.length);
+        
         // Single touch (drag)
         if (event.touches.length === 1) {
             this.isDragging = true;
@@ -121,6 +138,9 @@ export class Controls {
             this.touchStart.y = event.touches[0].clientY;
             this.touchCurrent.x = this.touchStart.x;
             this.touchCurrent.y = this.touchStart.y;
+            this.touchDelta.x = 0;
+            this.touchDelta.y = 0;
+            this.swipeDirection = null;
         }
         // Double touch (pinch)
         else if (event.touches.length === 2) {
@@ -132,6 +152,7 @@ export class Controls {
             const dy = event.touches[0].clientY - event.touches[1].clientY;
             this.pinchStart = Math.sqrt(dx * dx + dy * dy);
             this.pinchCurrent = this.pinchStart;
+            this.pinchDelta = 0;
         }
     }
     
@@ -160,6 +181,13 @@ export class Controls {
                     this.swipeDirection = 'left';
                 }
             }
+            
+            if (this.debug && Math.abs(this.touchDelta.x) > 10) {
+                console.log('Touch move delta:', this.touchDelta.x, this.touchDelta.y);
+            }
+            
+            // Apply rotation to camera based on touch movement
+            this.applyTouchRotation();
         }
         // Double touch (pinch)
         else if (this.isZooming && event.touches.length === 2) {
@@ -170,6 +198,9 @@ export class Controls {
             
             // Calculate delta
             this.pinchDelta = this.pinchCurrent - this.pinchStart;
+            
+            // Apply zoom
+            this.applyZoom();
         }
     }
     
@@ -178,6 +209,8 @@ export class Controls {
      */
     onTouchEnd(event) {
         if (!this.isActive) return;
+        
+        if (this.debug) console.log('Touch end, swipe direction:', this.swipeDirection);
         
         // Handle swipe
         if (this.swipeDirection === 'left') {
@@ -201,11 +234,16 @@ export class Controls {
     onMouseDown(event) {
         if (!this.isActive) return;
         
+        if (this.debug) console.log('Mouse down');
+        
         this.isDragging = true;
         this.touchStart.x = event.clientX;
         this.touchStart.y = event.clientY;
         this.touchCurrent.x = this.touchStart.x;
         this.touchCurrent.y = this.touchStart.y;
+        this.touchDelta.x = 0;
+        this.touchDelta.y = 0;
+        this.swipeDirection = null;
     }
     
     /**
@@ -229,6 +267,13 @@ export class Controls {
                 this.swipeDirection = 'left';
             }
         }
+        
+        if (this.debug && Math.abs(this.touchDelta.x) > 10) {
+            console.log('Mouse move delta:', this.touchDelta.x, this.touchDelta.y);
+        }
+        
+        // Apply rotation to camera
+        this.applyTouchRotation();
     }
     
     /**
@@ -236,6 +281,8 @@ export class Controls {
      */
     onMouseUp(event) {
         if (!this.isActive) return;
+        
+        if (this.debug) console.log('Mouse up, swipe direction:', this.swipeDirection);
         
         // Handle swipe
         if (this.swipeDirection === 'left') {
@@ -261,6 +308,66 @@ export class Controls {
         
         // Simulate pinch with wheel
         this.pinchDelta = event.deltaY * 0.05;
+        
+        // Apply zoom
+        this.applyZoom();
+    }
+    
+    /**
+     * Apply rotation based on touch/mouse movement
+     * Compatible with the Camera.js implementation
+     */
+    applyTouchRotation() {
+        if (!this.camera || !this.isDragging) return;
+        
+        // Calculate rotation amount based on touch delta
+        const rotX = this.touchDelta.y * 0.005;
+        const rotY = this.touchDelta.x * 0.005;
+        
+        // Update current rotation
+        this.cameraRotation.x += rotX;
+        this.cameraRotation.y += rotY;
+        
+        // Limit vertical rotation
+        this.cameraRotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.cameraRotation.x));
+        
+        // Calculate new camera position based on rotation
+        const distance = 5 * this.cameraZoom; // Distance from lookAt point
+        const cameraX = Math.sin(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
+        const cameraY = Math.sin(this.cameraRotation.x) * distance;
+        const cameraZ = Math.cos(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
+        
+        // Create new position vector
+        const newPosition = new THREE.Vector3(
+            cameraX + this.initialLookAtPosition.x,
+            cameraY + this.initialLookAtPosition.y,
+            cameraZ + this.initialLookAtPosition.z
+        );
+        
+        // Update camera using its existing methods
+        if (this.camera.moveTo) {
+            this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.2);
+        }
+    }
+    
+    /**
+     * Apply zoom based on pinch/wheel
+     * Compatible with the Camera.js implementation
+     */
+    applyZoom() {
+        if (!this.camera) return;
+        
+        // Convert pinch delta to zoom factor
+        const zoomFactor = this.pinchDelta * 0.001;
+        
+        // Update zoom level with limits
+        this.cameraZoom = Math.max(0.5, Math.min(2, this.cameraZoom - zoomFactor));
+        
+        // Reset pinch delta
+        this.pinchDelta = 0;
+        
+        // Apply zoom by updating camera position
+        this.applyTouchRotation();
     }
     
     /**
@@ -273,6 +380,36 @@ export class Controls {
         this.gyro.alpha = event.alpha || 0; // Z-axis (0-360)
         this.gyro.beta = event.beta || 0;   // X-axis (-180-180)
         this.gyro.gamma = event.gamma || 0; // Y-axis (-90-90)
+        
+        if (this.debug) {
+            console.log('Gyro data:', 
+                this.gyro.alpha.toFixed(1),
+                this.gyro.beta.toFixed(1),
+                this.gyro.gamma.toFixed(1)
+            );
+        }
+        
+        // Apply gyroscope rotation
+        this.applyGyroRotation();
+    }
+    
+    /**
+     * Apply rotation based on gyroscope data
+     * Compatible with the Camera.js implementation
+     */
+    applyGyroRotation() {
+        if (!this.camera) return;
+        
+        // Convert gyro data to radians
+        const betaRad = THREE.MathUtils.degToRad(this.gyro.beta * 0.5);
+        const gammaRad = THREE.MathUtils.degToRad(this.gyro.gamma * 0.5);
+        
+        // Update rotation
+        this.cameraRotation.x = betaRad;
+        this.cameraRotation.y = gammaRad;
+        
+        // Apply rotation (reuse same function as touch rotation)
+        this.applyTouchRotation();
     }
     
     /**
@@ -282,6 +419,11 @@ export class Controls {
         if (this.currentIndex < this.totalItems - 1) {
             this.currentIndex++;
             this.emit('itemChange', this.currentIndex);
+            
+            if (this.debug) console.log('Next item:', this.currentIndex);
+            
+            // Reset camera position and rotation
+            this.resetCameraView();
             
             // Update UI
             this.updateNavDots();
@@ -299,11 +441,32 @@ export class Controls {
             this.currentIndex--;
             this.emit('itemChange', this.currentIndex);
             
+            if (this.debug) console.log('Previous item:', this.currentIndex);
+            
+            // Reset camera position and rotation
+            this.resetCameraView();
+            
             // Update UI
             this.updateNavDots();
             
             // Show gesture hint
             this.showGestureHint();
+        }
+    }
+    
+    /**
+     * Reset camera to default view for current item
+     */
+    resetCameraView() {
+        this.cameraRotation = { x: 0, y: 0 };
+        this.cameraZoom = 1;
+        
+        if (this.camera && this.camera.moveTo) {
+            this.camera.moveTo(
+                this.initialCameraPosition,
+                this.initialLookAtPosition,
+                0.7
+            );
         }
     }
     
@@ -329,6 +492,7 @@ export class Controls {
             dot.addEventListener('click', () => {
                 this.currentIndex = i;
                 this.emit('itemChange', this.currentIndex);
+                this.resetCameraView();
                 this.updateNavDots();
             });
             
@@ -357,6 +521,7 @@ export class Controls {
      */
     setTotalItems(count) {
         this.totalItems = count;
+        if (this.debug) console.log('Total items set:', count);
         this.updateNavDots();
     }
     
@@ -364,44 +529,8 @@ export class Controls {
      * Update controls on each frame
      */
     update() {
-        if (!this.isActive || !this.camera) return;
-        
-        // Apply gyroscope rotation if active
-        if (this.isGyroActive) {
-            // Convert gyro data to radians and apply to camera rotation
-            const betaRad = THREE.MathUtils.degToRad(this.gyro.beta * 0.5);
-            const gammaRad = THREE.MathUtils.degToRad(this.gyro.gamma * 0.5);
-            
-            // Apply to camera target rotation
-            this.camera.targetRotation = {
-                x: betaRad,
-                y: gammaRad
-            };
-        }
-        // Apply touch/mouse rotation
-        else if (this.isDragging) {
-            // Convert touch delta to rotation
-            const rotX = this.touchDelta.y * 0.01;
-            const rotY = this.touchDelta.x * 0.01;
-            
-            // Apply to camera target rotation
-            this.camera.targetRotation = {
-                x: rotX,
-                y: rotY
-            };
-        }
-        
-        // Apply pinch zoom
-        if (this.isZooming || this.pinchDelta !== 0) {
-            // Convert pinch delta to zoom
-            const zoom = this.pinchDelta * 0.01;
-            
-            // Apply to camera target zoom
-            this.camera.targetZoom = Math.max(0.5, Math.min(2, this.camera.targetZoom - zoom));
-            
-            // Reset pinch delta
-            this.pinchDelta = 0;
-        }
+        // No need to update every frame, handled by event listeners
+        // Camera movement is already being updated by Camera.js update method
     }
     
     /**
