@@ -35,16 +35,15 @@ export class World {
             
             // Set total items in controls
             if (this.controls) {
-                this.controls.on('verticalSwipe', (direction) => {
-                    this.animateParticlesForVerticalNavigation(direction);
-                });
                 
-                this.controls.on('verticalItemChange', (data) => {
-                    this.showItemWithTransition(data.newIndex, data.direction);
-                });
                 
-                this.controls.on('cameraTransition', (direction) => {
-                    this.animateParticlesForVerticalNavigation(direction);
+                this.controls.on('horizontalTransition', (direction) => {
+                    this.animateParticlesForHorizontalNavigation(direction);
+                });
+                this.controls.on('itemChange', (index) => {
+                    // Find transition direction
+                    const direction = index > this.currentIndex ? 'left' : 'right';
+                    this.showItemWithHorizontalTransition(index, direction);
                 });
             }
             this.experience.emit('worldReady');
@@ -70,17 +69,17 @@ export class World {
         this.addAmbientParticles();
     }
 
-    animateParticlesForVerticalNavigation(direction) {
-        // Solo proceder si tenemos partículas ambientales
+    animateParticlesForHorizontalNavigation(direction) {
+        // Only proceed if we have ambient particles
         if (!this.particles) return;
         
-        console.log(`Animando partículas para navegación ${direction}`);
+        console.log(`Animating particles for horizontal navigation ${direction}`);
         
-        // Velocidad y dirección de la animación
-        const speed = direction === 'up' ? -0.15 : 0.15;
-        const targetY = direction === 'up' ? -10 : 10;
+        // Animation speed and direction
+        const speed = direction === 'left' ? -0.15 : 0.15;
+        const targetX = direction === 'left' ? -10 : 10;
         
-        // Guardar posiciones originales para restaurar después
+        // Save original positions to restore later
         if (!this.originalParticlePositions) {
             this.originalParticlePositions = this.particles.children.map(particle => ({
                 x: particle.position.x,
@@ -89,45 +88,45 @@ export class World {
             }));
         }
         
-        // Animación para partículas ambientales
+        // Animation for ambient particles
         let animating = true;
         
-        // Función para animar las partículas en cada frame
+        // Function to animate particles each frame
         const animateParticles = () => {
             if (!animating) return;
             
             let allParticlesReached = true;
             
-            // Mover cada partícula hacia el objetivo
+            // Move each particle toward target
             this.particles.children.forEach(particle => {
-                // Mover hacia arriba o abajo según dirección
-                particle.position.y += speed;
+                // Move left or right based on direction
+                particle.position.x += speed;
                 
-                // Comprobar si la partícula ha alcanzado su destino
-                if ((direction === 'up' && particle.position.y > targetY) || 
-                    (direction === 'down' && particle.position.y < targetY)) {
+                // Check if particle has reached destination
+                if ((direction === 'left' && particle.position.x > targetX) || 
+                    (direction === 'right' && particle.position.x < targetX)) {
                     allParticlesReached = false;
                 }
                 
-                // Añadir rotación más rápida durante la transición
+                // Add faster rotation during transition
                 particle.rotation.x += particle.userData.rotationSpeed.x * 3;
                 particle.rotation.y += particle.userData.rotationSpeed.y * 3;
                 particle.rotation.z += particle.userData.rotationSpeed.z * 3;
             });
             
-            // También animar partículas de la obra actual si existe
+            // Also animate current item particles if they exist
             if (this.items[this.currentIndex] && this.items[this.currentIndex].particles) {
                 this.items[this.currentIndex].particles.children.forEach(particle => {
-                    particle.position.y += speed * 1.2; // Un poco más rápido
+                    particle.position.x += speed * 1.2; // Slightly faster
                     
-                    // Rotación adicional
+                    // Additional rotation
                     particle.rotation.x += particle.userData.rotationSpeed.x * 4;
                     particle.rotation.y += particle.userData.rotationSpeed.y * 4;
                     particle.rotation.z += particle.userData.rotationSpeed.z * 4;
                 });
             }
             
-            // Si todas las partículas han llegado a su destino, restaurar posiciones
+            // If all particles reached destination, restore positions
             if (allParticlesReached) {
                 animating = false;
                 this.resetParticlePositions();
@@ -136,7 +135,7 @@ export class World {
             }
         };
         
-        // Iniciar la animación
+        // Start animation
         animateParticles();
     }
         // Método para restaurar posiciones de partículas después de la animación
@@ -159,28 +158,44 @@ export class World {
         }
     }
 
-    showItemWithTransition(index, direction) {
-        if (index < 0 || index >= this.items.length) return;
-        
-        console.log(`Mostrando obra ${index} con transición ${direction}`);
-        
-        // Ocultar todas las obras
-        for (const item of this.items) {
-            item.hide();
-        }
-        
-        // Mostrar la obra seleccionada con efecto de transición
-        this.items[index].show(direction);
-        this.currentIndex = index;
-        
-        // Mover cámara a la posición de la obra
-        if (this.camera) {
-            const position = new THREE.Vector3(0, 0, 5);
-            const lookAt = new THREE.Vector3(0, 0, 0);
-            
-            this.camera.moveTo(position, lookAt);
-        }
+    /**
+ * Show item with horizontal transition
+ * @param {Number} index - Item index
+ * @param {String} direction - Direction of transition ('left' or 'right')
+ */
+showItemWithHorizontalTransition(index, direction) {
+    if (index < 0 || index >= this.items.length) return;
+    
+    console.log(`Showing item ${index} with horizontal transition ${direction}`);
+    
+    // Hide all items
+    for (const item of this.items) {
+        item.hide();
     }
+    
+    // Show the selected item with horizontal transition effect
+    // We need to check if the showWithHorizontalTransition method exists
+    if (this.items[index].showWithHorizontalTransition) {
+        this.items[index].showWithHorizontalTransition(direction);
+    } else {
+        // Fallback to regular show if the method doesn't exist
+        this.items[index].show();
+    }
+    
+    this.currentIndex = index;
+    
+    // Move camera to item position
+    if (this.camera) {
+        const position = new THREE.Vector3(0, 0, 5);
+        const lookAt = new THREE.Vector3(0, 0, 0);
+        
+        this.camera.moveTo(position, lookAt);
+    }
+    
+    // Trigger particle animation for transition effect
+    this.animateParticlesForHorizontalNavigation(direction);
+}
+
 
     /**
      * Add ambient particles to the environment
@@ -290,7 +305,6 @@ export class World {
                 name: 'ceramic2',
                 title: 'Cuenco Textural',
                 description: 'Pieza de cerámica con relieves táctiles que evocan la corteza de los árboles en otoño.',
-                texture: this.resources.getItem('frame10'),
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
@@ -298,34 +312,14 @@ export class World {
                 geometry: 'glb'
             },
             {
-                name: 'sculpture',
-                title: 'Forma Orgánica',
-                description: 'Escultura en arcilla refractaria cocida a alta temperatura, inspirada en las formas fluidas de la naturaleza.',
-                texture: this.resources.getItem('frame15'),
-                position: new THREE.Vector3(0, 0, 0),
-                rotation: new THREE.Euler(0, 0, 0),
-                scale: new THREE.Vector3(1, 1, 1),
-                geometry: 'sculpture'
-            },
-            {
-                name: 'print',
+                name: 'lamina1',
                 title: 'Acuarela Otoñal',
                 description: 'Técnica mixta sobre papel, capturando la esencia de los bosques en otoño con tonos cálidos y texturas.',
-                texture: this.resources.getItem('frame5'),
+                texture: this.resources.getItem('lamina1'),
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
                 geometry: 'plane'
-            },
-            {
-                name: 'teaSet',
-                title: 'Set de Té Rústico',
-                description: 'Conjunto de tazas y tetera en gres con acabado natural y detalles en esmalte brillante.',
-                texture: this.resources.getItem('frame20'),
-                position: new THREE.Vector3(0, 0, 0),
-                rotation: new THREE.Euler(0, 0, 0),
-                scale: new THREE.Vector3(1, 1, 1),
-                geometry: 'teaSet'
             }
         ];
         

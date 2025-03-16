@@ -154,7 +154,8 @@ export class ArtworkItem {
             material = new THREE.MeshStandardMaterial({
                 map: this.texture,
                 roughness: 0.7,
-                metalness: 0.1
+                metalness: 0.1,
+                side: this.geometryType === 'plane' ? THREE.DoubleSide : THREE.FrontSide // Renderizar ambos lados para planos
             });
         } else {
             // Use color material with random autumn color
@@ -172,7 +173,9 @@ export class ArtworkItem {
             material = new THREE.MeshStandardMaterial({
                 color: color,
                 roughness: 0.7,
-                metalness: 0.1
+                metalness: 0.1,
+                side: this.geometryType === 'plane' ? THREE.DoubleSide : THREE.FrontSide // Renderizar ambos lados para planos
+
             });
         }
         
@@ -180,6 +183,10 @@ export class ArtworkItem {
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
+
+        if (this.geometryType === 'plane') {
+            this.mesh.rotation.y = Math.PI * 0.1; // Ligera rotación inicial para ver que es doble cara
+        }
         
         // Add to container
         this.container.add(this.mesh);
@@ -521,7 +528,7 @@ export class ArtworkItem {
     /**
      * Show the item
      */
-    show(transitionDirection = null) {
+    show(direction = null) {
         this.container.visible = true;
         this.isVisible = true;
         
@@ -529,22 +536,22 @@ export class ArtworkItem {
         this.container.position.copy(this.position);
         this.container.rotation.copy(this.rotation);
         
-        // Apply special entrance effect for vertical transitions
-        if (transitionDirection) {
-            // Aplicar efecto de entrada según dirección
-            const offset = transitionDirection === 'up' ? -5 : 5;
+        // Apply special entrance effect for horizontal transitions
+        if (direction) {
+            // Apply entrance effect based on direction
+            const offset = direction === 'left' ? 5 : -5;
             
-            // Animar entrada desde arriba o abajo
-            this.container.position.y += offset;
+            // Animate entrance from left or right
+            this.container.position.x += offset;
             
-            // Animar hacia la posición final
-            const targetY = this.position.y;
+            // Animate to final position
+            const targetX = this.position.x;
             const animate = () => {
-                const diff = targetY - this.container.position.y;
+                const diff = targetX - this.container.position.x;
                 if (Math.abs(diff) < 0.05) {
-                    this.container.position.y = targetY;
+                    this.container.position.x = targetX;
                 } else {
-                    this.container.position.y += diff * 0.1;
+                    this.container.position.x += diff * 0.1;
                     requestAnimationFrame(animate);
                 }
             };
@@ -573,7 +580,16 @@ export class ArtworkItem {
         
         // Rotate item
         if (this.isAnimating) {
-            this.container.rotation.y += this.rotationSpeed;
+            if (this.geometryType === 'plane') {
+                // Los planos rotan más lentamente en el eje Y para poder ver ambos lados
+                this.container.rotation.y += this.rotationSpeed * 0.5;
+                
+                // Añadir un ligero movimiento ondulante en el eje X para darle vida
+                this.container.rotation.x = Math.sin(Date.now() * 0.001) * 0.1;
+            } else {
+                // Rotación normal para otros elementos
+                this.container.rotation.y += this.rotationSpeed;
+            }
         }
         
         // Update glow effect
@@ -667,4 +683,39 @@ export class ArtworkItem {
             }
         }
     }
+
+    /**
+ * Handle manual rotation for plane objects
+ * Call this method from Controls.js when a drag is detected
+ * @param {Number} deltaX - Horizontal movement
+ * @param {Number} deltaY - Vertical movement
+ */
+handleManualRotation(deltaX, deltaY) {
+    // Solo aplicar rotación manual para planos
+    if (this.geometryType !== 'plane' || !this.isVisible) return;
+    
+    // Convertir el movimiento del mouse/touch a rotación
+    // Hacemos que el plano rote principalmente en el eje Y (para ver ambos lados)
+    // con un poco de rotación en X para inclinarlo
+    
+    // Ajustamos la sensibilidad para una experiencia más suave
+    const rotYFactor = 0.002;
+    const rotXFactor = 0.001;
+    
+    // Aplicar rotación directamente al contenedor
+    this.container.rotation.y += deltaX * rotYFactor;
+    
+    // Limitar la rotación en el eje X para que no se vea desde arriba o abajo
+    const newRotX = this.container.rotation.x + deltaY * rotXFactor;
+    this.container.rotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, newRotX));
+    
+    // Desactivar la animación automática mientras el usuario interactúa
+    this.isAnimating = false;
+    
+    // Reactivar la animación después de un tiempo sin interacción
+    clearTimeout(this.animationTimeout);
+    this.animationTimeout = setTimeout(() => {
+        this.isAnimating = true;
+    }, 2000); // Reactivar después de 2 segundos sin interacción
+}
 }

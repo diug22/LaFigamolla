@@ -90,13 +90,7 @@ export class Experience {
             { name: 'obj', type: 'glb', path: 'public/models/obra.glb' },
             { name: 'obj2', type: 'glb', path: 'public/models/obra2.glb' },
             // Video frames (for animation)
-            { name: 'frame0', type: 'texture', path: './frames/frame_00000.jpg' },
-            { name: 'frame5', type: 'texture', path: './frames/frame_00005.jpg' },
-            { name: 'frame10', type: 'texture', path: './frames/frame_00010.jpg' },
-            { name: 'frame15', type: 'texture', path: './frames/frame_00015.jpg' },
-            { name: 'frame20', type: 'texture', path: './frames/frame_00020.jpg' },
-            { name: 'frame25', type: 'texture', path: './frames/frame_00025.jpg' },
-            { name: 'frame30', type: 'texture', path: './frames/frame_00030.jpg' },
+            { name: 'lamina1', type: 'texture', path: 'public/images/lamina1.jpeg' }
         ];
         
         // Start loading
