@@ -24,11 +24,23 @@ export class UI {
             infoMaterial: document.getElementById('info-material'),
             infoYear: document.getElementById('info-year'),
             contactButton: document.getElementById('contact-button'),
-            contactPanel: document.getElementById('contact-panel')
+            contactPanel: document.getElementById('contact-panel'),
+            header: document.querySelector('.header'),
+            footer: document.querySelector('.footer'),
+            uiContainer: document.querySelector('.ui-container')
         };
+        
+        // UI State
+        this.uiVisible = true;
         
         // Setup
         this.setupEventListeners();
+        this.createUIToggleButton();
+        
+        // Auto-hide UI after a short delay when experience starts
+        setTimeout(() => {
+            this.hideUIElements();
+        }, 1000);
     }
     
     /**
@@ -71,6 +83,92 @@ export class UI {
             this.controls.on('itemChange', (index) => {
                 this.updateInfoForItem(index);
             });
+        }
+    }
+    
+    /**
+     * Create UI toggle button
+     */
+    createUIToggleButton() {
+        // Crear botón para mostrar/ocultar UI
+        const toggleButton = document.createElement('button');
+        toggleButton.classList.add('ui-toggle-button');
+        toggleButton.innerHTML = '👁️';
+        toggleButton.title = 'Mostrar/Ocultar Interfaz';
+        toggleButton.style.position = 'fixed';
+        toggleButton.style.top = '20px';
+        toggleButton.style.right = '80px';
+        toggleButton.style.zIndex = '100';
+        toggleButton.style.background = 'rgba(0,0,0,0.5)';
+        toggleButton.style.color = 'white';
+        toggleButton.style.border = 'none';
+        toggleButton.style.borderRadius = '50%';
+        toggleButton.style.width = '40px';
+        toggleButton.style.height = '40px';
+        toggleButton.style.display = 'flex';
+        toggleButton.style.alignItems = 'center';
+        toggleButton.style.justifyContent = 'center';
+        toggleButton.style.cursor = 'pointer';
+        toggleButton.style.transition = 'background-color 0.3s ease';
+        
+        // Añadir evento de clic
+        toggleButton.addEventListener('click', () => {
+            this.toggleUIElements();
+        });
+        
+        // Añadir al documento
+        document.body.appendChild(toggleButton);
+        this.toggleButton = toggleButton;
+    }
+    
+    /**
+     * Show UI elements (header and footer)
+     */
+    showUIElements() {
+        if (this.elements.header) {
+            this.elements.header.style.opacity = '1';
+        }
+        
+        if (this.elements.footer) {
+            this.elements.footer.style.opacity = '1';
+        }
+        
+        this.uiVisible = true;
+        
+        // Update button icon
+        if (this.toggleButton) {
+            this.toggleButton.innerHTML = '👁️';
+        }
+    }
+    
+    /**
+     * Hide UI elements (header and footer)
+     */
+    hideUIElements() {
+        if (this.elements.header) {
+            this.elements.header.style.opacity = '0';
+        }
+        
+        if (this.elements.footer) {
+            this.elements.footer.style.opacity = '0';
+        }
+        
+        this.uiVisible = false;
+        
+        // Update button icon
+        if (this.toggleButton) {
+            this.toggleButton.innerHTML = '👁️‍🗨️';
+        }
+    }
+    
+    /**
+     * Toggle UI elements visibility
+     */
+    toggleUIElements() {
+        if (this.uiVisible) {
+            this.hideUIElements();
+        } else {
+            this.showUIElements();
         }
     }
     

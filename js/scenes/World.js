@@ -9,8 +9,12 @@ import { ArtworkItem } from './ArtworkItem.js';
 export class World {
     constructor(experience) {
         this.experience = experience;
-        this.scene = new THREE.Scene();
-        this.experience.scene = this.scene; // Make scene available to other components
+        
+        // Use the scene from Experience instead of creating a new one
+        this.scene = this.experience.scene;
+        
+        console.log('World initialized with scene:', !!this.scene);
+        
         this.resources = this.experience.resources;
         this.camera = this.experience.camera;
         this.controls = this.experience.controls;
@@ -24,6 +28,7 @@ export class World {
         
         // Setup
         this.resources.on('ready', () => {
+            console.log('Resources ready in World, setting up scene');
             this.setupEnvironment();
             this.setupArtworks();
             this.setupLights();

@@ -12,6 +12,8 @@ export class Camera {
         this.scene = this.experience.scene;
         this.canvas = this.experience.canvas;
         
+        console.log('Camera initializing with scene:', !!this.scene);
+        
         // Camera settings
         this.fov = this.sizes.isMobile ? 75 : 65;
         this.nearPlane = 0.1;
@@ -47,6 +49,9 @@ export class Camera {
         // Add to scene
         if (this.scene) {
             this.scene.add(this.instance);
+            console.log('Camera added to scene');
+        } else {
+            console.error('Cannot add camera to scene: scene is missing');
         }
     }
     

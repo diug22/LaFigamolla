@@ -3,6 +3,7 @@
  * Manages the entire 3D experience including renderer, camera, scenes, and UI
  */
 
+import * as THREE from 'three';
 import { Renderer } from './Renderer.js';
 import { Camera } from './Camera.js';
 import { Sizes } from './Sizes.js';
@@ -28,6 +29,10 @@ export class Experience {
         // Event emitter setup
         this.callbacks = {};
         
+        // Create the scene FIRST - before any components that depend on it
+        this.scene = new THREE.Scene();
+        console.log('Scene created');
+        
         // Initialize components
         this.sizes = new Sizes();
         this.time = new Time();
@@ -50,11 +55,20 @@ export class Experience {
         
         // Load resources
         this.resources.on('ready', () => {
+            console.log('Resources loaded, emitting ready');
             this.emit('ready');
         });
         
         // Load resources
         this.loadResources();
+        
+        console.log('Experience initialized with:', {
+            hasScene: !!this.scene,
+            hasCamera: !!this.camera,
+            hasCameraInstance: this.camera && !!this.camera.instance,
+            hasRenderer: !!this.renderer,
+            hasWorld: !!this.world
+        });
     }
     
     /**
@@ -64,21 +78,20 @@ export class Experience {
         // Define resources to load
         const resources = [
             // Textures
-            { name: 'ceramic1', type: 'texture', path: '/images/img.jpeg' },
+            { name: 'ceramic1', type: 'texture', path: './images/img.jpeg' },
             
             // Video frames (for animation)
-            { name: 'frame0', type: 'texture', path: '/frames/frame_00000.jpg' },
-            { name: 'frame5', type: 'texture', path: '/frames/frame_00005.jpg' },
-            { name: 'frame10', type: 'texture', path: '/frames/frame_00010.jpg' },
-            { name: 'frame15', type: 'texture', path: '/frames/frame_00015.jpg' },
-            { name: 'frame20', type: 'texture', path: '/frames/frame_00020.jpg' },
-            { name: 'frame25', type: 'texture', path: '/frames/frame_00025.jpg' },
-            { name: 'frame30', type: 'texture', path: '/frames/frame_00030.jpg' },
+            { name: 'frame0', type: 'texture', path: './frames/frame_00000.jpg' },
+            { name: 'frame5', type: 'texture', path: './frames/frame_00005.jpg' },
+            { name: 'frame10', type: 'texture', path: './frames/frame_00010.jpg' },
+            { name: 'frame15', type: 'texture', path: './frames/frame_00015.jpg' },
+            { name: 'frame20', type: 'texture', path: './frames/frame_00020.jpg' },
+            { name: 'frame25', type: 'texture', path: './frames/frame_00025.jpg' },
+            { name: 'frame30', type: 'texture', path: './frames/frame_00030.jpg' },
         ];
         
         // Start loading
         this.resources.load(resources);
-
     }
     
     /**

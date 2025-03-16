@@ -23,6 +23,8 @@ export class Resources {
             gltfLoader: new GLTFLoader(),
             cubeTextureLoader: new THREE.CubeTextureLoader()
         };
+        
+        console.log('Resources initialized');
     }
     
     /**
@@ -35,14 +37,19 @@ export class Resources {
         this.queue = resources.length;
         this.loaded = 0;
         
+        console.log(`Starting to load ${this.queue} resources`);
+        
         // If no resources, emit ready immediately
         if (this.queue === 0) {
+            console.log('No resources to load, emitting ready');
             this.emit('ready');
             return;
         }
         
         // Load each resource
         for (const resource of resources) {
+            console.log(`Loading resource: ${resource.name} (${resource.path})`);
+            
             switch (resource.type) {
                 case 'texture':
                     this.loaders.textureLoader.load(
@@ -87,12 +94,15 @@ export class Resources {
         this.items[resource.name] = file;
         this.loaded++;
         
+        console.log(`Resource loaded successfully: ${resource.name} (${this.loaded}/${this.queue})`);
+        
         // Update loading progress
         const progress = this.loaded / this.queue;
         this.loadingCallback(progress);
         
         // Check if all resources are loaded
         if (this.loaded === this.queue) {
+            console.log('All resources loaded successfully, emitting ready');
             this.emit('ready');
         }
     }
@@ -102,7 +112,70 @@ export class Resources {
      */
     itemError(resource) {
         console.error(`Failed to load resource: ${resource.name} (${resource.path})`);
+        
+        // Create fallback texture if it's a texture resource
+        if (resource.type === 'texture') {
+            console.log(`Creating fallback texture for ${resource.name}`);
+            
+            // Create a canvas for the texture
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            // Fill with a color based on the resource name to make them distinguishable
+            let color;
+            switch(resource.name) {
+                case 'ceramic1':
+                    color = '#B87333'; // Copper/ceramic color
+                    break;
+                case 'frame0':
+                    color = '#FFD700'; // Gold
+                    break;
+                case 'frame5':
+                    color = '#C0C0C0'; // Silver
+                    break;
+                case 'frame10':
+                    color = '#CD7F32'; // Bronze
+                    break;
+                case 'frame15':
+                    color = '#E5E4E2'; // Platinum
+                    break;
+                case 'frame20':
+                    color = '#702963'; // Purple
+                    break;
+                case 'frame25':
+                    color = '#228B22'; // Forest Green
+                    break;
+                case 'frame30':
+                    color = '#4169E1'; // Royal Blue
+                    break;
+                default:
+                    color = '#FF5733'; // Default orange
+            }
+            
+            // Fill background
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add texture name
+            ctx.fillStyle = 'white';
+            ctx.font = '48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(resource.name, canvas.width / 2, canvas.height / 2);
+            
+            // Create texture from canvas
+            const texture = new THREE.CanvasTexture(canvas);
+            
+            // Save as if it loaded normally
+            this.items[resource.name] = texture;
+            
+            console.log(`Fallback texture created for ${resource.name}`);
+        }
+        
         this.loaded++;
+        
+        console.log(`Resource error handled: ${resource.name} (${this.loaded}/${this.queue})`);
         
         // Update loading progress
         const progress = this.loaded / this.queue;
@@ -110,6 +183,7 @@ export class Resources {
         
         // Check if all resources are loaded
         if (this.loaded === this.queue) {
+            console.log('All resources processed (some with errors). Emitting ready event.');
             this.emit('ready');
         }
     }
