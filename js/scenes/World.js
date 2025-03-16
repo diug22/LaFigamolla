@@ -35,13 +35,20 @@ export class World {
             
             // Set total items in controls
             if (this.controls) {
-                this.controls.setTotalItems(this.items.length);
+                this.controls.on('verticalSwipe', (direction) => {
+                    this.animateParticlesForVerticalNavigation(direction);
+                });
                 
-                // Listen for item change events
-                this.controls.on('itemChange', (index) => {
-                    this.showItem(index);
+                this.controls.on('verticalItemChange', (data) => {
+                    this.showItemWithTransition(data.newIndex, data.direction);
+                });
+                
+                this.controls.on('cameraTransition', (direction) => {
+                    this.animateParticlesForVerticalNavigation(direction);
                 });
             }
+            this.experience.emit('worldReady');
+
         });
     }
     
@@ -62,7 +69,119 @@ export class World {
         // Add ambient particles
         this.addAmbientParticles();
     }
-    
+
+    animateParticlesForVerticalNavigation(direction) {
+        // Solo proceder si tenemos partículas ambientales
+        if (!this.particles) return;
+        
+        console.log(`Animando partículas para navegación ${direction}`);
+        
+        // Velocidad y dirección de la animación
+        const speed = direction === 'up' ? -0.15 : 0.15;
+        const targetY = direction === 'up' ? -10 : 10;
+        
+        // Guardar posiciones originales para restaurar después
+        if (!this.originalParticlePositions) {
+            this.originalParticlePositions = this.particles.children.map(particle => ({
+                x: particle.position.x,
+                y: particle.position.y,
+                z: particle.position.z
+            }));
+        }
+        
+        // Animación para partículas ambientales
+        let animating = true;
+        
+        // Función para animar las partículas en cada frame
+        const animateParticles = () => {
+            if (!animating) return;
+            
+            let allParticlesReached = true;
+            
+            // Mover cada partícula hacia el objetivo
+            this.particles.children.forEach(particle => {
+                // Mover hacia arriba o abajo según dirección
+                particle.position.y += speed;
+                
+                // Comprobar si la partícula ha alcanzado su destino
+                if ((direction === 'up' && particle.position.y > targetY) || 
+                    (direction === 'down' && particle.position.y < targetY)) {
+                    allParticlesReached = false;
+                }
+                
+                // Añadir rotación más rápida durante la transición
+                particle.rotation.x += particle.userData.rotationSpeed.x * 3;
+                particle.rotation.y += particle.userData.rotationSpeed.y * 3;
+                particle.rotation.z += particle.userData.rotationSpeed.z * 3;
+            });
+            
+            // También animar partículas de la obra actual si existe
+            if (this.items[this.currentIndex] && this.items[this.currentIndex].particles) {
+                this.items[this.currentIndex].particles.children.forEach(particle => {
+                    particle.position.y += speed * 1.2; // Un poco más rápido
+                    
+                    // Rotación adicional
+                    particle.rotation.x += particle.userData.rotationSpeed.x * 4;
+                    particle.rotation.y += particle.userData.rotationSpeed.y * 4;
+                    particle.rotation.z += particle.userData.rotationSpeed.z * 4;
+                });
+            }
+            
+            // Si todas las partículas han llegado a su destino, restaurar posiciones
+            if (allParticlesReached) {
+                animating = false;
+                this.resetParticlePositions();
+            } else {
+                requestAnimationFrame(animateParticles);
+            }
+        };
+        
+        // Iniciar la animación
+        animateParticles();
+    }
+        // Método para restaurar posiciones de partículas después de la animación
+    resetParticlePositions() {
+        if (!this.originalParticlePositions) return;
+        
+        // Restaurar posiciones originales
+        this.particles.children.forEach((particle, index) => {
+            if (this.originalParticlePositions[index]) {
+                // Restaurar con un ligero efecto aleatorio
+                particle.position.x = this.originalParticlePositions[index].x + (Math.random() - 0.5) * 2;
+                particle.position.y = this.originalParticlePositions[index].y + (Math.random() - 0.5) * 2;
+                particle.position.z = this.originalParticlePositions[index].z + (Math.random() - 0.5) * 2;
+            }
+        });
+        
+        // También restaurar partículas de la obra actual
+        if (this.items[this.currentIndex] && this.items[this.currentIndex].resetParticles) {
+            this.items[this.currentIndex].resetParticles();
+        }
+    }
+
+    showItemWithTransition(index, direction) {
+        if (index < 0 || index >= this.items.length) return;
+        
+        console.log(`Mostrando obra ${index} con transición ${direction}`);
+        
+        // Ocultar todas las obras
+        for (const item of this.items) {
+            item.hide();
+        }
+        
+        // Mostrar la obra seleccionada con efecto de transición
+        this.items[index].show(direction);
+        this.currentIndex = index;
+        
+        // Mover cámara a la posición de la obra
+        if (this.camera) {
+            const position = new THREE.Vector3(0, 0, 5);
+            const lookAt = new THREE.Vector3(0, 0, 0);
+            
+            this.camera.moveTo(position, lookAt);
+        }
+    }
+
     /**
      * Add ambient particles to the environment
      */
@@ -175,7 +294,8 @@ export class World {
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
-                geometry: 'bowl'
+                model: this.resources.getItem('obj2'),  // Reference to the loaded GLB model,
+                geometry: 'glb'
             },
             {
                 name: 'sculpture',

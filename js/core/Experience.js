@@ -39,9 +39,9 @@ export class Experience {
         this.resources = new Resources(this.loadingCallback);
         this.camera = new Camera(this);
         this.renderer = new Renderer(this);
+        this.controls = new Controls(this);
         this.world = new World(this);
         this.ui = new UI(this);
-        this.controls = new Controls(this);
         
         // Handle resize event
         this.sizes.on('resize', () => {
@@ -57,6 +57,15 @@ export class Experience {
         this.resources.on('ready', () => {
             console.log('Resources loaded, emitting ready');
             this.emit('ready');
+        });
+
+        this.on('worldReady', () => {
+            console.log('World ready, configuring controls...');
+            if (this.controls && this.world) {
+                // Configurar controles con el número total de obras
+                this.controls.setTotalItems(this.world.items.length);
+                console.log(`Controls configured with ${this.world.items.length} items`);
+            }
         });
         
         // Load resources
@@ -79,7 +88,7 @@ export class Experience {
         const resources = [
             // Textures
             { name: 'obj', type: 'glb', path: 'public/models/obra.glb' },
-
+            { name: 'obj2', type: 'glb', path: 'public/models/obra2.glb' },
             // Video frames (for animation)
             { name: 'frame0', type: 'texture', path: './frames/frame_00000.jpg' },
             { name: 'frame5', type: 'texture', path: './frames/frame_00005.jpg' },

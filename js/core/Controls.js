@@ -73,6 +73,13 @@ export class Controls {
         
         // Event callbacks
         this.callbacks = {};
+
+        // Añadir soporte para swipe vertical
+        this.swipeVerticalThreshold = 50; // Umbral para swipe vertical
+        this.swipeVerticalDirection = null;
+
+        // Estructura de navegación lineal (sin categorías)
+        this.itemsStructure = 'linear'; // Para modo lineal vs grid
         
         // Setup
         this.setupEventListeners();
@@ -209,10 +216,11 @@ export class Controls {
                 this.nextItem();
                 break;
             case 'ArrowUp':
-                this.zoomIn();
+                this.previousVerticalItem();
                 break;
             case 'ArrowDown':
-                this.zoomOut();
+                console.log('DOWN')
+                this.nextVerticalItem();
                 break;
             case 'r':
             case 'R':
@@ -331,12 +339,23 @@ export class Controls {
                 };
             }
             
-            // Detect swipe direction con umbral aumentado para evitar swipes accidentales
             if (Math.abs(this.touchDelta.x) > Math.abs(this.touchDelta.y)) {
                 if (this.touchDelta.x > this.swipeThreshold * 1.5) {
                     this.swipeDirection = 'right';
+                    this.swipeVerticalDirection = null;
                 } else if (this.touchDelta.x < -this.swipeThreshold * 1.5) {
                     this.swipeDirection = 'left';
+                    this.swipeVerticalDirection = null;
+                }
+            } 
+            // Detect vertical swipe direction
+            else {
+                if (this.touchDelta.y > this.swipeVerticalThreshold * 1.5) {
+                    this.swipeVerticalDirection = 'down';
+                    this.swipeDirection = null;
+                } else if (this.touchDelta.y < -this.swipeVerticalThreshold * 1.5) {
+                    this.swipeVerticalDirection = 'up';
+                    this.swipeDirection = null;
                 }
             }
             
@@ -393,6 +412,16 @@ export class Controls {
             } else if (this.swipeDirection === 'right' && Math.abs(this.touchDelta.x) > this.swipeThreshold * 1.2) {
                 this.previousItem();
             }
+            // Handle vertical swipe - convertir a navegación vertical para obras
+            else if (this.swipeVerticalDirection === 'up' && Math.abs(this.touchDelta.y) > this.swipeVerticalThreshold * 1.2) {
+                // Navegación vertical hacia arriba (obra siguiente)
+                this.emit('verticalSwipe', 'up');
+                this.nextVerticalItem();
+            } else if (this.swipeVerticalDirection === 'down' && Math.abs(this.touchDelta.y) > this.swipeVerticalThreshold * 1.2) {
+                // Navegación vertical hacia abajo (obra anterior)
+                this.emit('verticalSwipe', 'down');
+                this.previousVerticalItem();
+            }
         }
         
         // Reset states but keep momentum
@@ -400,6 +429,8 @@ export class Controls {
         this.isZooming = false;
         this.pinchDelta = 0;
         this.swipeDirection = null;
+        this.swipeVerticalDirection = null;
+
     }
 
     // Mejorar el comportamiento del zoom al hacer doble toque (para móviles)
@@ -596,6 +627,80 @@ export class Controls {
         if (this.camera.moveTo) {
             this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.25); // Más lento (era 0.15)
         }
+    }
+    
+    nextVerticalItem() {
+        // En modo lineal, simplemente avanzamos a la siguiente obra
+        console.log(this.totalItems)
+        if (this.currentIndex < this.totalItems - 1) {
+            // Indicar que estamos navegando verticalmente
+            const oldIndex = this.currentIndex;
+            this.currentIndex++;
+            
+            // Emitir eventos
+            this.emit('verticalItemChange', {
+                oldIndex: oldIndex,
+                newIndex: this.currentIndex,
+                direction: 'up'
+            });
+            
+            if (this.debug) console.log('Next vertical item:', this.currentIndex);
+            
+            // Reset camera position and rotation with a vertical transition
+            this.resetCameraViewVertical('up');
+            
+            // Update UI
+            this.updateNavDots();
+            
+            // Show gesture hint
+            this.showGestureHint("Desliza arriba/abajo para navegar");
+        }
+    }
+
+    previousVerticalItem() {
+        // En modo lineal, simplemente retrocedemos a la obra anterior
+        if (this.currentIndex > 0) {
+            // Indicar que estamos navegando verticalmente
+            const oldIndex = this.currentIndex;
+            this.currentIndex--;
+            
+            // Emitir eventos
+            this.emit('verticalItemChange', {
+                oldIndex: oldIndex,
+                newIndex: this.currentIndex,
+                direction: 'down'
+            });
+            
+            if (this.debug) console.log('Previous vertical item:', this.currentIndex);
+            
+            // Reset camera position and rotation with a vertical transition
+            this.resetCameraViewVertical('down');
+            
+            // Update UI
+            this.updateNavDots();
+            
+            // Show gesture hint
+            this.showGestureHint("Desliza arriba/abajo para navegar");
+        }
+    }
+
+    resetCameraViewVertical(direction) {
+        // Reiniciamos rotación y zoom
+        this.cameraRotation = { x: 0, y: 0 };
+        this.cameraZoom = 1;
+        this.momentum = { x: 0, y: 0 };
+        
+        // Modificamos la animación de cámara para transición vertical
+        if (this.camera && this.camera.moveTo) {
+            this.camera.moveTo(
+                this.initialCameraPosition,
+                this.initialLookAtPosition,
+                0.9 // Transición más lenta
+            );
+        }
+        
+        // Emitir evento para animar partículas
+        this.emit('cameraTransition', direction);
     }
     
     /**

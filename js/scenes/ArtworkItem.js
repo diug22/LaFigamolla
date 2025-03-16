@@ -100,7 +100,13 @@ export class ArtworkItem {
             console.log(`GLB model loaded for ${this.name}`);
         }
     
-    
+        resetParticles() {
+            if (!this.particles) return;
+            
+            // Recrear las partículas o restaurar posiciones
+            this.container.remove(this.particles);
+            this.addParticles(); // Volver a añadir partículas frescas
+        }
     /**
      * Create the mesh based on geometry type
      */
@@ -515,13 +521,36 @@ export class ArtworkItem {
     /**
      * Show the item
      */
-    show() {
+    show(transitionDirection = null) {
         this.container.visible = true;
         this.isVisible = true;
         
         // Reset position and rotation
         this.container.position.copy(this.position);
         this.container.rotation.copy(this.rotation);
+        
+        // Apply special entrance effect for vertical transitions
+        if (transitionDirection) {
+            // Aplicar efecto de entrada según dirección
+            const offset = transitionDirection === 'up' ? -5 : 5;
+            
+            // Animar entrada desde arriba o abajo
+            this.container.position.y += offset;
+            
+            // Animar hacia la posición final
+            const targetY = this.position.y;
+            const animate = () => {
+                const diff = targetY - this.container.position.y;
+                if (Math.abs(diff) < 0.05) {
+                    this.container.position.y = targetY;
+                } else {
+                    this.container.position.y += diff * 0.1;
+                    requestAnimationFrame(animate);
+                }
+            };
+            
+            animate();
+        }
         
         // Start animation
         this.isAnimating = true;
