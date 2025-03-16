@@ -15,9 +15,36 @@
             "value": "model/gltf-binary"
           }
         ]
+      },
+      {
+        "source": "/frames/(.*\\.jpg)",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "image/jpeg"
+          }
+        ]
+      },
+      {
+        "source": "/js/(.*)",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "text/javascript"
+          }
+        ]
+      },
+      {
+        "source": "/css/(.*)",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "text/css"
+          }
+        ]
       }
     ],
     "rewrites": [
-      { "source": "/(.*)", "destination": "/index.html" }
+      { "source": "/((?!api|_next/static|images|models|css|js|frames).*)", "destination": "/index.html" }
     ]
   }

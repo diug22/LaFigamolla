@@ -49,16 +49,20 @@ export class Controls {
         this.swipeDirection = null;
         
         // Enhanced camera settings
-        this.defaultDistance = 3.5; // Closer default distance (was 5)
-        this.minDistance = 1.5;    // Minimum zoom distance (closer to artwork)
-        this.maxDistance = 6;      // Maximum zoom distance
-        this.rotationSensitivity = 0.003; // Reduced for smoother rotation (was 0.005)
-        this.zoomSensitivity = 0.0008;    // Adjusted for better zoom feel (was 0.001)
-        this.dampingFactor = 0.92;        // Added for smooth deceleration of movements
+        this.defaultDistance = 5; // Aumentado para una vista inicial más lejana (era 3.5)
+        this.minDistance = 2;    // Ajustado para un zoom mínimo más razonable (era 1.5)
+        this.maxDistance = 8;    // Aumentado para permitir alejarse más (era 6)
+        this.rotationSensitivity = 0.001; // Reducido para rotación más lenta (era 0.003)
+        this.zoomSensitivity = 0.0004;    // Reducido para zoom más lento (era 0.0008)
+        this.dampingFactor = 0.95; 
         
         // Camera motion
         this.momentum = { x: 0, y: 0 };
         this.isInertiaActive = true;
+
+        // Añadir esta propiedad para mejorar el zoom con pellizco:
+        this.pinchZoomEnabled = true;
+        this.pinchZoomSensitivity = 0.05; // Sensibilidad más suave para el zoom con pellizco
         
         // Initial camera position/target for resets
         this.initialCameraPosition = new THREE.Vector3(0, 0, this.defaultDistance);
@@ -153,94 +157,41 @@ export class Controls {
         }
         
         // Create UI controls for zoom
-        this.createZoomControls();
+        this.createResetButton();
     }
     
     /**
      * Create zoom in/out buttons
      */
-    createZoomControls() {
-        // Create container
-        const controlsContainer = document.createElement('div');
-        controlsContainer.style.position = 'fixed';
-        controlsContainer.style.bottom = '20px';
-        controlsContainer.style.right = '20px';
-        controlsContainer.style.zIndex = '100';
-        controlsContainer.style.display = 'flex';
-        controlsContainer.style.flexDirection = 'column';
-        controlsContainer.style.gap = '10px';
-        
-        // Zoom in button
-        const zoomInButton = document.createElement('button');
-        zoomInButton.innerHTML = '➕';
-        zoomInButton.title = 'Acercar';
-        zoomInButton.style.width = '40px';
-        zoomInButton.style.height = '40px';
-        zoomInButton.style.borderRadius = '50%';
-        zoomInButton.style.border = 'none';
-        zoomInButton.style.backgroundColor = 'rgba(255,255,255,0.2)';
-        zoomInButton.style.color = '#fff';
-        zoomInButton.style.fontSize = '18px';
-        zoomInButton.style.cursor = 'pointer';
-        zoomInButton.style.display = 'flex';
-        zoomInButton.style.alignItems = 'center';
-        zoomInButton.style.justifyContent = 'center';
-        zoomInButton.style.backdropFilter = 'blur(5px)';
-        
-        // Zoom out button
-        const zoomOutButton = document.createElement('button');
-        zoomOutButton.innerHTML = '➖';
-        zoomOutButton.title = 'Alejar';
-        zoomOutButton.style.width = '40px';
-        zoomOutButton.style.height = '40px';
-        zoomOutButton.style.borderRadius = '50%';
-        zoomOutButton.style.border = 'none';
-        zoomOutButton.style.backgroundColor = 'rgba(255,255,255,0.2)';
-        zoomOutButton.style.color = '#fff';
-        zoomOutButton.style.fontSize = '18px';
-        zoomOutButton.style.cursor = 'pointer';
-        zoomOutButton.style.display = 'flex';
-        zoomOutButton.style.alignItems = 'center';
-        zoomOutButton.style.justifyContent = 'center';
-        zoomOutButton.style.backdropFilter = 'blur(5px)';
-        
-        // Reset button
+    createResetButton() {
+        // Create reset button
         const resetButton = document.createElement('button');
         resetButton.innerHTML = '🔄';
         resetButton.title = 'Resetear Vista';
+        resetButton.style.position = 'fixed';
+        resetButton.style.bottom = '20px';
+        resetButton.style.left = '20px';  // Posicionado a la izquierda
+        resetButton.style.zIndex = '100';
+        resetButton.style.background = 'rgba(255,255,255,0.2)';
+        resetButton.style.color = '#fff';
+        resetButton.style.border = 'none';
+        resetButton.style.borderRadius = '50%';
         resetButton.style.width = '40px';
         resetButton.style.height = '40px';
-        resetButton.style.borderRadius = '50%';
-        resetButton.style.border = 'none';
-        resetButton.style.backgroundColor = 'rgba(255,255,255,0.2)';
-        resetButton.style.color = '#fff';
-        resetButton.style.fontSize = '18px';
         resetButton.style.cursor = 'pointer';
         resetButton.style.display = 'flex';
         resetButton.style.alignItems = 'center';
         resetButton.style.justifyContent = 'center';
         resetButton.style.backdropFilter = 'blur(5px)';
         
-        // Add event listeners
-        zoomInButton.addEventListener('click', () => {
-            this.zoomIn();
-        });
-        
-        zoomOutButton.addEventListener('click', () => {
-            this.zoomOut();
-        });
-        
+        // Add event listener
         resetButton.addEventListener('click', () => {
             this.resetCameraView();
         });
         
-        // Add buttons to container
-        controlsContainer.appendChild(zoomInButton);
-        controlsContainer.appendChild(zoomOutButton);
-        controlsContainer.appendChild(resetButton);
-        
-        // Add container to document
-        document.body.appendChild(controlsContainer);
+        // Add button to document
+        document.body.appendChild(resetButton);
+        this.resetButton = resetButton;
     }
     
     /**
@@ -304,6 +255,7 @@ export class Controls {
         // Single touch (drag)
         if (event.touches.length === 1) {
             this.isDragging = true;
+            this.isZooming = false; // Asegurarse de que no estamos en modo zoom
             this.touchStart.x = event.touches[0].clientX;
             this.touchStart.y = event.touches[0].clientY;
             this.touchCurrent.x = this.touchStart.x;
@@ -318,20 +270,33 @@ export class Controls {
                 y: this.touchStart.y,
                 time: Date.now()
             };
+            
+            // Añadir un pequeño umbral de tiempo para distinguir entre toques y arrastres
+            this.touchStartTime = Date.now();
         }
-        // Double touch (pinch)
+        // Double touch (pinch) - mejorado para dispositivos móviles
         else if (event.touches.length === 2) {
             this.isDragging = false;
             this.isZooming = true;
             
-            // Calculate initial pinch distance
+            // Calculate initial pinch distance more accurately
             const dx = event.touches[0].clientX - event.touches[1].clientX;
             const dy = event.touches[0].clientY - event.touches[1].clientY;
             this.pinchStart = Math.sqrt(dx * dx + dy * dy);
             this.pinchCurrent = this.pinchStart;
             this.pinchDelta = 0;
+            
+            // Store the midpoint of the pinch
+            this.pinchMidpoint = {
+                x: (event.touches[0].clientX + event.touches[1].clientX) / 2,
+                y: (event.touches[0].clientY + event.touches[1].clientY) / 2
+            };
+            
+            // Show a hint that tells the user they're zooming
+            this.showGestureHint('Pellizca para acercar o alejar');
         }
     }
+    
     
     /**
      * Handle touch move event
@@ -350,14 +315,14 @@ export class Controls {
             this.touchCurrent.x = x;
             this.touchCurrent.y = y;
             
-            // Calculate delta
-            this.touchDelta.x = this.touchCurrent.x - this.touchStart.x;
-            this.touchDelta.y = this.touchCurrent.y - this.touchStart.y;
+            // Calculate delta con movimiento más lento
+            this.touchDelta.x = (this.touchCurrent.x - this.touchStart.x) * 0.5; // Reducido 50%
+            this.touchDelta.y = (this.touchCurrent.y - this.touchStart.y) * 0.5; // Reducido 50%
             
-            // Calculate momentum
-            if (now - this.lastPosition.time > 20) { // Only update every 20ms for stability
-                this.momentum.x = (x - this.lastPosition.x) * 0.05; // Scaling factor
-                this.momentum.y = (y - this.lastPosition.y) * 0.05;
+            // Calculate momentum con aceleración reducida
+            if (now - this.lastPosition.time > 20) {
+                this.momentum.x = (x - this.lastPosition.x) * 0.02; // Reducido (era 0.05)
+                this.momentum.y = (y - this.lastPosition.y) * 0.02; // Reducido (era 0.05)
                 
                 this.lastPosition = {
                     x: x,
@@ -366,11 +331,11 @@ export class Controls {
                 };
             }
             
-            // Detect swipe direction
+            // Detect swipe direction con umbral aumentado para evitar swipes accidentales
             if (Math.abs(this.touchDelta.x) > Math.abs(this.touchDelta.y)) {
-                if (this.touchDelta.x > this.swipeThreshold) {
+                if (this.touchDelta.x > this.swipeThreshold * 1.5) {
                     this.swipeDirection = 'right';
-                } else if (this.touchDelta.x < -this.swipeThreshold) {
+                } else if (this.touchDelta.x < -this.swipeThreshold * 1.5) {
                     this.swipeDirection = 'left';
                 }
             }
@@ -378,15 +343,15 @@ export class Controls {
             // Apply rotation to camera based on touch movement
             this.applyTouchRotation();
         }
-        // Double touch (pinch)
+        // Double touch (pinch) - mejorado para zoom más suave
         else if (this.isZooming && event.touches.length === 2) {
             // Calculate current pinch distance
             const dx = event.touches[0].clientX - event.touches[1].clientX;
             const dy = event.touches[0].clientY - event.touches[1].clientY;
             this.pinchCurrent = Math.sqrt(dx * dx + dy * dy);
             
-            // Calculate delta
-            this.pinchDelta = this.pinchCurrent - this.pinchStart;
+            // Calculate delta con mayor suavidad
+            this.pinchDelta = (this.pinchCurrent - this.pinchStart) * this.pinchZoomSensitivity;
             
             // Apply zoom
             this.applyZoom();
@@ -404,11 +369,30 @@ export class Controls {
         
         if (this.debug) console.log('Touch end, swipe direction:', this.swipeDirection);
         
-        // Handle swipe
-        if (this.swipeDirection === 'left') {
-            this.nextItem();
-        } else if (this.swipeDirection === 'right') {
-            this.previousItem();
+        const now = Date.now();
+        const touchDuration = now - this.touchStartTime;
+        
+        // Detect double tap (toques rápidos en la misma área)
+        if (touchDuration < 300 && Math.abs(this.touchDelta.x) < 10 && Math.abs(this.touchDelta.y) < 10) {
+            // Es un toque rápido, no un arrastre
+            const currentTime = now;
+            const tapLength = currentTime - this.lastTapTime;
+            
+            if (tapLength < 300 && tapLength > 0) {
+                // Doble toque detectado
+                this.onDoubleTap(this.touchCurrent.x, this.touchCurrent.y);
+                event.preventDefault();
+            }
+            
+            this.lastTapTime = currentTime;
+        } 
+        // Handle swipe with reduced sensitivity (less accidental swipes)
+        else if (touchDuration < 400) { // Solo detectar swipes rápidos
+            if (this.swipeDirection === 'left' && Math.abs(this.touchDelta.x) > this.swipeThreshold * 1.2) {
+                this.nextItem();
+            } else if (this.swipeDirection === 'right' && Math.abs(this.touchDelta.x) > this.swipeThreshold * 1.2) {
+                this.previousItem();
+            }
         }
         
         // Reset states but keep momentum
@@ -416,6 +400,38 @@ export class Controls {
         this.isZooming = false;
         this.pinchDelta = 0;
         this.swipeDirection = null;
+    }
+
+    // Mejorar el comportamiento del zoom al hacer doble toque (para móviles)
+    // Añadir este método a Controls.js
+    onDoubleTap(x, y) {
+        // Esta función se llama cuando se detecta un doble toque rápido
+
+        // Si ya estamos en un nivel de zoom, volvemos a la posición normal
+        if (this.cameraZoom < 0.9) { // Si estamos alejados
+            this.zoomIn();
+        } else if (this.cameraZoom > 1.1) { // Si estamos acercados
+            this.resetCameraView();
+        } else {
+            // Si estamos en zoom normal, hacemos zoom en el punto tocado
+            this.zoomToPoint(x, y);
+        }
+    }
+
+    // Añadir este nuevo método para zoom en punto específico
+    zoomToPoint(x, y) {
+        if (!this.camera) return;
+        
+        // Hacemos zoom a un punto específico
+        // En una implementación real, necesitaríamos técnicas más avanzadas de raycasting
+        // Pero esto es una aproximación simplificada
+        
+        // Zoom in por defecto
+        this.cameraZoom = Math.max(this.minDistance / this.defaultDistance, 
+                            this.cameraZoom * 0.6); // Zoom más pronunciado (era 0.9)
+        
+        // Aplicar zoom
+        this.applyTouchRotation();
     }
     
     /**
@@ -524,25 +540,47 @@ export class Controls {
     }
     
     /**
-     * Apply rotation based on touch/mouse movement
-     * Enhanced for smoother camera control
+     * Mejorar el método applyTouchRotation para una rotación más suave
      */
     applyTouchRotation() {
-        if (!this.camera || !this.isDragging) return;
+        if (!this.camera || !this.isDragging && !this.isZooming) return;
         
-        // Calculate rotation amount based on touch delta with sensitivity adjustment
-        const rotX = this.touchDelta.y * this.rotationSensitivity;
-        const rotY = this.touchDelta.x * this.rotationSensitivity;
+        // Si estamos haciendo zoom pero no arrastrando, no aplicar rotación
+        if (this.isZooming && !this.isDragging) {
+            // Calculate new camera position based on current rotation
+            const distance = this.defaultDistance * this.cameraZoom;
+            const cameraX = Math.sin(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
+            const cameraY = Math.sin(this.cameraRotation.x) * distance;
+            const cameraZ = Math.cos(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
+            
+            // Create new position vector
+            const newPosition = new THREE.Vector3(
+                cameraX + this.initialLookAtPosition.x,
+                cameraY + this.initialLookAtPosition.y,
+                cameraZ + this.initialLookAtPosition.z
+            );
+            
+            // Update camera with slower transition (para zoom más suave)
+            if (this.camera.moveTo) {
+                this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.25); // Más lento (era 0.15)
+            }
+            return;
+        }
         
-        // Update current rotation
-        this.cameraRotation.x += rotX;
-        this.cameraRotation.y += rotY;
+        // Para movimiento de arrastre normal
+        // Calculate rotation amount based on touch delta with reduced sensitivity
+        const rotX = this.touchDelta.y * this.rotationSensitivity * 0.8; // Reducido un 20%
+        const rotY = this.touchDelta.x * this.rotationSensitivity * 0.8; // Reducido un 20%
         
-        // Limit vertical rotation more naturally (-60° to +60°)
-        this.cameraRotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.cameraRotation.x));
+        // Update current rotation with smoother transitions
+        this.cameraRotation.x = THREE.MathUtils.lerp(this.cameraRotation.x, this.cameraRotation.x + rotX, 0.3);
+        this.cameraRotation.y = THREE.MathUtils.lerp(this.cameraRotation.y, this.cameraRotation.y + rotY, 0.3);
+        
+        // Limit vertical rotation more naturally (-45° to +45°) en lugar de 60°
+        this.cameraRotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, this.cameraRotation.x));
         
         // Calculate new camera position based on rotation
-        const distance = this.defaultDistance * this.cameraZoom; // Distance from lookAt point
+        const distance = this.defaultDistance * this.cameraZoom;
         const cameraX = Math.sin(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
         const cameraY = Math.sin(this.cameraRotation.x) * distance;
         const cameraZ = Math.cos(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
@@ -554,26 +592,28 @@ export class Controls {
             cameraZ + this.initialLookAtPosition.z
         );
         
-        // Update camera using its existing methods with faster response time
+        // Update camera using its existing methods with slower response time
         if (this.camera.moveTo) {
-            this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.15);
+            this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.25); // Más lento (era 0.15)
         }
     }
     
     /**
-     * Apply zoom based on pinch/wheel
-     * Enhanced for smoother zoom experience
+     * Mejorar el método applyZoom para un zoom más suave
      */
     applyZoom() {
         if (!this.camera) return;
         
-        // Convert pinch delta to zoom factor with sensitivity adjustment
-        const zoomFactor = this.pinchDelta * this.zoomSensitivity;
+        // Reduce zoom sensitivity for smoother experience
+        const zoomFactor = this.pinchDelta * (this.zoomSensitivity * 0.8);
         
-        // Update zoom level with improved limits
-        this.cameraZoom = Math.max(this.minDistance / this.defaultDistance, 
-                              Math.min(this.maxDistance / this.defaultDistance, 
-                                  this.cameraZoom - zoomFactor));
+        // Smoother zoom transition with easing
+        this.targetZoom = Math.max(this.minDistance / this.defaultDistance, 
+                            Math.min(this.maxDistance / this.defaultDistance, 
+                                this.cameraZoom - zoomFactor));
+                                
+        // Ease toward target zoom
+        this.cameraZoom = THREE.MathUtils.lerp(this.cameraZoom, this.targetZoom, 0.1);
         
         // Reset pinch delta
         this.pinchDelta = 0;
@@ -741,20 +781,33 @@ export class Controls {
         }
     }
     
-    /**
-     * Show gesture hint
-     */
-    showGestureHint() {
+    // Mejorar el método showGestureHint para que sea más visible:
+    showGestureHint(text) {
         const gestureHint = document.getElementById('gesture-hint');
         if (!gestureHint) return;
+        
+        // Clear any previous timeout
+        if (this.gestureHintTimeout) {
+            clearTimeout(this.gestureHintTimeout);
+        }
+        
+        // Update text if provided
+        if (text) {
+            gestureHint.textContent = text;
+        }
+        
+        // Make hint more visible on mobile
+        gestureHint.style.fontSize = this.sizes.isMobile ? '18px' : '16px';
+        gestureHint.style.padding = this.sizes.isMobile ? '12px 20px' : '10px 16px';
+        gestureHint.style.backgroundColor = 'rgba(0,0,0,0.7)';
         
         // Show hint
         gestureHint.classList.add('visible');
         
-        // Hide after 2 seconds
-        setTimeout(() => {
+        // Hide after 2.5 seconds (longer on mobile)
+        this.gestureHintTimeout = setTimeout(() => {
             gestureHint.classList.remove('visible');
-        }, 2000);
+        }, this.sizes.isMobile ? 2500 : 2000);
     }
     
     /**

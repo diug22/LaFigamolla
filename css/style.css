@@ -435,3 +435,149 @@ canvas {
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
 }
+
+/* 
+ * Añadir estos estilos a tu archivo CSS para mejorar la visualización de los gestos
+ */
+
+/* Mejora en la visualización de pistas de gestos */
+.gesture-hint {
+    position: fixed;
+    bottom: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-size: 16px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1000;
+    text-align: center;
+    max-width: 80%;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.gesture-hint.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Estilo para dispositivos móviles */
+@media (max-width: 768px) {
+    .gesture-hint {
+        bottom: 15%;
+        padding: 12px 20px;
+        font-size: 18px;
+        max-width: 90%;
+    }
+}
+
+/* Mejorar la visualización de los puntos de navegación */
+.nav-dots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.nav-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-dot.active {
+    background-color: white;
+    transform: scale(1.2);
+}
+
+/* En móviles, hacer los puntos más grandes para facilitar el toque */
+@media (max-width: 768px) {
+    .nav-dot {
+        width: 16px;
+        height: 16px;
+        margin: 0 8px;
+    }
+}
+
+/* Mejorar la visualización del panel de información */
+.info-panel {
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 20px;
+    border-radius: 15px;
+    max-width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+    transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    transform: translateY(50px);
+    opacity: 0;
+    visibility: hidden;
+}
+
+.info-panel.active {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Estilo para dispositivos móviles */
+@media (max-width: 768px) {
+    .info-panel {
+        padding: 16px;
+        max-width: 95%;
+    }
+}
+
+/* Mejorar botones de zoom */
+button.zoom-button {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 24px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+button.zoom-button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+/* Indicador visual de zoom */
+.zoom-indicator {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.zoom-indicator.visible {
+    opacity: 1;
+    visibility: visible;
+}

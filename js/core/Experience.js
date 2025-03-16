@@ -78,7 +78,7 @@ export class Experience {
         // Define resources to load
         const resources = [
             // Textures
-            { name: 'obj', type: 'glb', path: '/models/obra.glb' },
+            { name: 'obj', type: 'glb', path: 'public/models/obra.glb' },
 
             // Video frames (for animation)
             { name: 'frame0', type: 'texture', path: './frames/frame_00000.jpg' },

@@ -36,6 +36,8 @@ export class UI {
         // Setup
         this.setupEventListeners();
         this.createUIToggleButton();
+        this.createResetButton();
+        this.repositionContactButton();
         
         // Auto-hide UI after a short delay when experience starts
         setTimeout(() => {
@@ -97,7 +99,7 @@ export class UI {
         toggleButton.title = 'Mostrar/Ocultar Interfaz';
         toggleButton.style.position = 'fixed';
         toggleButton.style.top = '20px';
-        toggleButton.style.right = '80px';
+        toggleButton.style.right = '20px';
         toggleButton.style.zIndex = '100';
         toggleButton.style.background = 'rgba(0,0,0,0.5)';
         toggleButton.style.color = 'white';
@@ -119,6 +121,65 @@ export class UI {
         // Añadir al documento
         document.body.appendChild(toggleButton);
         this.toggleButton = toggleButton;
+    }
+    
+    /**
+     * Create reset view button
+     */
+    createResetButton() {
+        // Crear botón de reset
+        const resetButton = document.createElement('button');
+        resetButton.classList.add('reset-button');
+        resetButton.innerHTML = '🔄';
+        resetButton.title = 'Resetear Vista';
+        resetButton.style.position = 'fixed';
+        resetButton.style.bottom = '20px';
+        resetButton.style.left = '20px';
+        resetButton.style.zIndex = '100';
+        resetButton.style.background = 'rgba(0,0,0,0.5)';
+        resetButton.style.color = 'white';
+        resetButton.style.border = 'none';
+        resetButton.style.borderRadius = '50%';
+        resetButton.style.width = '40px';
+        resetButton.style.height = '40px';
+        resetButton.style.display = 'flex';
+        resetButton.style.alignItems = 'center';
+        resetButton.style.justifyContent = 'center';
+        resetButton.style.cursor = 'pointer';
+        resetButton.style.transition = 'background-color 0.3s ease';
+        resetButton.style.backdropFilter = 'blur(5px)';
+        
+        // Añadir evento de clic
+        resetButton.addEventListener('click', () => {
+            if (this.controls) {
+                this.controls.resetCameraView();
+            }
+        });
+        
+        // Añadir al documento
+        document.body.appendChild(resetButton);
+        this.resetButton = resetButton;
+    }
+    
+    /**
+     * Reposition contact button to always be on the right
+     */
+    repositionContactButton() {
+        if (this.elements.contactButton) {
+            // Reposicionar botón de contacto a la derecha
+            this.elements.contactButton.style.position = 'fixed';
+            this.elements.contactButton.style.bottom = '20px';
+            this.elements.contactButton.style.right = '20px';
+            this.elements.contactButton.style.left = 'auto'; // Eliminar posicionamiento a la izquierda si existe
+            this.elements.contactButton.style.zIndex = '100';
+            this.elements.contactButton.style.width = '40px';
+            this.elements.contactButton.style.height = '40px';
+            this.elements.contactButton.style.borderRadius = '50%';
+            this.elements.contactButton.style.display = 'flex';
+            this.elements.contactButton.style.alignItems = 'center';
+            this.elements.contactButton.style.justifyContent = 'center';
+            this.elements.contactButton.style.backdropFilter = 'blur(5px)';
+        }
     }
     
     /**
