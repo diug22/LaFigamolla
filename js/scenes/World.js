@@ -160,11 +160,12 @@ export class World {
                 name: 'ceramic1',
                 title: 'Vasija Otoñal',
                 description: 'Cerámica artesanal con esmaltes en tonos tierra y ocre, inspirada en las formas orgánicas de la naturaleza.',
-                texture: this.resources.getItem('ceramic1'),
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
-                geometry: 'vase'
+                model: this.resources.getItem('obj'),  // Reference to the loaded GLB model,
+                geometry: 'glb'
+
             },
             {
                 name: 'ceramic2',
@@ -262,7 +263,7 @@ export class World {
      */
     showItem(index) {
         if (index < 0 || index >= this.items.length) return;
-        
+        console.log('ITEM: '+this.items[index].name);      
         // Hide all items
         for (const item of this.items) {
             item.hide();

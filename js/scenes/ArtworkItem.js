@@ -6,43 +6,100 @@
 import * as THREE from 'three';
 
 export class ArtworkItem {
-    constructor(world, data) {
-        this.world = world;
-        this.scene = world.scene;
-        this.data = data;
+
+        constructor(world, data) {
+            this.world = world;
+            this.scene = world.scene;
+            this.data = data;
+            
+            // Properties
+            this.name = data.name;
+            this.title = data.title;
+            this.description = data.description;
+            this.texture = data.texture;
+            this.position = data.position || new THREE.Vector3(0, 0, 0);
+            this.rotation = data.rotation || new THREE.Euler(0, 0, 0);
+            this.scale = data.scale || new THREE.Vector3(1, 1, 1);
+            this.geometryType = data.geometry || 'box';
+            this.model = data.model; // Add GLB model reference
+            
+            // State
+            this.isVisible = false;
+            this.isAnimating = false;
+            this.rotationSpeed = 0.005;
+            this.hoverEffect = 0;
+            
+            // Setup
+            this.container = new THREE.Group();
+            this.container.name = this.name;
+            this.container.position.copy(this.position);
+            this.container.rotation.copy(this.rotation);
+            this.container.scale.copy(this.scale);
+            this.container.visible = false;
+            
+            this.scene.add(this.container);
+            
+            // Create mesh or load model
+            if (this.geometryType === 'glb' && this.model) {
+                this.loadGLBModel();
+            } else {
+                this.createMesh();
+            }
+            
+            // Add effects
+            this.addEffects();
+        }
         
-        // Properties
-        this.name = data.name;
-        this.title = data.title;
-        this.description = data.description;
-        this.texture = data.texture;
-        this.position = data.position || new THREE.Vector3(0, 0, 0);
-        this.rotation = data.rotation || new THREE.Euler(0, 0, 0);
-        this.scale = data.scale || new THREE.Vector3(1, 1, 1);
-        this.geometryType = data.geometry || 'box';
-        
-        // State
-        this.isVisible = false;
-        this.isAnimating = false;
-        this.rotationSpeed = 0.005;
-        this.hoverEffect = 0;
-        
-        // Setup
-        this.container = new THREE.Group();
-        this.container.name = this.name;
-        this.container.position.copy(this.position);
-        this.container.rotation.copy(this.rotation);
-        this.container.scale.copy(this.scale);
-        this.container.visible = false;
-        
-        this.scene.add(this.container);
-        
-        // Create mesh
-        this.createMesh();
-        
-        // Add effects
-        this.addEffects();
-    }
+        /**
+         * Load GLB model
+         */
+        loadGLBModel() {
+            if (!this.model) {
+                console.error(`No GLB model provided for ${this.name}`);
+                // Fallback to a basic shape
+                this.geometryType = 'box';
+                this.createMesh();
+                return;
+            }
+            
+            // The model should already be loaded by the Resource manager
+            // and passed in the data object
+            
+            // Clone the model to avoid modifying the original
+            this.modelScene = this.model.scene.clone();
+            
+            // Apply custom materials if texture is provided
+            if (this.texture) {
+                this.modelScene.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material = new THREE.MeshStandardMaterial({
+                            map: this.texture,
+                            roughness: 0.7,
+                            metalness: 0.1
+                        });
+                        
+                        // Enable shadows
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+            } else {
+                // Just enable shadows for all meshes
+                this.modelScene.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+            }
+            
+            // Add model to container
+            this.container.add(this.modelScene);
+            this.mesh = this.modelScene; // For consistency with other methods
+            
+            console.log(`GLB model loaded for ${this.name}`);
+        }
+    
     
     /**
      * Create the mesh based on geometry type
@@ -327,8 +384,8 @@ export class ArtworkItem {
      * Add visual effects to the item
      */
     addEffects() {
-        // Add glow effect
-        if (this.geometryType !== 'teaSet') {
+        // Add glow effect - don't add to GLB models or tea sets
+        if (this.geometryType !== 'teaSet' && this.geometryType !== 'glb') {
             const glowMaterial = new THREE.MeshBasicMaterial({
                 color: 0xffffff,
                 transparent: true,
@@ -339,7 +396,7 @@ export class ArtworkItem {
             // Create slightly larger geometry for glow effect
             let glowGeometry;
             
-            if (this.mesh.geometry.clone) {
+            if (this.mesh.geometry && this.mesh.geometry.clone) {
                 glowGeometry = this.mesh.geometry.clone();
                 
                 // Scale vertices outward
@@ -535,10 +592,6 @@ export class ArtworkItem {
     resize() {
         // Any resize-specific updates
     }
-    
-    /**
-     * Clean up and destroy item
-     */
     destroy() {
         // Remove from scene
         if (this.container.parent) {
@@ -548,7 +601,29 @@ export class ArtworkItem {
         // Dispose of geometries and materials
         if (this.mesh) {
             if (this.mesh.geometry) this.mesh.geometry.dispose();
-            if (this.mesh.material) this.mesh.material.dispose();
+            if (this.mesh.material) {
+                if (Array.isArray(this.mesh.material)) {
+                    this.mesh.material.forEach(material => material.dispose());
+                } else {
+                    this.mesh.material.dispose();
+                }
+            }
+        }
+        
+        // Dispose of GLB model if present
+        if (this.modelScene) {
+            this.modelScene.traverse((child) => {
+                if (child.isMesh) {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(material => material.dispose());
+                        } else {
+                            child.material.dispose();
+                        }
+                    }
+                }
+            });
         }
         
         if (this.glowMesh) {

@@ -78,8 +78,8 @@ export class Experience {
         // Define resources to load
         const resources = [
             // Textures
-            { name: 'ceramic1', type: 'texture', path: './images/img.jpeg' },
-            
+            { name: 'obj', type: 'glb', path: '/models/obra.glb' },
+
             // Video frames (for animation)
             { name: 'frame0', type: 'texture', path: './frames/frame_00000.jpg' },
             { name: 'frame5', type: 'texture', path: './frames/frame_00005.jpg' },
