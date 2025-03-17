@@ -22,6 +22,13 @@ export class ArtworkItem {
             this.scale = data.scale || new THREE.Vector3(1, 1, 1);
             this.geometryType = data.geometry || 'box';
             this.model = data.model; // Add GLB model reference
+            this.particleColors = data.particleColors || [
+                '#FFB178', // Default soft orange
+                '#E78F8E', // Default soft red
+                '#FEEAA7', // Default pale yellow
+                '#D4A373', // Default soft brown
+                '#A8DADC'  // Default pastel green
+            ];
             
             // State
             this.isVisible = false;
@@ -463,67 +470,62 @@ export class ArtworkItem {
      * Add particle effect around the item
      */
     addParticles() {
-        // Create particles
         const particleCount = 20;
-        const particles = new THREE.Group();
+    const particles = new THREE.Group();
+    
+    // Use the custom particle colors defined for this artwork
+    const colors = this.particleColors.map(colorHex => new THREE.Color(colorHex));
+    
+    // Create particle geometry
+    const geometry = new THREE.SphereGeometry(0.05, 8, 8);
+    
+    for (let i = 0; i < particleCount; i++) {
+        // Random color from the artwork's color array
+        const colorIndex = Math.floor(Math.random() * colors.length);
+        const color = colors[colorIndex];
         
-        // Autumn colors
-        const colors = [
-            new THREE.Color('#FFB178'), // Soft orange
-            new THREE.Color('#E78F8E'), // Soft red
-            new THREE.Color('#FEEAA7'), // Pale yellow
-            new THREE.Color('#D4A373'), // Soft brown
-            new THREE.Color('#A8DADC')  // Pastel green
-        ];
+        // Create material
+        const material = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.5
+        });
         
-        // Create particle geometry
-        const geometry = new THREE.SphereGeometry(0.05, 8, 8);
+        // Rest of the method remains the same...
         
-        for (let i = 0; i < particleCount; i++) {
-            // Random color
-            const colorIndex = Math.floor(Math.random() * colors.length);
-            const color = colors[colorIndex];
-            
-            // Create material
-            const material = new THREE.MeshBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.5
-            });
-            
-            // Create mesh
-            const mesh = new THREE.Mesh(geometry, material);
-            
-            // Random position in sphere around item
-            const radius = 1.5 + Math.random() * 0.5;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.random() * Math.PI;
-            
-            mesh.position.x = radius * Math.sin(phi) * Math.cos(theta);
-            mesh.position.y = radius * Math.sin(phi) * Math.sin(theta);
-            mesh.position.z = radius * Math.cos(phi);
-            
-            // Add animation properties
-            mesh.userData.rotationSpeed = {
-                x: (Math.random() - 0.5) * 0.02,
-                y: (Math.random() - 0.5) * 0.02,
-                z: (Math.random() - 0.5) * 0.02
-            };
-            
-            mesh.userData.movementSpeed = {
-                theta: (Math.random() - 0.5) * 0.01,
-                phi: (Math.random() - 0.5) * 0.01,
-                radius: (Math.random() - 0.5) * 0.01
-            };
-            
-            // Add to particles group
-            particles.add(mesh);
-        }
+        // Create mesh
+        const mesh = new THREE.Mesh(geometry, material);
         
-        // Add particles to container
-        this.container.add(particles);
-        this.particles = particles;
+        // Random position in sphere around item
+        const radius = 1.5 + Math.random() * 0.5;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        
+        mesh.position.x = radius * Math.sin(phi) * Math.cos(theta);
+        mesh.position.y = radius * Math.sin(phi) * Math.sin(theta);
+        mesh.position.z = radius * Math.cos(phi);
+        
+        // Add animation properties
+        mesh.userData.rotationSpeed = {
+            x: (Math.random() - 0.5) * 0.02,
+            y: (Math.random() - 0.5) * 0.02,
+            z: (Math.random() - 0.5) * 0.02
+        };
+        
+        mesh.userData.movementSpeed = {
+            theta: (Math.random() - 0.5) * 0.01,
+            phi: (Math.random() - 0.5) * 0.01,
+            radius: (Math.random() - 0.5) * 0.01
+        };
+        
+        // Add to particles group
+        particles.add(mesh);
     }
+    
+    // Add particles to container
+    this.container.add(particles);
+    this.particles = particles;
+}
     
     /**
      * Show the item
@@ -694,20 +696,16 @@ handleManualRotation(deltaX, deltaY) {
     // Solo aplicar rotación manual para planos
     if (this.geometryType !== 'plane' || !this.isVisible) return;
     
-    // Convertir el movimiento del mouse/touch a rotación
-    // Hacemos que el plano rote principalmente en el eje Y (para ver ambos lados)
-    // con un poco de rotación en X para inclinarlo
-    
-    // Ajustamos la sensibilidad para una experiencia más suave
-    const rotYFactor = 0.002;
-    const rotXFactor = 0.001;
+    // Aumentar significativamente los factores de rotación
+    const rotYFactor = 0.01; // Mucho mayor que el anterior 0.002
+    const rotXFactor = 0.005; // Mucho mayor que el anterior 0.001
     
     // Aplicar rotación directamente al contenedor
     this.container.rotation.y += deltaX * rotYFactor;
     
-    // Limitar la rotación en el eje X para que no se vea desde arriba o abajo
+    // Ampliar el rango de rotación en el eje X para más libertad
     const newRotX = this.container.rotation.x + deltaY * rotXFactor;
-    this.container.rotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, newRotX));
+    this.container.rotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, newRotX));
     
     // Desactivar la animación automática mientras el usuario interactúa
     this.isAnimating = false;
@@ -716,6 +714,6 @@ handleManualRotation(deltaX, deltaY) {
     clearTimeout(this.animationTimeout);
     this.animationTimeout = setTimeout(() => {
         this.isAnimating = true;
-    }, 2000); // Reactivar después de 2 segundos sin interacción
+    }, 3000); // Dar más tiempo (3 segundos) antes de reanudar animación automática
 }
 }

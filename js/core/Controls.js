@@ -46,8 +46,8 @@ export class Controls {
         this.defaultDistance = 5;
         this.minDistance = 2;
         this.maxDistance = 8;
-        this.rotationSensitivity = 0.002;
-        this.zoomSensitivity = 0.0008;
+        this.rotationSensitivity = 0.005;
+        this.zoomSensitivity = 0.001;
         this.dampingFactor = 0.95;
         
         // Camera motion
@@ -225,13 +225,13 @@ export class Controls {
             this.touchCurrent.y = y;
             
             // Calculate delta with reduced movement for smoother control
-            this.touchDelta.x = (this.touchCurrent.x - this.touchStart.x) * 0.6;
-            this.touchDelta.y = (this.touchCurrent.y - this.touchStart.y) * 0.6;
+            this.touchDelta.x = (this.touchCurrent.x - this.touchStart.x) * 0.8;
+            this.touchDelta.y = (this.touchCurrent.y - this.touchStart.y) * 0.8;
             
             // Calculate momentum with reduced acceleration
-            if (now - this.lastPosition.time > 20) {
-                this.momentum.x = (x - this.lastPosition.x) * 0.01;
-                this.momentum.y = (y - this.lastPosition.y) * 0.01;
+            if (now - this.lastPosition.time > 10) {
+                this.momentum.x = (x - this.lastPosition.x) * 0.02;
+                this.momentum.y = (y - this.lastPosition.y) * 0.02;
                 
                 this.lastPosition = {
                     x: x,
@@ -263,16 +263,15 @@ export class Controls {
             
             // If not swiping, apply rotation to camera
             if (!this.swipeDirection && !this.swipeVerticalDirection) {
-                // Primero comprobamos si el item actual es un plano para tratarlo de forma especial
                 const currentItem = this.getCurrentItem();
                 
                 if (currentItem && currentItem.geometryType === 'plane' && currentItem.handleManualRotation) {
-                    // Si es un plano y tiene el método de rotación manual, lo utilizamos
-                    currentItem.handleManualRotation(this.momentum.x * 100, this.momentum.y * 100);
+                    // Si es un plano y tiene el método de rotación manual, enviar un factor más alto
+                    currentItem.handleManualRotation(this.momentum.x * 200, this.momentum.y * 200); // Duplicado de 100
                 } else {
-                    // Si no, aplicamos la rotación normal de cámara
                     this.applyTouchRotation();
-                }}
+                }
+            }
         }
         // Double touch (pinch)
         else if (this.isZooming && event.touches.length === 2) {
@@ -534,17 +533,19 @@ export class Controls {
         }
         
         // For normal dragging, calculate rotation based on touch delta
-        const rotX = this.touchDelta.y * this.rotationSensitivity;
-        const rotY = this.touchDelta.x * this.rotationSensitivity;
+        // Aumentar la influencia del movimiento para respuesta más rápida
+        const rotX = this.touchDelta.y * this.rotationSensitivity * 1.5;
+        const rotY = this.touchDelta.x * this.rotationSensitivity * 1.5;
         
-        // Update current rotation with smoother transitions
-        this.cameraRotation.x = THREE.MathUtils.lerp(this.cameraRotation.x, this.cameraRotation.x + rotX, 0.3);
-        this.cameraRotation.y = THREE.MathUtils.lerp(this.cameraRotation.y, this.cameraRotation.y + rotY, 0.3);
+        // Update current rotation with smoother transitions pero más directas
+        // Cambiar el factor de interpolación de 0.3 a 0.5 para respuesta más inmediata
+        this.cameraRotation.x = THREE.MathUtils.lerp(this.cameraRotation.x, this.cameraRotation.x + rotX, 0.5);
+        this.cameraRotation.y = THREE.MathUtils.lerp(this.cameraRotation.y, this.cameraRotation.y + rotY, 0.5);
         
-        // Limit vertical rotation (-45° to +45°)
-        this.cameraRotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, this.cameraRotation.x));
+        // Permitir una rotación vertical ligeramente mayor
+        this.cameraRotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.cameraRotation.x));
         
-        // Calculate new camera position based on rotation
+        // Resto del método sin cambios...
         const distance = this.defaultDistance * this.cameraZoom;
         const cameraX = Math.sin(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
         const cameraY = Math.sin(this.cameraRotation.x) * distance;
@@ -559,9 +560,11 @@ export class Controls {
         
         // Update camera using its existing methods
         if (this.camera.moveTo) {
-            this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.3);
+            // Ajustar la duración a un valor más bajo para respuesta más rápida
+            this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.2);
         }
     }
+    
     
     /**
      * Apply zoom based on pinch/wheel

@@ -309,7 +309,14 @@ showItemWithHorizontalTransition(index, direction) {
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
                 model: this.resources.getItem('obj2'),  // Reference to the loaded GLB model,
-                geometry: 'glb'
+                geometry: 'glb',
+                particleColors: [
+                    '#556B2F', // Dark Olive Green
+                    '#6B8E23', // Olive Drab
+                    '#808000', // Olive
+                    '#BDB76B', // Dark Khaki
+                    '#F0E68C'  // Khaki
+                ]
             },
             {
                 name: 'lamina1',
@@ -319,7 +326,14 @@ showItemWithHorizontalTransition(index, direction) {
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
-                geometry: 'plane'
+                geometry: 'plane',
+                particleColors: [
+                    '#FF7F50', // Coral
+                    '#FF4500', // Orange Red
+                    '#FF8C00', // Dark Orange
+                    '#FFA500', // Orange
+                    '#FFBF00'  // Amber
+                ]
             }
         ];
         

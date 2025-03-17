@@ -65,10 +65,10 @@ export class Camera {
         this.targetPosition.copy(position);
         this.targetLookAt.copy(lookAt);
         
-        // Adjust easing based on duration (smaller value = slower transition)
-        // Use a more relaxed easing factor
-        this.easing = duration > 0 ? 1 / (duration * 80) : 1; // Aumentado para transiciones más lentas (era 60)
-        this.easing = Math.min(Math.max(this.easing, 0.005), 0.5); // Menor valor mínimo (era 0.01)
+        // Ajustar easing para respuesta más rápida
+        // Usar un factor de easing más grande para transiciones más rápidas
+        this.easing = duration > 0 ? 1 / (duration * 60) : 1; // Reducido de 80 para transiciones más rápidas
+        this.easing = Math.min(Math.max(this.easing, 0.01), 0.5); // Aumentado el valor mínimo para mayor velocidad
     }
     
     /**
@@ -91,20 +91,20 @@ export class Camera {
      * Update camera on each frame
      */
     update() {
-        // Smooth camera movement with enhanced easing
-        const positionEasing = this.easing * 0.8; // Reducido para movimientos más suaves
-        const lookAtEasing = this.easing * 0.9; // Reducido para movimientos más suaves
+        // Smooth camera movement con factores más altos para respuesta más rápida
+        const positionEasing = this.easing * 1.1; // Aumentado de 0.8
+        const lookAtEasing = this.easing * 1.1; // Aumentado de 0.9
         
         // Apply easing with improved interpolation
         this.currentPosition.lerp(this.targetPosition, positionEasing);
         this.currentLookAt.lerp(this.targetLookAt, lookAtEasing);
         
-        // Small damping to prevent tiny jitters
-        if (this.currentPosition.distanceTo(this.targetPosition) < 0.001) {
+        // Reducir el umbral para minimizar jitter pero permitir llegar a destino más rápido
+        if (this.currentPosition.distanceTo(this.targetPosition) < 0.0005) {
             this.currentPosition.copy(this.targetPosition);
         }
         
-        if (this.currentLookAt.distanceTo(this.targetLookAt) < 0.001) {
+        if (this.currentLookAt.distanceTo(this.targetLookAt) < 0.0005) {
             this.currentLookAt.copy(this.targetLookAt);
         }
         
