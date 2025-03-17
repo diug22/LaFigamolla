@@ -97,9 +97,7 @@ export class Experience {
         const resources = [
             { name: 'obj', type: 'glb', path: 'public/models/obra.glb' },
             { name: 'obj2', type: 'glb', path: 'public/models/obra2.glb' },
-            { name: 'lamina1', type: 'glb', path: 'public/models/lamina1.glb' },
-            { name: 'moon', type: 'glb', path: 'public/models/the_moon.glb' }
-        ];
+            { name: 'lamina1', type: 'glb', path: 'public/models/lamina1.glb' }        ];
         
         // Start loading
         this.resources.load(resources);

@@ -39,6 +39,8 @@ export class ArtworkItem {
         this.container.rotation.copy(this.rotation);
         this.container.scale.copy(this.scale);
         this.container.visible = false;
+
+
         
         this.scene.add(this.container);
         
@@ -304,7 +306,10 @@ export class ArtworkItem {
         // Reset position and rotation
         this.container.position.copy(this.position);
         this.container.rotation.copy(this.rotation);
-        
+
+        this.rotationQuaternion = new THREE.Quaternion();
+        this.rotationQuaternion.setFromEuler(this.container.rotation);
+        this.targetRotationQuaternion = this.rotationQuaternion.clone();
         // Apply special entrance effect for horizontal transitions
         if (direction) {
             // Apply entrance effect based on direction
@@ -330,6 +335,14 @@ export class ArtworkItem {
         
         // Start animation
         this.isAnimating = true;
+
+        if (this.world && this.world.experience && 
+            this.world.experience.ui && 
+            this.world.experience.ui.showGestureHint) {
+            setTimeout(() => {
+                this.world.experience.ui.showGestureHint("Arrastra para rotar");
+            }, 2000);
+        }
     }
     
     /**
@@ -349,7 +362,31 @@ export class ArtworkItem {
         
         // Rotate item
         if (this.isAnimating) {
-            this.container.rotation.y += this.rotationSpeed;
+            // Rotación automática - más lenta para un efecto más sutil
+            this.container.rotation.y += this.rotationSpeed * 0.7;
+        } 
+        else if (this.targetRotationQuaternion) {
+            // Factor de suavizado
+            const smoothFactor = 0.1;
+            
+            // Crear quaternion temporal para SLERP (interpolación esférica)
+            const tempQuaternion = new THREE.Quaternion();
+            tempQuaternion.setFromEuler(this.container.rotation);
+            
+            // Interpolar suavemente hacia la rotación objetivo
+            tempQuaternion.slerp(this.targetRotationQuaternion, smoothFactor);
+            
+            // Aplicar la rotación interpolada
+            this.container.quaternion.copy(tempQuaternion);
+        }
+        // Interpolación suave hacia la rotación objetivo si existe
+        else if (this.targetRotation) {
+            // Factor de suavizado (valor bajo = más suave)
+            const smoothFactor = 0.08;
+            
+            // Aplicar interpolación para movimiento suave
+            this.container.rotation.x += (this.targetRotation.x - this.container.rotation.x) * smoothFactor;
+            this.container.rotation.y += (this.targetRotation.y - this.container.rotation.y) * smoothFactor;
         }
         
         // Update particles
@@ -443,25 +480,138 @@ export class ArtworkItem {
     handleManualRotation(deltaX, deltaY) {
         if (!this.isVisible) return;
         
-        const rotYFactor = 0.01;
+        const rotYFactor = 0.005;
         const rotXFactor = 0.005;
+
+        if (!this.targetRotation) {
+            this.targetRotation = {
+                x: this.container.rotation.x,
+                y: this.container.rotation.y
+            };
+        }
         
-        // Apply rotation directly to container
-        this.container.rotation.y += deltaX * rotYFactor;
+        this.targetRotation.y += deltaX * rotYFactor;
+
+        const newRotX = this.targetRotation.x + deltaY * rotXFactor;
+        this.targetRotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, newRotX));
         
-        // Limit vertical rotation range
-        const newRotX = this.container.rotation.x + deltaY * rotXFactor;
-        this.container.rotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, newRotX));
-        
-        // Disable automatic animation while user interacts
+        // Desactivar animación automática mientras el usuario interactúa
         this.isAnimating = false;
         
-        // Restart animation after a pause in interaction
+        // Reiniciar animación después de una pausa en la interacción
         clearTimeout(this.animationTimeout);
         this.animationTimeout = setTimeout(() => {
             this.isAnimating = true;
-        }, 3000);
+        }, 5000);
     }
+
+    // Añadir un nuevo método para manejar la inercia después de la rotación
+    /**
+     * Apply inertia effect after manual rotation
+     * @param {Number} momentumX - Horizontal momentum
+     * @param {Number} momentumY - Vertical momentum
+     */
+    applyInertia(momentumX, momentumY) {
+        if (!this.isVisible) return;
+        
+        // Inicializar inercia si no existe
+        if (!this.inertia) {
+            this.inertia = { x: 0, y: 0 };
+        }
+        
+        // Aplicar momentum como inercia inicial
+        this.inertia.x = momentumX * 0.2;
+        this.inertia.y = momentumY * 0.2;
+        
+        // Detener cualquier animación de inercia previa
+        if (this.inertiaInterval) {
+            clearInterval(this.inertiaInterval);
+        }
+        
+        // Actualizar targetRotation con inercia que se desvanece
+        this.inertiaInterval = setInterval(() => {
+            if (Math.abs(this.inertia.x) < 0.001 && Math.abs(this.inertia.y) < 0.001) {
+                clearInterval(this.inertiaInterval);
+                this.inertiaInterval = null;
+                return;
+            }
+            
+            if (this.targetRotationQuaternion) {
+                // Crear eje para inercia (perpendicular al movimiento)
+                const axis = new THREE.Vector3(this.inertia.y, this.inertia.x, 0).normalize();
+                const inertiaQuaternion = new THREE.Quaternion();
+                
+                this.inertiaInterval = setInterval(() => {
+                    if (Math.abs(this.inertia.x) < 0.001 && Math.abs(this.inertia.y) < 0.001) {
+                        clearInterval(this.inertiaInterval);
+                        this.inertiaInterval = null;
+                        return;
+                    }
+                    
+                    // Calcular ángulo para inercia
+                    const angle = Math.sqrt(this.inertia.x * this.inertia.x + this.inertia.y * this.inertia.y) * 0.1;
+                    
+                    // Crear quaternion de inercia
+                    inertiaQuaternion.setFromAxisAngle(axis, angle);
+                    
+                    // Aplicar al quaternion de rotación objetivo
+                    if (this.targetRotationQuaternion) {
+                        this.targetRotationQuaternion.premultiply(inertiaQuaternion);
+                    }
+                    
+                    // Reducir inercia gradualmente - factor de amortiguación
+                    this.inertia.x *= 0.93;
+                    this.inertia.y *= 0.93;
+                }, 16);
+            }
+            if (this.targetRotation) {
+                this.targetRotation.y += this.inertia.x;
+                
+                const newRotX = this.targetRotation.x + this.inertia.y;
+                this.targetRotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, newRotX));
+            }
+            
+            // Reducir inercia gradualmente - factor de amortiguación
+            this.inertia.x *= 0.93; // Un valor más cercano a 1 = más deslizamiento
+            this.inertia.y *= 0.93;
+        }, 16); // Aproximadamente 60fps
+    }
+
+    /**
+ * Handle trackball rotation from pointer movement
+ * @param {THREE.Quaternion} quaternion - Quaternion representing rotation
+ */
+handleTrackballRotation(quaternion) {
+    if (!this.isVisible) return;
+    
+    // Asegurarnos de que tengamos un quaternion de rotación
+    if (!this.rotationQuaternion) {
+        this.rotationQuaternion = new THREE.Quaternion();
+        this.rotationQuaternion.setFromEuler(this.container.rotation);
+    }
+    
+    // Calcular nueva rotación
+    // Multiplicamos el quaternion actual por el nuevo para acumular rotaciones
+    this.rotationQuaternion.premultiply(quaternion);
+    
+    // Configurar rotación como target para animación suave
+    if (!this.targetRotationQuaternion) {
+        this.targetRotationQuaternion = new THREE.Quaternion();
+    }
+    
+    // Copiar al quaternion objetivo para animación suave
+    this.targetRotationQuaternion.copy(this.rotationQuaternion);
+    
+    // Desactivar animación automática mientras el usuario interactúa
+    this.isAnimating = false;
+    
+    // Reiniciar animación después de una pausa en la interacción
+    clearTimeout(this.animationTimeout);
+    this.animationTimeout = setTimeout(() => {
+        this.isAnimating = true;
+    }, 5000); // Tiempo antes de reanudar la animación automática
+}
+
     
     /**
      * Clean up and destroy resources
@@ -470,6 +620,16 @@ export class ArtworkItem {
         // Remove from scene
         if (this.container.parent) {
             this.container.parent.remove(this.container);
+        }
+
+        if (this.inertiaInterval) {
+            clearInterval(this.inertiaInterval);
+            this.inertiaInterval = null;
+        }
+
+        if (this.animationTimeout) {
+            clearTimeout(this.animationTimeout);
+            this.animationTimeout = null;
         }
         
         // Dispose of GLB model

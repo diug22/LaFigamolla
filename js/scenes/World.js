@@ -442,22 +442,6 @@ export class World {
                     '#FFA500', // Orange
                     '#FFBF00'  // Amber
                 ]
-            },
-            {
-                name: 'moon',
-                title: 'Acuarela Otoñal',
-                description: 'Técnica mixta sobre papel, capturando la esencia de los bosques en otoño con tonos cálidos y texturas.',
-                position: new THREE.Vector3(0, 0, 0),
-                rotation: new THREE.Euler(0, 0, 0),
-                scale: new THREE.Vector3(1, 1, 1),
-                model: this.resources.getItem('moon'),
-                particleColors: [
-                    '#FF7F50', // Coral
-                    '#FF4500', // Orange Red
-                    '#FF8C00', // Dark Orange
-                    '#FFA500', // Orange
-                    '#FFBF00'  // Amber
-                ]
             }
         ];
         

@@ -48,6 +48,13 @@ export class Controls {
         this.rotationSensitivity = 0.005;
         this.zoomSensitivity = 0.001;
         this.dampingFactor = 0.95;
+
+        // Estado de rotación trackball
+        this.trackballActive = false;
+        this.trackballStart = { x: 0, y: 0 };
+        this.trackballPrevious = { x: 0, y: 0 };
+        this.trackballAxis = new THREE.Vector3();
+        this.trackballQuaternion = new THREE.Quaternion();
         
         // Camera motion
         this.momentum = { x: 0, y: 0 };
@@ -191,9 +198,15 @@ export class Controls {
             this.touchDelta.x = 0;
             this.touchDelta.y = 0;
             
+            // Iniciar trackball
+            this.trackballActive = true;
+            this.trackballStart.x = this.touchStart.x;
+            this.trackballStart.y = this.touchStart.y;
+            this.trackballPrevious.x = this.trackballStart.x;
+            this.trackballPrevious.y = this.trackballStart.y;
+            
             // Almacenar tiempo para posible doble tap
             this.touchStartTime = Date.now();
-            
             // Mostrar hint de zoom si es la primera interacción del usuario
             if (!this.zoomConfig.zoomHintShown) {
                 setTimeout(() => {
@@ -278,16 +291,17 @@ export class Controls {
                 }
             }
             
-            // If not swiping, apply rotation to camera or model
             if (!this.swipeDirection && !this.swipeVerticalDirection) {
-                const currentItem = this.getCurrentItem();
-                
-                if (currentItem && currentItem.handleManualRotation) {
-                    // Pass rotation to item
-                    //currentItem.handleManualRotation(this.momentum.x * 200, this.momentum.y * 200);
+                if (this.trackballActive) {
+                    this.calculateTrackballRotation(this.touchCurrent.x, this.touchCurrent.y);
                 } else {
-                    // Apply to camera
-                    this.applyTouchRotation();
+                    // Código de fallback a la rotación anterior
+                    const currentItem = this.getCurrentItem();
+                    if (currentItem && currentItem.handleManualRotation) {
+                        currentItem.handleManualRotation(this.momentum.x * 0.8, this.momentum.y * 0.8);
+                    } else {
+                        this.applyTouchRotation();
+                    }
                 }
             }
         }
@@ -330,6 +344,16 @@ export class Controls {
                 this.hideArtworkInfo();
             }
         }
+
+        if (!this.swipeDirection && !this.swipeVerticalDirection && touchDuration < 300) {
+            const currentItem = this.getCurrentItem();
+            if (currentItem && currentItem.applyInertia && 
+                Math.abs(this.momentum.x) + Math.abs(this.momentum.y) > 0.01) {
+                // Aplicar inercia con un factor que logre un efecto suave
+                const inertiaFactor = 12;
+                currentItem.applyInertia(this.momentum.x * inertiaFactor, this.momentum.y * inertiaFactor);
+            }
+        }
         
         // Reset states but keep momentum for smooth deceleration
         this.isDragging = false;
@@ -337,6 +361,8 @@ export class Controls {
         this.pinchDelta = 0;
         this.swipeDirection = null;
         this.swipeVerticalDirection = null;
+        this.trackballActive = false;
+
     }
     
     /**
@@ -403,6 +429,13 @@ export class Controls {
         this.touchDelta.x = 0;
         this.touchDelta.y = 0;
         this.swipeDirection = null;
+
+        // Iniciar trackball
+        this.trackballActive = true;
+        this.trackballStart.x = this.touchStart.x;
+        this.trackballStart.y = this.touchStart.y;
+        this.trackballPrevious.x = this.trackballStart.x;
+        this.trackballPrevious.y = this.trackballStart.y;
         
         // Reset momentum
         this.momentum = { x: 0, y: 0 };
@@ -483,7 +516,7 @@ export class Controls {
             const currentItem = this.getCurrentItem();
             
             if (currentItem && currentItem.handleManualRotation) {
-                //currentItem.handleManualRotation(this.momentum.x * 200, this.momentum.y * 200);
+                currentItem.handleManualRotation(this.momentum.x * 0.8, this.momentum.y * 0.8);
             } else {
                 this.applyTouchRotation();
             }
@@ -508,10 +541,20 @@ export class Controls {
         } else if (this.swipeVerticalDirection === 'down') {
             this.hideArtworkInfo();
         }
+
+        if (!this.swipeDirection && !this.swipeVerticalDirection) {
+            const currentItem = this.getCurrentItem();
+            if (currentItem && currentItem.applyInertia && 
+                Math.abs(this.momentum.x) + Math.abs(this.momentum.y) > 0.01) {
+                const inertiaFactor = 12;
+                currentItem.applyInertia(this.momentum.x * inertiaFactor, this.momentum.y * inertiaFactor);
+            }
+        }
         
         // Reset state but keep momentum for smooth deceleration
         this.isDragging = false;
         this.swipeDirection = null;
+        this.trackballActive = false;
         this.swipeVerticalDirection = null;
     }
     
@@ -609,6 +652,57 @@ export class Controls {
             this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.2);
         }
     }
+
+    /* Calcula la rotación tipo trackball basada en movimientos del puntero
+    * @param {Number} currentX - Posición X actual del cursor
+    * @param {Number} currentY - Posición Y actual del cursor
+    */
+   calculateTrackballRotation(currentX, currentY) {
+       if (!this.trackballActive) return;
+       
+       const currentItem = this.getCurrentItem();
+       if (!currentItem || !currentItem.handleTrackballRotation) return;
+       
+       // Calcular delta desde el punto anterior
+       const deltaX = currentX - this.trackballPrevious.x;
+       const deltaY = currentY - this.trackballPrevious.y;
+       
+       // Actualizar posición previa
+       this.trackballPrevious.x = currentX;
+       this.trackballPrevious.y = currentY;
+       
+       // Si no hay suficiente movimiento, salir
+       if (Math.abs(deltaX) < 1.0 && Math.abs(deltaY) < 1.0) return;
+       
+       // Tamaño de la pantalla para normalización
+       const width = this.sizes.width;
+       const height = this.sizes.height;
+       
+       // Sensibilidad ajustable
+       const rotationSpeed = 4.0;
+       
+       // Calcular eje de rotación perpendicular al movimiento del cursor
+       // Esto hace que el objeto gire como si estuvieras "arrastrando" su superficie
+       this.trackballAxis.set(
+           deltaY / height * rotationSpeed,
+           deltaX / width * rotationSpeed,
+           0
+       ).normalize();
+       
+       // Calcular ángulo de rotación basado en la distancia recorrida
+       const angle = Math.sqrt(deltaX * deltaX + deltaY * deltaY) * 0.01;
+       
+       // Crear quaternion de rotación
+       this.trackballQuaternion.setFromAxisAngle(this.trackballAxis, angle);
+       
+       // Aplicar rotación al modelo
+       currentItem.handleTrackballRotation(this.trackballQuaternion);
+       
+       // Calcular momentum para inercia
+       this.momentum.x = deltaX * 0.01;
+       this.momentum.y = deltaY * 0.01;
+   }
+   
     
     /**
      * Apply zoom based on pinch/wheel
