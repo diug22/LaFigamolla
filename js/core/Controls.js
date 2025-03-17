@@ -69,6 +69,13 @@ export class Controls {
             zoomInProgress: false,   // Si hay un zoom en progreso
             zoomHintShown: false     // Si se ha mostrado el hint de zoom
         };
+
+        this.lastPosition = {
+            x: 0,
+            y: 0,
+            time: Date.now()
+
+        };
         
         // Initial camera position/target for resets
         this.initialCameraPosition = new THREE.Vector3(0, 0, this.defaultDistance);
@@ -277,7 +284,7 @@ export class Controls {
                 
                 if (currentItem && currentItem.handleManualRotation) {
                     // Pass rotation to item
-                    currentItem.handleManualRotation(this.momentum.x * 200, this.momentum.y * 200);
+                    //currentItem.handleManualRotation(this.momentum.x * 200, this.momentum.y * 200);
                 } else {
                     // Apply to camera
                     this.applyTouchRotation();
@@ -476,7 +483,7 @@ export class Controls {
             const currentItem = this.getCurrentItem();
             
             if (currentItem && currentItem.handleManualRotation) {
-                currentItem.handleManualRotation(this.momentum.x * 200, this.momentum.y * 200);
+                //currentItem.handleManualRotation(this.momentum.x * 200, this.momentum.y * 200);
             } else {
                 this.applyTouchRotation();
             }
