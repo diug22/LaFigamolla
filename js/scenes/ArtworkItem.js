@@ -105,60 +105,194 @@ export class ArtworkItem {
      * Add particle effect around the item
      */
     addParticles() {
-        const particleCount = 20;
-        const particles = new THREE.Group();
+        const starCount = 20;  // Más estrellas
+        const starGroup = new THREE.Group();
         
-        // Use the custom particle colors defined for this artwork
-        const colors = this.particleColors.map(colorHex => new THREE.Color(colorHex));
+        // Crear material para las estrellas - color blanco más brillante
+        const starMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8  // Más opacidad para mayor visibilidad
+        });
         
-        // Create particle geometry
-        const geometry = new THREE.SphereGeometry(0.05, 8, 8);
+        // Geometrías variadas para las estrellas - tamaños más grandes
+        const starGeometries = [
+            new THREE.SphereGeometry(0.06, 8, 8),
+            new THREE.SphereGeometry(0.09, 8, 8),
+            new THREE.SphereGeometry(0.12, 8, 8),
+            new THREE.IcosahedronGeometry(0.08, 0)
+        ];
         
-        for (let i = 0; i < particleCount; i++) {
-            // Random color from the artwork's color array
-            const colorIndex = Math.floor(Math.random() * colors.length);
-            const color = colors[colorIndex];
+        // Crear estrellas alrededor de la obra - principalmente detrás
+        for (let i = 0; i < starCount; i++) {
+            // Geometría aleatoria para variedad
+            const geometry = starGeometries[Math.floor(Math.random() * starGeometries.length)];
             
-            // Create material
-            const material = new THREE.MeshBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.5
-            });
+            // Crear material con brillo propio
+            const material = starMaterial.clone();
             
-            // Create mesh
-            const mesh = new THREE.Mesh(geometry, material);
+            // Crear estrella
+            const star = new THREE.Mesh(geometry, material);
             
-            // Random position in sphere around item
-            const radius = 1.5 + Math.random() * 0.5;
+            // Posición esférica alrededor de la obra, pero principalmente detrás
+            // Usamos un radio mayor y control de distribución para posicionar más estrellas detrás
+            const radius = 2.5 + Math.random() * 2;  // Radio más grande
             const theta = Math.random() * Math.PI * 2;
-            const phi = Math.random() * Math.PI;
             
-            mesh.position.x = radius * Math.sin(phi) * Math.cos(theta);
-            mesh.position.y = radius * Math.sin(phi) * Math.sin(theta);
-            mesh.position.z = radius * Math.cos(phi);
+            // Modificar phi para que la mayoría de estrellas estén detrás
+            // phi cerca de 0 o PI = parte trasera, phi cerca de PI/2 = parte media
+            let phi;
+            const positionType = Math.random();
+            if (positionType < 0.7) {
+                // 70% de estrellas detrás
+                phi = (Math.random() < 0.5) ? 
+                    Math.random() * Math.PI * 0.3 :      // Parte superior trasera
+                    Math.PI - Math.random() * Math.PI * 0.3;  // Parte inferior trasera
+            } else {
+                // 30% distribuidas por los lados
+                phi = Math.PI * 0.3 + Math.random() * Math.PI * 0.4;
+            }
             
-            // Add animation properties
-            mesh.userData.rotationSpeed = {
-                x: (Math.random() - 0.5) * 0.02,
-                y: (Math.random() - 0.5) * 0.02,
-                z: (Math.random() - 0.5) * 0.02
+            star.position.x = radius * Math.sin(phi) * Math.cos(theta);
+            star.position.y = radius * Math.sin(phi) * Math.sin(theta);
+            star.position.z = radius * Math.cos(phi) - 1;  // Desplazamiento adicional hacia atrás
+            
+            // Propiedades de animación - pulsaciones más visibles
+            star.userData.originalOpacity = 0.5 + Math.random() * 0.5;
+            star.userData.pulseSpeed = 0.2 + Math.random() * 0.5;
+            star.userData.pulsePhase = Math.random() * Math.PI * 2;
+            star.material.opacity = star.userData.originalOpacity;
+            
+            star.userData.movementSpeed = {
+                theta: (Math.random() - 0.5) * 0.004,
+                phi: (Math.random() - 0.5) * 0.004,
+                radius: (Math.random() - 0.5) * 0.002
             };
             
-            mesh.userData.movementSpeed = {
-                theta: (Math.random() - 0.5) * 0.01,
-                phi: (Math.random() - 0.5) * 0.01,
-                radius: (Math.random() - 0.5) * 0.01
+            // Guardar posición original
+            star.userData.originalPosition = {
+                x: star.position.x,
+                y: star.position.y,
+                z: star.position.z
             };
             
-            // Add to particles group
-            particles.add(mesh);
+            // Añadir al grupo
+            starGroup.add(star);
         }
         
-        // Add particles to container
-        this.container.add(particles);
-        this.particles = particles;
+        // Crear algunas conexiones entre estrellas cercanas (mini-constelaciones)
+        const connectedStars = 8;  // Más estrellas conectadas
+        const lineMaterial = new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.3  // Mayor opacidad
+        });
+        
+        // Seleccionar aleatoriamente algunas estrellas para conectar
+        const selectedIndices = [];
+        while (selectedIndices.length < Math.min(connectedStars, starCount)) {
+            const index = Math.floor(Math.random() * starCount);
+            if (!selectedIndices.includes(index)) {
+                selectedIndices.push(index);
+            }
+        }
+        
+        // Para cada estrella seleccionada, conectar a la más cercana
+        for (let i = 0; i < selectedIndices.length; i++) {
+            const starIndex = selectedIndices[i];
+            const star = starGroup.children[starIndex];
+            
+            let closestIndex = -1;
+            let closestDistance = Infinity;
+            
+            // Encontrar la estrella más cercana
+            for (let j = 0; j < starGroup.children.length; j++) {
+                if (j !== starIndex) {
+                    const otherStar = starGroup.children[j];
+                    const distance = star.position.distanceTo(otherStar.position);
+                    
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestIndex = j;
+                    }
+                }
+            }
+            
+            // Si encontramos una estrella cercana, crear la línea
+            if (closestIndex !== -1 && closestDistance < 3) {  // Mayor distancia permitida
+                const otherStar = starGroup.children[closestIndex];
+                
+                const points = [
+                    star.position.clone(),
+                    otherStar.position.clone()
+                ];
+                
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(lineGeometry, lineMaterial.clone());
+                
+                // Propiedades de animación para la línea
+                line.userData.originalOpacity = 0.15 + Math.random() * 0.25;
+                line.userData.pulseSpeed = 0.15 + Math.random() * 0.3;
+                line.userData.pulsePhase = Math.random() * Math.PI * 2;
+                line.material.opacity = line.userData.originalOpacity;
+                
+                // Referencias a las estrellas que conecta
+                line.userData.star1 = starIndex;
+                line.userData.star2 = closestIndex;
+                
+                // Añadir al grupo
+                starGroup.add(line);
+            }
+        }
+        
+        // Añadir el grupo al contenedor de la obra
+        this.container.add(starGroup);
+        this.particles = starGroup;
     }
+    
+        /**
+         * Método para restablecer las estrellas a sus posiciones originales
+         * Añadir este método a la clase ArtworkItem
+         */
+        resetParticles() {
+            if (!this.particles) return;
+            
+            this.particles.children.forEach(child => {
+                if (child.isMesh) {
+                    // Restaurar opacidad original
+                    child.material.opacity = child.userData.originalOpacity;
+                    
+                    // Resetear posición si tiene una guardada
+                    if (child.userData.originalPosition) {
+                        child.position.x = child.userData.originalPosition.x;
+                        child.position.y = child.userData.originalPosition.y;
+                        child.position.z = child.userData.originalPosition.z;
+                    }
+                }
+                else if (child.isLine) {
+                    // Restaurar opacidad de las líneas
+                    child.material.opacity = child.userData.originalOpacity;
+                    
+                    // Actualizar puntos de la línea
+                    if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
+                        const star1 = this.particles.children[child.userData.star1];
+                        const star2 = this.particles.children[child.userData.star2];
+                        
+                        if (star1 && star2) {
+                            const points = [
+                                star1.position.clone(),
+                                star2.position.clone()
+                            ];
+                            
+                            child.geometry.setFromPoints(points);
+                            child.geometry.attributes.position.needsUpdate = true;
+                        }
+                    }
+                }
+            });
+        }
+        
+    
     
     /**
      * Show the item with optional transition effect
@@ -219,36 +353,85 @@ export class ArtworkItem {
         }
         
         // Update particles
+        /**
+ * Método para actualizar las estrellas de cada obra
+ * Reemplaza la sección de update() en ArtworkItem que maneja partículas
+ */
+// Update particles
         if (this.particles) {
-            for (const particle of this.particles.children) {
-                // Get current spherical coordinates
-                const radius = Math.sqrt(
-                    particle.position.x * particle.position.x +
-                    particle.position.y * particle.position.y +
-                    particle.position.z * particle.position.z
-                );
-                
-                let theta = Math.atan2(particle.position.y, particle.position.x);
-                let phi = Math.acos(particle.position.z / radius);
-                
-                // Update spherical coordinates
-                theta += particle.userData.movementSpeed.theta;
-                phi += particle.userData.movementSpeed.phi;
-                const newRadius = radius + particle.userData.movementSpeed.radius;
-                
-                // Convert back to Cartesian coordinates
-                particle.position.x = newRadius * Math.sin(phi) * Math.cos(theta);
-                particle.position.y = newRadius * Math.sin(phi) * Math.sin(theta);
-                particle.position.z = newRadius * Math.cos(phi);
-                
-                // Keep particles within bounds
-                const maxRadius = 2;
-                const minRadius = 1;
-                
-                if (newRadius > maxRadius || newRadius < minRadius) {
-                    particle.userData.movementSpeed.radius *= -1;
+            const time = Date.now() / 1000; // tiempo en segundos
+            
+            this.particles.children.forEach(child => {
+                if (child.isMesh) {
+                    // Efecto de brillo pulsante para las estrellas
+                    const pulseValue = 0.5 + 0.5 * Math.sin(
+                        time * child.userData.pulseSpeed + child.userData.pulsePhase
+                    );
+                    
+                    // Aplicar opacidad variable
+                    child.material.opacity = child.userData.originalOpacity * pulseValue;
+                    
+                    // Movimiento suave
+                    if (child.userData.originalPosition) {
+                        // Obtener coordenadas esféricas actuales
+                        const position = new THREE.Vector3(
+                            child.position.x,
+                            child.position.y,
+                            child.position.z
+                        );
+                        
+                        const radius = position.length();
+                        let theta = Math.atan2(position.y, position.x);
+                        let phi = Math.acos(position.z / radius);
+                        
+                        // Actualizar coordenadas esféricas
+                        theta += child.userData.movementSpeed.theta;
+                        phi += child.userData.movementSpeed.phi;
+                        const newRadius = radius + child.userData.movementSpeed.radius;
+                        
+                        // Convertir a coordenadas cartesianas
+                        child.position.x = newRadius * Math.sin(phi) * Math.cos(theta);
+                        child.position.y = newRadius * Math.sin(phi) * Math.sin(theta);
+                        child.position.z = newRadius * Math.cos(phi);
+                        
+                        // Mantener las estrellas dentro de límites
+                        const maxRadius = 2.5;
+                        const minRadius = 1;
+                        
+                        if (newRadius > maxRadius || newRadius < minRadius) {
+                            child.userData.movementSpeed.radius *= -1;
+                        }
+                    }
+                    
+                    // Pequeño efecto de escala pulsante
+                    const scale = 0.8 + 0.4 * pulseValue;
+                    child.scale.set(scale, scale, scale);
                 }
-            }
+                else if (child.isLine) {
+                    // Actualizar opacidad de las líneas
+                    const pulseValue = 0.5 + 0.5 * Math.sin(
+                        time * child.userData.pulseSpeed + child.userData.pulsePhase
+                    );
+                    
+                    child.material.opacity = child.userData.originalOpacity * pulseValue;
+                    
+                    // Actualizar posición de las líneas para seguir a las estrellas
+                    if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
+                        const star1 = this.particles.children[child.userData.star1];
+                        const star2 = this.particles.children[child.userData.star2];
+                        
+                        if (star1 && star2) {
+                            const points = [
+                                star1.position.clone(),
+                                star2.position.clone()
+                            ];
+                            
+                            child.geometry.setFromPoints(points);
+                            child.geometry.attributes.position.needsUpdate = true;
+                        }
+                    }
+                }
+            });
         }
     }
     
