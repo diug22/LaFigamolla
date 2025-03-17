@@ -296,7 +296,7 @@ showItemWithHorizontalTransition(index, direction) {
                 description: 'Cerámica artesanal con esmaltes en tonos tierra y ocre, inspirada en las formas orgánicas de la naturaleza.',
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
-                scale: new THREE.Vector3(1, 1, 1),
+                scale: new THREE.Vector3(2,2,2),
                 model: this.resources.getItem('obj'),  // Reference to the loaded GLB model,
                 geometry: 'glb'
 
