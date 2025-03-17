@@ -454,15 +454,10 @@ export class UI {
                     }, 500);
                     
                     // Guardar en localStorage que ya vio el tutorial
-                    localStorage.setItem('zoomTutorialSeen', 'true');
                 });
             }
         }, 1500); // Mostrar el tutorial después de que se cargue la experiencia
-        
-        // No mostrar si ya lo ha visto antes
-        if (localStorage.getItem('zoomTutorialSeen')) {
-            tutorial.style.display = 'none';
-        }
+    
     }
     
     // Actualizar indicador de nivel de zoom

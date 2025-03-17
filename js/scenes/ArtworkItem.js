@@ -98,8 +98,8 @@ export class ArtworkItem {
         if (!this.isVisible || !this.modelScene) return;
         
         // Amplify velocity dramatically for much stronger effect
-        this.rotationVelocity.x = velocity.x * 15.0;
-        this.rotationVelocity.y = velocity.y * 15.0;
+        this.rotationVelocity.x = velocity.x * 10.0;
+        this.rotationVelocity.y = velocity.y * 10.0;
         
         // DIRECT ROTATION: Apply rotation directly to the model
         // Create rotation matrices based on mouse/touch movement
