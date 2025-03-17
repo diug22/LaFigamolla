@@ -90,7 +90,7 @@ export class Experience {
             { name: 'obj', type: 'glb', path: 'public/models/obra.glb' },
             { name: 'obj2', type: 'glb', path: 'public/models/obra2.glb' },
             // Video frames (for animation)
-            { name: 'lamina1', type: 'texture', path: 'public/images/lamina1.jpeg' }
+            { name: 'lamina1', type: 'glb', path: 'public/models/lamina1.glb' }
         ];
         
         // Start loading

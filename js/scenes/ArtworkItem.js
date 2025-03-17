@@ -139,7 +139,7 @@ export class ArtworkItem {
                 
             case 'plane':
                 // Create plane for prints/paintings
-                geometry = new THREE.PlaneGeometry(3, 4, 1, 1);
+                geometry = new THREE.BoxGeometry(3, 4, 0.02);
                 break;
                 
             case 'teaSet':
@@ -158,12 +158,26 @@ export class ArtworkItem {
         
         if (this.texture) {
             // Use texture if available
-            material = new THREE.MeshStandardMaterial({
-                map: this.texture,
-                roughness: 0.7,
-                metalness: 0.1,
-                side: this.geometryType === 'plane' ? THREE.DoubleSide : THREE.FrontSide // Renderizar ambos lados para planos
-            });
+            if (this.geometryType === 'plane') {
+                material = new THREE.MeshStandardMaterial({
+                    map: this.texture,
+                    roughness: 0.7,
+                    metalness: 0.1,
+                    side: THREE.DoubleSide,
+                    alphaTest: 0.01,    // Valor más bajo para mayor precisión
+                    depthWrite: true,   // Asegura escritura correcta en buffer de profundidad
+                    depthTest: true     // Asegura prueba de profundidad correcta
+                });
+
+
+            } else {
+                // Material normal para otros tipos
+                material = new THREE.MeshStandardMaterial({
+                    map: this.texture,
+                    roughness: 0.7,
+                    metalness: 0.1
+                });
+            }
         } else {
             // Use color material with random autumn color
             const autumnColors = [
@@ -181,8 +195,7 @@ export class ArtworkItem {
                 color: color,
                 roughness: 0.7,
                 metalness: 0.1,
-                side: this.geometryType === 'plane' ? THREE.DoubleSide : THREE.FrontSide // Renderizar ambos lados para planos
-
+                side: this.geometryType === 'plane' ? THREE.DoubleSide : THREE.FrontSide, // Renderizar ambos lados para planos
             });
         }
         

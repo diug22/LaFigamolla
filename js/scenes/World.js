@@ -322,11 +322,11 @@ showItemWithHorizontalTransition(index, direction) {
                 name: 'lamina1',
                 title: 'Acuarela Otoñal',
                 description: 'Técnica mixta sobre papel, capturando la esencia de los bosques en otoño con tonos cálidos y texturas.',
-                texture: this.resources.getItem('lamina1'),
+                model: this.resources.getItem('lamina1'),  // Reference to the loaded GLB model,
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
-                geometry: 'plane',
+                geometry: 'glb',
                 particleColors: [
                     '#FF7F50', // Coral
                     '#FF4500', // Orange Red

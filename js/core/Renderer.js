@@ -44,9 +44,19 @@ export class Renderer {
         this.instance.toneMappingExposure = 1;
         this.instance.shadowMap.enabled = true;
         this.instance.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        //this.instance.setClearColor('#000000');
+        this.instance.setSize(this.sizes.width, this.sizes.height);
+        this.instance.setPixelRatio(Math.min(this.sizes.pixelRatio, 2));
+
+        // Añadir esta línea para corregir problemas de transparencia
+        this.instance.sortObjects = true;
+
+        // Opcional: ajustar la exposición para mejorar la visualización
+        this.instance.toneMappingExposure = 1.2;
         
         // Set clear color
-        this.instance.setClearColor('#000000');
+        //this.instance.setClearColor('#000000');
         
         console.log('Renderer instance created successfully');
     }
