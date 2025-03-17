@@ -2,6 +2,8 @@
  * UI class
  * Handles user interface elements and interactions
  */
+import { ContactSystem } from './ContactSystem.js';
+
 
 export class UI {
     constructor(experience) {
@@ -24,8 +26,6 @@ export class UI {
             infoDimensions: document.getElementById('info-dimensions'),
             infoMaterial: document.getElementById('info-material'),
             infoYear: document.getElementById('info-year'),
-            contactButton: document.getElementById('contact-button'),
-            contactPanel: document.getElementById('contact-panel'),
             header: document.querySelector('.header'),
             footer: document.querySelector('.footer'),
             uiContainer: document.querySelector('.ui-container')
@@ -37,19 +37,16 @@ export class UI {
 
         
         // UI State
-        this.uiVisible = true;
+        this.uiVisible = false;
         this.infoBubbleVisible = false;
-        
+        this.contactSystem = new ContactSystem(this.experience);
+
         // Setup
         this.setupEventListeners();
         this.createUIToggleButton();
         this.createResetButton();
-        this.repositionContactButton();
         
         // Auto-hide UI after a short delay when experience starts
-        setTimeout(() => {
-            this.hideUIElements();
-        }, 1000);
     }
     
     /**
@@ -336,20 +333,7 @@ export class UI {
             });
         }
         
-        // Contact button
-        if (this.elements.contactButton) {
-            this.elements.contactButton.addEventListener('click', () => {
-                this.showContactPanel();
-            });
-        }
-        
-        // Close contact panel
-        const closeContactBtn = document.getElementById('close-contact');
-        if (closeContactBtn) {
-            closeContactBtn.addEventListener('click', () => {
-                this.hideContactPanel();
-            });
-        }
+    
         
         // Start experience button
         const startBtn = document.getElementById('start-experience');
@@ -424,7 +408,6 @@ export class UI {
         // Create reset button
         const resetButton = document.createElement('button');
         resetButton.classList.add('reset-button');
-        resetButton.innerHTML = '🔄';
         resetButton.title = 'Reset View';
         resetButton.style.position = 'fixed';
         resetButton.style.bottom = '20px';
@@ -455,26 +438,7 @@ export class UI {
         this.resetButton = resetButton;
     }
     
-    /**
-     * Reposition contact button to always be on the right
-     */
-    repositionContactButton() {
-        if (this.elements.contactButton) {
-            // Reposition contact button to the right
-            this.elements.contactButton.style.position = 'fixed';
-            this.elements.contactButton.style.bottom = '20px';
-            this.elements.contactButton.style.right = '20px';
-            this.elements.contactButton.style.left = 'auto'; // Remove left positioning if it exists
-            this.elements.contactButton.style.zIndex = '100';
-            this.elements.contactButton.style.width = '40px';
-            this.elements.contactButton.style.height = '40px';
-            this.elements.contactButton.style.borderRadius = '50%';
-            this.elements.contactButton.style.display = 'flex';
-            this.elements.contactButton.style.alignItems = 'center';
-            this.elements.contactButton.style.justifyContent = 'center';
-            this.elements.contactButton.style.backdropFilter = 'blur(5px)';
-        }
-    }
+
     
     /**
      * Show UI elements (header and footer)
@@ -685,8 +649,8 @@ export class UI {
      * Show contact panel
      */
     showContactPanel() {
-        if (this.elements.contactPanel) {
-            this.elements.contactPanel.classList.add('active');
+        if (this.contactSystem) {
+            this.contactSystem.showContactCard();
         }
     }
     
@@ -694,8 +658,8 @@ export class UI {
      * Hide contact panel
      */
     hideContactPanel() {
-        if (this.elements.contactPanel) {
-            this.elements.contactPanel.classList.remove('active');
+        if (this.contactSystem) {
+            this.contactSystem.hideContactCard();
         }
     }
     
