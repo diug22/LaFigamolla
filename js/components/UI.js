@@ -33,6 +33,8 @@ export class UI {
         
         // Add info bubble element for swipe-up info display
         this.createInfoBubble();
+        this.createZoomUI();
+
         
         // UI State
         this.uiVisible = true;
@@ -145,6 +147,182 @@ export class UI {
         this.elements.bubbleMaterial = material;
         this.elements.bubbleYear = year;
     }
+    createZoomUI() {
+        // Crear contenedor para indicador de zoom
+        const zoomIndicator = document.createElement('div');
+        zoomIndicator.id = 'zoom-indicator';
+        zoomIndicator.className = 'zoom-indicator';
+        zoomIndicator.style.position = 'fixed';
+        zoomIndicator.style.bottom = '60px';
+        zoomIndicator.style.right = '20px';
+        zoomIndicator.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+        zoomIndicator.style.color = 'white';
+        zoomIndicator.style.padding = '8px 12px';
+        zoomIndicator.style.borderRadius = '20px';
+        zoomIndicator.style.fontSize = '14px';
+        zoomIndicator.style.opacity = '0';
+        zoomIndicator.style.transition = 'opacity 0.3s ease';
+        zoomIndicator.style.zIndex = '100';
+        zoomIndicator.style.display = 'flex';
+        zoomIndicator.style.alignItems = 'center';
+        zoomIndicator.style.justifyContent = 'center';
+        zoomIndicator.style.backdropFilter = 'blur(4px)';
+        zoomIndicator.style.fontFamily = 'Arial, sans-serif';
+        zoomIndicator.style.userSelect = 'none';
+        zoomIndicator.style.pointerEvents = 'none'; // No intercepta eventos
+        
+        // Añadir icono de zoom
+        const zoomIcon = document.createElement('span');
+        zoomIcon.innerHTML = '🔍';
+        zoomIcon.style.marginRight = '5px';
+        zoomIcon.style.fontSize = '16px';
+        
+        // Añadir texto para el nivel de zoom
+        const zoomText = document.createElement('span');
+        zoomText.id = 'zoom-level-text';
+        zoomText.textContent = '100%';
+        
+        // Estructura del indicador
+        zoomIndicator.appendChild(zoomIcon);
+        zoomIndicator.appendChild(zoomText);
+        
+        // Añadir al DOM
+        document.body.appendChild(zoomIndicator);
+        
+        // Guardar referencia
+        this.elements.zoomIndicator = zoomIndicator;
+        this.elements.zoomText = zoomText;
+        
+        // Crear tutorial visual para el zoom (aparece solo la primera vez)
+        this.createZoomTutorial();
+    }
+    
+    // Crear tutorial visual para el zoom
+    createZoomTutorial() {
+        // Crear contenedor del tutorial
+        const tutorial = document.createElement('div');
+        tutorial.id = 'zoom-tutorial';
+        tutorial.className = 'zoom-tutorial';
+        tutorial.style.position = 'fixed';
+        tutorial.style.top = '0';
+        tutorial.style.left = '0';
+        tutorial.style.width = '100%';
+        tutorial.style.height = '100%';
+        tutorial.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        tutorial.style.color = 'white';
+        tutorial.style.display = 'flex';
+        tutorial.style.flexDirection = 'column';
+        tutorial.style.alignItems = 'center';
+        tutorial.style.justifyContent = 'center';
+        tutorial.style.zIndex = '1000';
+        tutorial.style.opacity = '0';
+        tutorial.style.pointerEvents = 'none'; // No intercepta eventos inicialmente
+        tutorial.style.transition = 'opacity 0.5s ease';
+        
+        // Crear contenido específico dependiendo de si es móvil o escritorio
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        if (isMobile) {
+            // Tutorial para móvil
+            tutorial.innerHTML = `
+                <div style="text-align: center; max-width: 80%;">
+                    <h2 style="margin-bottom: 20px;">Gestos de zoom</h2>
+                    <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                        <div style="text-align: center; margin: 10px;">
+                            <div style="font-size: 40px; margin-bottom: 10px;">👆👆</div>
+                            <p>Doble tap para<br>hacer zoom</p>
+                        </div>
+                        <div style="text-align: center; margin: 10px;">
+                            <div style="font-size: 40px; margin-bottom: 10px;">👌</div>
+                            <p>Pellizca para<br>ampliar o reducir</p>
+                        </div>
+                    </div>
+                    <p>Prueba ahora estos gestos para interactuar con los modelos 3D</p>
+                    <button id="tutorial-close" style="margin-top: 20px; padding: 10px 20px; border: none; background: #fff; color: #000; border-radius: 20px; cursor: pointer;">Entendido</button>
+                </div>
+            `;
+        } else {
+            // Tutorial para escritorio
+            tutorial.innerHTML = `
+                <div style="text-align: center; max-width: 80%;">
+                    <h2 style="margin-bottom: 20px;">Controles de zoom</h2>
+                    <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                        <div style="text-align: center; margin: 10px;">
+                            <div style="font-size: 40px; margin-bottom: 10px;">🖱️</div>
+                            <p>Usa la rueda del ratón<br>para hacer zoom</p>
+                        </div>
+                        <div style="text-align: center; margin: 10px;">
+                            <div style="font-size: 40px; margin-bottom: 10px;">👆👆</div>
+                            <p>Doble click para<br>ampliar un objeto</p>
+                        </div>
+                    </div>
+                    <p>Prueba ahora estos controles para interactuar con los modelos 3D</p>
+                    <button id="tutorial-close" style="margin-top: 20px; padding: 10px 20px; border: none; background: #fff; color: #000; border-radius: 20px; cursor: pointer;">Entendido</button>
+                </div>
+            `;
+        }
+        
+        // Añadir al DOM
+        document.body.appendChild(tutorial);
+        
+        // Guardar referencia
+        this.elements.zoomTutorial = tutorial;
+        
+        // Configurar botón de cierre
+        setTimeout(() => {
+            const closeButton = document.getElementById('tutorial-close');
+            if (closeButton) {
+                tutorial.style.pointerEvents = 'auto'; // Habilitar eventos
+                tutorial.style.opacity = '1'; // Mostrar tutorial
+                
+                closeButton.addEventListener('click', () => {
+                    tutorial.style.opacity = '0';
+                    setTimeout(() => {
+                        tutorial.style.display = 'none';
+                    }, 500);
+                    
+                    // Guardar en localStorage que ya vio el tutorial
+                    localStorage.setItem('zoomTutorialSeen', 'true');
+                });
+            }
+        }, 1500); // Mostrar el tutorial después de que se cargue la experiencia
+        
+        // No mostrar si ya lo ha visto antes
+        if (localStorage.getItem('zoomTutorialSeen')) {
+            tutorial.style.display = 'none';
+        }
+    }
+    
+    // Actualizar indicador de nivel de zoom
+    updateZoomIndicator(zoomLevel) {
+        if (!this.elements.zoomIndicator || !this.elements.zoomText) return;
+        
+        // Calcular porcentaje de zoom
+        const zoomPercent = Math.round(zoomLevel * 100);
+        
+        // Actualizar texto
+        this.elements.zoomText.textContent = `${zoomPercent}%`;
+        
+        // Mostrar el indicador
+        this.elements.zoomIndicator.style.opacity = '1';
+        
+        // Ocultar después de un tiempo
+        clearTimeout(this.zoomIndicatorTimeout);
+        this.zoomIndicatorTimeout = setTimeout(() => {
+            this.elements.zoomIndicator.style.opacity = '0';
+        }, 1500);
+    }
+    // Mostrar hint de zoom específico (para rueda de ratón o gestos táctiles)
+    showZoomHint() {
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        if (isMobile) {
+            this.showGestureHint("Pellizca para hacer zoom");
+        } else {
+            this.showGestureHint("Usa la rueda del ratón para hacer zoom");
+        }
+    }
+
     
     /**
      * Setup event listeners for UI elements
@@ -196,6 +374,9 @@ export class UI {
             
             this.controls.on('hideInfo', () => {
                 this.hideInfoBubble();
+            });
+            this.controls.on('zoomChange', (zoomLevel) => {
+                this.updateZoomIndicator(zoomLevel);
             });
         }
     }

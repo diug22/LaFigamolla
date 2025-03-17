@@ -54,8 +54,21 @@ export class Controls {
         this.isInertiaActive = true;
         
         // Zoom settings
-        this.pinchZoomEnabled = true;
-        this.pinchZoomSensitivity = 0.05;
+        this.zoomConfig = {
+            minZoom: 0.5,            // Factor mínimo de zoom (1 = 100%)
+            maxZoom: 3.0,            // Factor máximo de zoom (3 = 300%)
+            defaultZoom: 1.0,        // Zoom por defecto
+            currentZoom: 1.0,        // Zoom actual
+            targetZoom: 1.0,         // Zoom objetivo para animación
+            zoomSmoothness: 0.08,    // Suavidad de animación (0.08 = suave, 0.2 = más rápido)
+            mouseWheelSpeed: 0.05,   // Velocidad de zoom con rueda de ratón
+            pinchSpeed: 0.01,        // Velocidad de zoom con pellizco en móvil
+            zoomCenter: new THREE.Vector2(0, 0),  // Centro de zoom para zoom a un punto
+            zoomCenterObject: null,  // Objeto que está en el centro del zoom
+            zoomAnimation: null,     // Para gestionar la animación de zoom
+            zoomInProgress: false,   // Si hay un zoom en progreso
+            zoomHintShown: false     // Si se ha mostrado el hint de zoom
+        };
         
         // Initial camera position/target for resets
         this.initialCameraPosition = new THREE.Vector3(0, 0, this.defaultDistance);
@@ -170,38 +183,32 @@ export class Controls {
             this.touchCurrent.y = this.touchStart.y;
             this.touchDelta.x = 0;
             this.touchDelta.y = 0;
-            this.swipeDirection = null;
-            this.swipeVerticalDirection = null;
             
-            // Store last position for momentum
-            this.lastPosition = {
-                x: this.touchStart.x,
-                y: this.touchStart.y,
-                time: Date.now()
-            };
-            
+            // Almacenar tiempo para posible doble tap
             this.touchStartTime = Date.now();
+            
+            // Mostrar hint de zoom si es la primera interacción del usuario
+            if (!this.zoomConfig.zoomHintShown) {
+                setTimeout(() => {
+                    this.showGestureHint("Pinch to zoom, double tap to focus");
+                    this.zoomConfig.zoomHintShown = true;
+                }, 1000);
+            }
         }
         // Double touch (pinch)
         else if (event.touches.length === 2) {
             this.isDragging = false;
             this.isZooming = true;
             
-            // Calculate initial pinch distance
-            const dx = event.touches[0].clientX - event.touches[1].clientX;
-            const dy = event.touches[0].clientY - event.touches[1].clientY;
-            this.pinchStart = Math.sqrt(dx * dx + dy * dy);
-            this.pinchCurrent = this.pinchStart;
-            this.pinchDelta = 0;
+            // Reiniciar valores de pellizco
+            this.pinchStart = 0;
+            this.zoomConfig.zoomStartValue = this.zoomConfig.currentZoom;
             
-            // Store the midpoint of the pinch
-            this.pinchMidpoint = {
-                x: (event.touches[0].clientX + event.touches[1].clientX) / 2,
-                y: (event.touches[0].clientY + event.touches[1].clientY) / 2
-            };
+            // Procesar el primer evento de pellizco
+            this.handlePinchZoom(event);
             
-            // Show a hint
-            this.showGestureHint('Pinch to zoom in or out');
+            // Mostrar hint visual de gesto
+            this.showGestureHint("Pinch to zoom in/out");
         }
     }
     
@@ -212,6 +219,11 @@ export class Controls {
         if (!this.isActive) return;
         
         event.preventDefault();
+
+        if (this.isZooming && event.touches.length === 2) {
+            this.handlePinchZoom(event);
+            return;
+        }
         
         // Single touch (drag)
         if (this.isDragging && event.touches.length === 1) {
@@ -272,22 +284,6 @@ export class Controls {
                 }
             }
         }
-        // Double touch (pinch)
-        else if (this.isZooming && event.touches.length === 2) {
-            // Calculate current pinch distance
-            const dx = event.touches[0].clientX - event.touches[1].clientX;
-            const dy = event.touches[0].clientY - event.touches[1].clientY;
-            this.pinchCurrent = Math.sqrt(dx * dx + dy * dy);
-            
-            // Calculate delta with smoother sensitivity
-            this.pinchDelta = (this.pinchCurrent - this.pinchStart) * this.pinchZoomSensitivity;
-            
-            // Apply zoom
-            this.applyZoom();
-            
-            // Update pinch start for smoother zooming
-            this.pinchStart = this.pinchCurrent;
-        }
     }
     
     /**
@@ -340,14 +336,34 @@ export class Controls {
      * Handle double tap for quick zoom
      */
     onDoubleTap(x, y) {
-        // Check current zoom level and toggle between zoomed and normal view
-        if (this.cameraZoom < 0.9) {
-            this.zoomIn();
-        } else if (this.cameraZoom > 1.1) {
-            this.resetCameraView();
+        // Obtener objeto en la posición del doble tap
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2(
+            (x / window.innerWidth) * 2 - 1,
+            -((y / window.innerHeight) * 2 - 1)
+        );
+        
+        raycaster.setFromCamera(mouse, this.camera.instance);
+        
+        // Buscar intersecciones con objetos en la escena
+        const currentItem = this.getCurrentItem();
+        if (!currentItem || !currentItem.mesh) return;
+        
+        // Decidir si hacer zoom in o out
+        if (this.zoomConfig.currentZoom > 1.5) {
+            // Ya estamos en zoom in, hacer zoom out
+            this.zoomConfig.targetZoom = this.zoomConfig.defaultZoom;
+            this.zoomConfig.zoomCenterObject = null;
         } else {
-            this.zoomToPoint(x, y);
+            // Hacer zoom in hacia el objeto
+            this.zoomToObject(currentItem.mesh, 2.5);
         }
+        
+        // Iniciar animación
+        this.startZoomAnimation();
+        
+        // Mostrar indicador
+        this.showZoomIndicator(this.zoomConfig.targetZoom);
     }
     
     /**
@@ -500,11 +516,36 @@ export class Controls {
         
         event.preventDefault();
         
-        // Smoother zoom with wheel
-        this.pinchDelta = event.deltaY * 0.005;
+        // Dirección de scroll (+1 hacia abajo, -1 hacia arriba)
+        const direction = Math.sign(event.deltaY);
         
-        // Apply zoom
-        this.applyZoom();
+        // Calcular velocidad basada en la velocidad de la rueda
+        const speed = this.zoomConfig.mouseWheelSpeed * Math.min(Math.abs(event.deltaY), 100) / 100;
+        
+        // Calcular nuevo zoom objetivo
+        const newZoom = this.zoomConfig.targetZoom * (1 - direction * speed);
+        
+        // Limitar zoom al mínimo y máximo
+        this.zoomConfig.targetZoom = Math.max(
+            this.zoomConfig.minZoom,
+            Math.min(this.zoomConfig.maxZoom, newZoom)
+        );
+        
+        // Almacenar posición del ratón para zoom hacia ese punto
+        this.zoomConfig.zoomCenter.x = (event.clientX / window.innerWidth) * 2 - 1;
+        this.zoomConfig.zoomCenter.y = -((event.clientY / window.innerHeight) * 2 - 1);
+        
+        // Iniciar animación de zoom si no está en progreso
+        this.startZoomAnimation();
+        
+        // Notificar cambio de zoom mediante un evento
+        this.emit('zoomChange', this.zoomConfig.targetZoom);
+        
+        // Mostrar hint visual de zoom si es la primera vez
+        if (!this.zoomConfig.zoomHintShown) {
+            this.showGestureHint(direction > 0 ? "Zoom out" : "Zoom in");
+            this.zoomConfig.zoomHintShown = true;
+        }
     }
     
     /**
@@ -590,37 +631,183 @@ export class Controls {
         this.applyTouchRotation();
     }
     
-    /**
-     * Zoom in by a fixed amount
-     */
-    zoomIn() {
-        if (!this.camera) return;
+    // Reemplaza la función de pinch zoom existente por esta mejorada
+    handlePinchZoom(event) {
+        if (!this.isActive || !this.isZooming) return;
         
-        // Zoom in by 30%
-        this.cameraZoom = Math.max(
-            this.minDistance / this.defaultDistance,
-            this.cameraZoom * 0.7
+        // Calcular distancia actual entre dedos
+        const touch1 = event.touches[0];
+        const touch2 = event.touches[1];
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Si es el primer evento, inicializar
+        if (this.pinchStart === 0) {
+            this.pinchStart = distance;
+            this.zoomConfig.zoomStartValue = this.zoomConfig.currentZoom;
+            return;
+        }
+        
+        // Calcular factor de zoom basado en la diferencia de distancia
+        const pinchRatio = distance / this.pinchStart;
+        const zoomDelta = (pinchRatio - 1) * this.zoomConfig.pinchSpeed;
+        
+        // Aplicar zoom basado en el movimiento de pellizco
+        const newZoom = this.zoomConfig.zoomStartValue * (1 + zoomDelta * 20);
+        
+        // Limitar al min/max zoom
+        this.zoomConfig.targetZoom = Math.max(
+            this.zoomConfig.minZoom,
+            Math.min(this.zoomConfig.maxZoom, newZoom)
         );
         
-        // Apply zoom
-        this.applyTouchRotation();
+        // Calcular el centro del pellizco para hacer zoom hacia ese punto
+        const centerX = (touch1.clientX + touch2.clientX) / 2;
+        const centerY = (touch1.clientY + touch2.clientY) / 2;
+        
+        this.zoomConfig.zoomCenter.x = (centerX / window.innerWidth) * 2 - 1;
+        this.zoomConfig.zoomCenter.y = -((centerY / window.innerHeight) * 2 - 1);
+        
+        // Iniciar animación de zoom
+        this.startZoomAnimation();
+        
+        // Emitir evento de cambio de zoom
+        this.emit('zoomChange', this.zoomConfig.targetZoom);
+        
+        // Mostrar indicador de zoom en pantalla
+        this.showZoomIndicator(this.zoomConfig.targetZoom);
     }
-    
-    /**
-     * Zoom out by a fixed amount
-     */
-    zoomOut() {
+
+    // Nueva función para iniciar la animación de zoom
+    startZoomAnimation() {
+        // Marcar que hay un zoom en progreso
+        this.zoomConfig.zoomInProgress = true;
+        
+        // Cancelar animación anterior si existe
+        if (this.zoomConfig.zoomAnimation) {
+            cancelAnimationFrame(this.zoomConfig.zoomAnimation);
+        }
+        
+        // Función para la animación del zoom
+        const animateZoom = () => {
+            // Calcular interpolación suave entre zoom actual y objetivo
+            this.zoomConfig.currentZoom += (this.zoomConfig.targetZoom - this.zoomConfig.currentZoom) 
+                * this.zoomConfig.zoomSmoothness;
+            
+            // Actualizar la cámara basado en el nuevo zoom
+            this.updateCameraZoom();
+            
+            // Continuar la animación si aún no estamos lo suficientemente cerca del objetivo
+            if (Math.abs(this.zoomConfig.currentZoom - this.zoomConfig.targetZoom) > 0.001) {
+                this.zoomConfig.zoomAnimation = requestAnimationFrame(animateZoom);
+            } else {
+                // Finalizar la animación
+                this.zoomConfig.zoomInProgress = false;
+                this.zoomConfig.currentZoom = this.zoomConfig.targetZoom;
+                this.updateCameraZoom();
+            }
+        };
+        
+        // Iniciar la animación
+        this.zoomConfig.zoomAnimation = requestAnimationFrame(animateZoom);
+    }
+
+    // Nueva función para actualizar la cámara durante el zoom
+    updateCameraZoom() {
         if (!this.camera) return;
         
-        // Zoom out by 30%
-        this.cameraZoom = Math.min(
-            this.maxDistance / this.defaultDistance,
-            this.cameraZoom * 1.3
-        );
+        // Obtener factor de zoom relativo al valor predeterminado
+        const zoomFactor = this.zoomConfig.currentZoom / this.zoomConfig.defaultZoom;
         
-        // Apply zoom
-        this.applyTouchRotation();
+        // Calcular distancia basada en el zoom
+        const distance = this.defaultDistance / zoomFactor;
+        
+        // Posición actual de la cámara
+        const cameraPos = new THREE.Vector3();
+        this.camera.instance.getWorldPosition(cameraPos);
+        
+        // Dirección de la cámara
+        const cameraDir = new THREE.Vector3();
+        this.camera.instance.getWorldDirection(cameraDir);
+        
+        // Calcular nueva posición basada en zoom y centro
+        let newPosition;
+        
+        if (this.zoomConfig.zoomCenterObject) {
+            // Zoom hacia un objeto específico
+            const targetPos = new THREE.Vector3();
+            this.zoomConfig.zoomCenterObject.getWorldPosition(targetPos);
+            
+            // Calcular dirección hacia el objeto
+            const direction = new THREE.Vector3()
+                .subVectors(targetPos, cameraPos)
+                .normalize();
+            
+            // Nueva posición
+            newPosition = new THREE.Vector3()
+                .copy(targetPos)
+                .sub(direction.multiplyScalar(distance));
+        } else {
+            // Zoom normal
+            const cameraX = Math.sin(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
+            const cameraY = Math.sin(this.cameraRotation.x) * distance;
+            const cameraZ = Math.cos(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
+            
+            newPosition = new THREE.Vector3(
+                cameraX + this.initialLookAtPosition.x,
+                cameraY + this.initialLookAtPosition.y,
+                cameraZ + this.initialLookAtPosition.z
+            );
+        }
+        
+        // Aplicar la nueva posición con movimiento suave
+        if (this.camera.moveTo) {
+            // Duración más corta para que se sienta más responsivo
+            const duration = 0.15;
+            this.camera.moveTo(newPosition, this.initialLookAtPosition, duration);
+        }
     }
+
+    // Mostrar indicador de nivel de zoom en pantalla
+    showZoomIndicator(zoomLevel) {
+        // Verificar si el UI existe
+        if (!this.ui) return;
+        
+        // Calcular porcentaje de zoom
+        const zoomPercent = Math.round(zoomLevel * 100);
+        
+        // Mostrar hint con el nivel de zoom
+        this.showGestureHint(`Zoom: ${zoomPercent}%`);
+    }
+
+    // Nuevo método para hacer zoom hacia un objeto específico (llamado cuando se da doble click)
+    zoomToObject(object, targetZoom = null) {
+        if (!object || !this.camera) return;
+        
+        // Guardar objeto como centro de zoom
+        this.zoomConfig.zoomCenterObject = object;
+        
+        // Establecer nivel de zoom, o usar 2.5x como predeterminado
+        this.zoomConfig.targetZoom = targetZoom || 2.5;
+        
+        // Iniciar animación
+        this.startZoomAnimation();
+        
+        // Emitir evento de zoom
+        this.emit('zoomChange', this.zoomConfig.targetZoom);
+        
+        // Mostrar indicador
+        this.showZoomIndicator(this.zoomConfig.targetZoom);
+        
+        // Cancelar el centro de zoom después de completar la animación
+        setTimeout(() => {
+            this.zoomConfig.zoomCenterObject = null;
+        }, 1000);
+    }
+
+
+
     
     /**
      * Navigate to the next item
