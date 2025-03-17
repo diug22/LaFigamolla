@@ -1,13 +1,13 @@
 /**
  * Main entry point for La Figamolla portfolio
- * This file initializes the experience and handles the loading process
+ * This file initializes the 3D experience and handles the loading process
  */
 
 import { Experience } from './core/Experience.js';
 
 // Wait for DOM to be fully loaded
 window.addEventListener('DOMContentLoaded', () => {
-    // Create loading manager
+    // Get UI elements
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingBar = document.getElementById('loading-bar');
     const loadingText = document.getElementById('loading-text');
@@ -40,7 +40,6 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('start-experience').addEventListener('click', () => {
         // Hide instructions
         instructions.style.opacity = '0';
-        instructions.style.display = 'none';
         setTimeout(() => {
             instructions.style.display = 'none';
             

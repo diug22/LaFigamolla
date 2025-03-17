@@ -1,11 +1,11 @@
 /**
  * Resources class
- * Handles loading of all resources (textures, models, etc.)
+ * Handles loading of all 3D model resources
  */
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'; // Add DRACOLoader for compressed models
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 export class Resources {
     constructor(loadingCallback) {
@@ -28,21 +28,17 @@ export class Resources {
      * Setup resource loaders
      */
     setupLoaders() {
-        // Basic loaders
-        this.loaders = {
-            textureLoader: new THREE.TextureLoader(),
-            cubeTextureLoader: new THREE.CubeTextureLoader()
-        };
-        
         // Setup GLTF/GLB loader
         const gltfLoader = new GLTFLoader();
         
-        // Optional: Setup DRACO decoder for compressed models
+        // Setup DRACO decoder for compressed models
         const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/'); // Use CDN path
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
         gltfLoader.setDRACOLoader(dracoLoader);
         
-        this.loaders.gltfLoader = gltfLoader;
+        this.loaders = {
+            gltfLoader: gltfLoader
+        };
     }
     
     /**
@@ -68,43 +64,21 @@ export class Resources {
         for (const resource of resources) {
             console.log(`Loading resource: ${resource.name} (${resource.path})`);
             
-            switch (resource.type) {
-                case 'texture':
-                    this.loaders.textureLoader.load(
-                        resource.path,
-                        (file) => this.itemLoaded(resource, file),
-                        () => {},
-                        (error) => this.itemError(resource, error)
-                    );
-                    break;
-                    
-                case 'cubeTexture':
-                    this.loaders.cubeTextureLoader.load(
-                        resource.path,
-                        (file) => this.itemLoaded(resource, file),
-                        () => {},
-                        (error) => this.itemError(resource, error)
-                    );
-                    break;
-                    
-                case 'gltf':
-                case 'glb':
-                    this.loaders.gltfLoader.load(
-                        resource.path,
-                        (file) => this.itemLoaded(resource, file),
-                        (xhr) => {
-                            // Progress callback
-                            const percentComplete = xhr.loaded / xhr.total;
-                            console.log(`${resource.name} loading: ${Math.round(percentComplete * 100)}%`);
-                        },
-                        (error) => this.itemError(resource, error)
-                    );
-                    break;
-                    
-                default:
-                    console.warn(`Unknown resource type: ${resource.type}`);
-                    this.itemError(resource);
-                    break;
+            // Only handle GLB/GLTF files now
+            if (resource.type === 'glb' || resource.type === 'gltf') {
+                this.loaders.gltfLoader.load(
+                    resource.path,
+                    (file) => this.itemLoaded(resource, file),
+                    (xhr) => {
+                        // Progress callback
+                        const percentComplete = xhr.loaded / xhr.total;
+                        console.log(`${resource.name} loading: ${Math.round(percentComplete * 100)}%`);
+                    },
+                    (error) => this.itemError(resource, error)
+                );
+            } else {
+                console.warn(`Unsupported resource type: ${resource.type}`);
+                this.itemError(resource, new Error(`Unsupported resource type: ${resource.type}`));
             }
         }
     }
@@ -119,15 +93,15 @@ export class Resources {
         
         console.log(`Resource loaded successfully: ${resource.name} (${this.loaded}/${this.queue})`);
         
-        // Apply adjustments to GLB models if needed
+        // Process GLB models
         if (resource.type === 'gltf' || resource.type === 'glb') {
-            // Optional processing for models
+            // Process models for better quality and performance
             file.scene.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
                     child.receiveShadow = true;
                     
-                    // Improve material quality if needed
+                    // Improve material quality
                     if (child.material) {
                         child.material.roughness = 0.7;
                         child.material.metalness = 0.2;
@@ -162,12 +136,8 @@ export class Resources {
     itemError(resource, error) {
         console.error(`Failed to load resource: ${resource.name} (${resource.path})`, error);
         
-        // Create fallback based on resource type
-        if (resource.type === 'texture') {
-            this.createFallbackTexture(resource);
-        } else if (resource.type === 'gltf' || resource.type === 'glb') {
-            this.createFallbackModel(resource);
-        }
+        // Create fallback for GLB models
+        this.createFallbackModel(resource);
         
         this.loaded++;
         
@@ -185,99 +155,13 @@ export class Resources {
     }
     
     /**
-     * Create a fallback texture
-     */
-    createFallbackTexture(resource) {
-        console.log(`Creating fallback texture for ${resource.name}`);
-        
-        // Create a canvas for the texture
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 512;
-        const ctx = canvas.getContext('2d');
-        
-        // Fill with a color based on the resource name to make them distinguishable
-        let color;
-        switch(resource.name) {
-            case 'ceramic1':
-                color = '#B87333'; // Copper/ceramic color
-                break;
-            case 'frame0':
-                color = '#FFD700'; // Gold
-                break;
-            case 'frame5':
-                color = '#C0C0C0'; // Silver
-                break;
-            case 'frame10':
-                color = '#CD7F32'; // Bronze
-                break;
-            case 'frame15':
-                color = '#E5E4E2'; // Platinum
-                break;
-            case 'frame20':
-                color = '#702963'; // Purple
-                break;
-            case 'frame25':
-                color = '#228B22'; // Forest Green
-                break;
-            case 'frame30':
-                color = '#4169E1'; // Royal Blue
-                break;
-            default:
-                color = '#FF5733'; // Default orange
-        }
-        
-        // Fill background
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Add texture name
-        ctx.fillStyle = 'white';
-        ctx.font = '48px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(resource.name, canvas.width / 2, canvas.height / 2);
-        ctx.font = '24px Arial';
-        ctx.fillText('FALLBACK', canvas.width / 2, canvas.height / 2 + 48);
-        
-        // Create texture from canvas
-        const texture = new THREE.CanvasTexture(canvas);
-        
-        // Save as if it loaded normally
-        this.items[resource.name] = texture;
-    }
-    
-    /**
-     * Create a fallback model
+     * Create a fallback model when loading fails
      */
     createFallbackModel(resource) {
         console.log(`Creating fallback model for ${resource.name}`);
         
-        // Create a simple geometry to represent the missing model
-        let geometry;
-        
-        // Choose geometry based on resource name if possible
-        if (resource.name.includes('vase')) {
-            // Create a simple vase-like shape
-            const points = [];
-            for (let i = 0; i < 10; i++) {
-                const y = i / 10 * 2;
-                const radius = 0.5 + Math.sin(i / 10 * Math.PI) * 0.3;
-                points.push(new THREE.Vector2(radius, y));
-            }
-            geometry = new THREE.LatheGeometry(points, 16);
-        } else if (resource.name.includes('bowl')) {
-            // Create a simple bowl shape
-            const points = [];
-            for (let i = 0; i < 5; i++) {
-                const y = i / 5;
-                const radius = 1 - Math.pow(1 - i / 5, 2);
-                points.push(new THREE.Vector2(radius, y));
-            }
-            geometry = new THREE.LatheGeometry(points, 16);
-        } else {
-            // Default to a cube
-            geometry = new THREE.BoxGeometry(1, 1, 1);
-        }
+        // Create a simple cube as fallback
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
         
         // Create material
         const material = new THREE.MeshStandardMaterial({ 

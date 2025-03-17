@@ -12,10 +12,8 @@ export class Camera {
         this.scene = this.experience.scene;
         this.canvas = this.experience.canvas;
         
-        console.log('Camera initializing with scene:', !!this.scene);
-        
         // Camera settings
-        this.fov = this.sizes.isMobile ? 65 : 60; // Reducido para una vista más natural (era 75/65)
+        this.fov = this.sizes.isMobile ? 65 : 60;
         this.nearPlane = 0.1;
         this.farPlane = 100;
         
@@ -65,10 +63,9 @@ export class Camera {
         this.targetPosition.copy(position);
         this.targetLookAt.copy(lookAt);
         
-        // Ajustar easing para respuesta más rápida
-        // Usar un factor de easing más grande para transiciones más rápidas
-        this.easing = duration > 0 ? 1 / (duration * 60) : 1; // Reducido de 80 para transiciones más rápidas
-        this.easing = Math.min(Math.max(this.easing, 0.01), 0.5); // Aumentado el valor mínimo para mayor velocidad
+        // Adjust easing for faster response
+        this.easing = duration > 0 ? 1 / (duration * 60) : 1;
+        this.easing = Math.min(Math.max(this.easing, 0.01), 0.5);
     }
     
     /**
@@ -76,7 +73,6 @@ export class Camera {
      */
     resize() {
         this.instance.aspect = this.sizes.width / this.sizes.height;
-        this.instance.updateProjectionMatrix();
         
         // Adjust FOV for mobile
         if (this.sizes.isMobile) {
@@ -84,6 +80,7 @@ export class Camera {
         } else {
             this.instance.fov = 65;
         }
+        
         this.instance.updateProjectionMatrix();
     }
     
@@ -91,15 +88,15 @@ export class Camera {
      * Update camera on each frame
      */
     update() {
-        // Smooth camera movement con factores más altos para respuesta más rápida
-        const positionEasing = this.easing * 1.1; // Aumentado de 0.8
-        const lookAtEasing = this.easing * 1.1; // Aumentado de 0.9
+        // Smooth camera movement with improved response
+        const positionEasing = this.easing * 1.1;
+        const lookAtEasing = this.easing * 1.1;
         
         // Apply easing with improved interpolation
         this.currentPosition.lerp(this.targetPosition, positionEasing);
         this.currentLookAt.lerp(this.targetLookAt, lookAtEasing);
         
-        // Reducir el umbral para minimizar jitter pero permitir llegar a destino más rápido
+        // Snap to target when very close
         if (this.currentPosition.distanceTo(this.targetPosition) < 0.0005) {
             this.currentPosition.copy(this.targetPosition);
         }
