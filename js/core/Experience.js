@@ -53,20 +53,8 @@ export class Experience {
             this.update();
         });
         
-        // Load resources
-        this.resources.on('ready', () => {
-            console.log('Resources loaded, emitting ready');
-            this.emit('ready');
-        });
-
-        this.on('worldReady', () => {
-            console.log('World ready, configuring controls...');
-            if (this.controls && this.world) {
-                // Configurar controles con el número total de obras
-                this.controls.setTotalItems(this.world.items.length);
-                console.log(`Controls configured with ${this.world.items.length} items`);
-            }
-        });
+        // Setup world/UI connections
+        this.setupEventHandlers();
         
         // Load resources
         this.loadResources();
@@ -81,15 +69,34 @@ export class Experience {
     }
     
     /**
+     * Setup event handlers between components
+     */
+    setupEventHandlers() {
+        // Resources ready event
+        this.resources.on('ready', () => {
+            console.log('Resources loaded, emitting ready');
+            this.emit('ready');
+        });
+
+        // World ready event - set controls
+        this.on('worldReady', () => {
+            console.log('World ready, configuring controls...');
+            if (this.controls && this.world) {
+                // Configure controls with total number of artworks
+                this.controls.setTotalItems(this.world.items.length);
+                console.log(`Controls configured with ${this.world.items.length} items`);
+            }
+        });
+    }
+    
+    /**
      * Load all required resources
      */
     loadResources() {
-        // Define resources to load
+        // Define resources to load (only GLB models now)
         const resources = [
-            // Textures
             { name: 'obj', type: 'glb', path: 'public/models/obra.glb' },
             { name: 'obj2', type: 'glb', path: 'public/models/obra2.glb' },
-            // Video frames (for animation)
             { name: 'lamina1', type: 'glb', path: 'public/models/lamina1.glb' }
         ];
         
@@ -104,6 +111,7 @@ export class Experience {
         this.camera.resize();
         this.renderer.resize();
         this.world.resize();
+        this.ui.resize();
     }
     
     /**
@@ -114,6 +122,7 @@ export class Experience {
         this.world.update();
         this.renderer.update();
         this.controls.update();
+        this.ui.update();
     }
     
     /**

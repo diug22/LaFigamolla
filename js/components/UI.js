@@ -8,7 +8,7 @@ export class UI {
         this.experience = experience;
         this.sizes = this.experience.sizes;
         this.controls = this.experience.controls;
-        this.world = this.experience.world; // Añadida referencia a world para acceder a los items
+        this.world = this.experience.world;
 
         // UI elements
         this.elements = {
@@ -191,7 +191,7 @@ export class UI {
             
             // Show/hide info events
             this.controls.on('showInfo', (index) => {
-                //this.showInfoBubble(index);
+                this.showInfoBubble(index);
             });
             
             this.controls.on('hideInfo', () => {
@@ -358,7 +358,7 @@ export class UI {
         
         if (this.elements.loadingText) {
             const percent = Math.floor(progress * 100);
-            this.elements.loadingText.textContent = `Loading experience... ${percent}%`;
+            this.elements.loadingText.textContent = `Cargando experiencia... ${percent}%`;
         }
     }
     
@@ -420,56 +420,27 @@ export class UI {
      * @param {Number} index - Item index
      */
     showInfoBubble(index) {
-        if (!this.elements.infoBubble) return;
+        if (!this.elements.infoBubble || !this.world || !this.world.items) return;
         
-        // Update bubble content with item data
-        const items = [
-            {
-                title: 'Autumn Vase',
-                description: 'Handcrafted ceramic with earth and ochre glazes, inspired by organic forms of nature.',
-                dimensions: '25cm x 18cm x 10cm',
-                material: 'Handcrafted ceramic, non-toxic glazes',
-                year: '2025'
-            },
-            {
-                title: 'Textural Bowl',
-                description: 'Ceramic piece with tactile reliefs evoking tree bark in autumn.',
-                dimensions: '15cm x 15cm x 8cm',
-                material: 'Stoneware, artisanal glazes',
-                year: '2024'
-            },
-            {
-                title: 'Organic Form',
-                description: 'Sculpture in high-temperature fired refractory clay, inspired by fluid forms of nature.',
-                dimensions: '35cm x 20cm x 15cm',
-                material: 'Refractory clay, glazes and natural elements',
-                year: '2025'
-            },
-            {
-                title: 'Autumn Watercolor',
-                description: 'Mixed technique on paper, capturing the essence of autumn forests with warm tones and textures.',
-                dimensions: '40cm x 30cm (framed)',
-                material: 'Handcrafted paper 300g, natural pigments',
-                year: '2024'
-            },
-            {
-                title: 'Rustic Tea Set',
-                description: 'Set of cups and teapot in stoneware with natural finish and glossy glaze details.',
-                dimensions: 'Various pieces',
-                material: 'Stoneware, artisanal glazes',
-                year: '2025'
-            }
-        ];
+        // Get current item data instead of using hardcoded items
+        const currentItem = this.world.items[index];
+        if (!currentItem) return;
         
-        // Get item data
-        const item = items[index] || items[0];
+        // Define item info (can be expanded with additional data if needed)
+        const item = {
+            title: currentItem.title || 'Sin título',
+            description: currentItem.description || 'Sin descripción',
+            dimensions: 'Modelo 3D',
+            material: 'Modelo GLB',
+            year: '2025'
+        };
         
         // Update bubble content
         this.elements.bubbleTitle.textContent = item.title;
         this.elements.bubbleDescription.textContent = item.description;
-        this.elements.bubbleDimensions.textContent = `Dimensions: ${item.dimensions}`;
+        this.elements.bubbleDimensions.textContent = `Dimensiones: ${item.dimensions}`;
         this.elements.bubbleMaterial.textContent = `Material: ${item.material}`;
-        this.elements.bubbleYear.textContent = `Year: ${item.year}`;
+        this.elements.bubbleYear.textContent = `Año: ${item.year}`;
         
         // Show bubble with animation
         this.elements.infoBubble.style.bottom = '0';
@@ -496,23 +467,24 @@ export class UI {
         
         // Update info panel content
         if (this.elements.infoTitle) {
-            this.elements.infoTitle.textContent = item.title || 'Untitled';
+            this.elements.infoTitle.textContent = item.title || 'Sin título';
         }
         
         if (this.elements.infoDescription) {
-            this.elements.infoDescription.textContent = item.description || 'No description';
+            this.elements.infoDescription.textContent = item.description || 'Sin descripción';
         }
         
+        // Update optional fields if they exist
         if (this.elements.infoDimensions) {
-            this.elements.infoDimensions.textContent = `Dimensions: ${item.dimensions || 'Not specified'}`;
+            this.elements.infoDimensions.textContent = `Dimensiones: ${item.dimensions || 'Modelo 3D'}`;
         }
         
         if (this.elements.infoMaterial) {
-            this.elements.infoMaterial.textContent = `Material: ${item.material || 'Not specified'}`;
+            this.elements.infoMaterial.textContent = `Material: ${item.material || 'Modelo GLB'}`;
         }
         
         if (this.elements.infoYear) {
-            this.elements.infoYear.textContent = `Year: ${item.year || '2025'}`;
+            this.elements.infoYear.textContent = `Año: ${item.year || '2025'}`;
         }
         
         // Show panel
@@ -551,22 +523,22 @@ export class UI {
      * @param {Number} index - Item index
      */
     updateInfoForItem(index) {
-        // Obtener el item directamente del World
+        // Get the item directly from the World
         if (!this.world || !this.world.items || index >= this.world.items.length) {
             console.warn('No se puede acceder a la información del item:', index);
             return;
         }
         
-        // Obtener el item de la colección de world
+        // Get the item from the world collection
         const worldItem = this.world.items[index];
         
-        // Extraer solo los datos necesarios (título y descripción)
+        // Extract only the needed data (title and description)
         const item = {
             title: worldItem.title,
             description: worldItem.description
         };
         
-        // Actualizar panel de información con datos simplificados
+        // Update info panel with simplified data
         if (this.elements.infoPanel) {
             if (this.elements.infoTitle) {
                 this.elements.infoTitle.textContent = item.title || 'Sin título';
@@ -576,36 +548,22 @@ export class UI {
                 this.elements.infoDescription.textContent = item.description || 'Sin descripción';
             }
             
-            // Ocultar elementos innecesarios
+            // Hide unnecessary elements or show with default values
             if (this.elements.infoDimensions) {
-                this.elements.infoDimensions.style.display = 'none';
+                this.elements.infoDimensions.textContent = 'Dimensiones: Modelo 3D';
             }
             
             if (this.elements.infoMaterial) {
-                this.elements.infoMaterial.style.display = 'none';
+                this.elements.infoMaterial.textContent = 'Material: Modelo GLB';
             }
             
             if (this.elements.infoYear) {
-                this.elements.infoYear.style.display = 'none';
+                this.elements.infoYear.textContent = 'Año: 2025';
             }
             
-            // Mostrar panel
+            // Show panel
             this.elements.infoPanel.classList.add('active');
         }
-    }
-    
-    /**
-     * Update info bubble content without showing it
-     * @param {Object} item - Artwork item data
-     */
-    updateInfoBubbleContent(item) {
-        if (!this.elements.infoBubble) return;
-        
-        this.elements.bubbleTitle.textContent = item.title;
-        this.elements.bubbleDescription.textContent = item.description;
-        this.elements.bubbleDimensions.textContent = `Dimensions: ${item.dimensions}`;
-        this.elements.bubbleMaterial.textContent = `Material: ${item.material}`;
-        this.elements.bubbleYear.textContent = `Year: ${item.year}`;
     }
     
     /**

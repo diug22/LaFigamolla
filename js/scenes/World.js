@@ -9,10 +9,7 @@ import { ArtworkItem } from './ArtworkItem.js';
 export class World {
     constructor(experience) {
         this.experience = experience;
-        
-        // Use the scene from Experience instead of creating a new one
         this.scene = this.experience.scene;
-        
         console.log('World initialized with scene:', !!this.scene);
         
         this.resources = this.experience.resources;
@@ -35,19 +32,18 @@ export class World {
             
             // Set total items in controls
             if (this.controls) {
-                
-                
                 this.controls.on('horizontalTransition', (direction) => {
                     this.animateParticlesForHorizontalNavigation(direction);
                 });
+                
                 this.controls.on('itemChange', (index) => {
                     // Find transition direction
                     const direction = index > this.currentIndex ? 'left' : 'right';
                     this.showItemWithHorizontalTransition(index, direction);
                 });
             }
+            
             this.experience.emit('worldReady');
-
         });
     }
     
@@ -55,7 +51,7 @@ export class World {
      * Setup environment (background, fog, etc.)
      */
     setupEnvironment() {
-        // Set background color (autumn-themed)
+        // Set background color
         this.scene.background = new THREE.Color('#1a1a1a');
         
         // Add subtle fog
@@ -69,6 +65,9 @@ export class World {
         this.addAmbientParticles();
     }
 
+    /**
+     * Animate particles for transitions between artworks
+     */
     animateParticlesForHorizontalNavigation(direction) {
         // Only proceed if we have ambient particles
         if (!this.particles) return;
@@ -138,70 +137,63 @@ export class World {
         // Start animation
         animateParticles();
     }
-        // Método para restaurar posiciones de partículas después de la animación
+    
+    /**
+     * Reset particles to original positions after animation
+     */
     resetParticlePositions() {
         if (!this.originalParticlePositions) return;
         
-        // Restaurar posiciones originales
+        // Restore original positions
         this.particles.children.forEach((particle, index) => {
             if (this.originalParticlePositions[index]) {
-                // Restaurar con un ligero efecto aleatorio
+                // Restore with a slight random effect
                 particle.position.x = this.originalParticlePositions[index].x + (Math.random() - 0.5) * 2;
                 particle.position.y = this.originalParticlePositions[index].y + (Math.random() - 0.5) * 2;
                 particle.position.z = this.originalParticlePositions[index].z + (Math.random() - 0.5) * 2;
             }
         });
         
-        // También restaurar partículas de la obra actual
+        // Also restore current item particles
         if (this.items[this.currentIndex] && this.items[this.currentIndex].resetParticles) {
             this.items[this.currentIndex].resetParticles();
         }
     }
 
     /**
- * Show item with horizontal transition
- * @param {Number} index - Item index
- * @param {String} direction - Direction of transition ('left' or 'right')
- */
-showItemWithHorizontalTransition(index, direction) {
-    if (index < 0 || index >= this.items.length) return;
-    
-    console.log(`Showing item ${index} with horizontal transition ${direction}`);
-    
-    // Hide all items
-    for (const item of this.items) {
-        item.hide();
-    }
-    
-    // Show the selected item with horizontal transition effect
-    // We need to check if the showWithHorizontalTransition method exists
-    if (this.items[index].showWithHorizontalTransition) {
-        this.items[index].showWithHorizontalTransition(direction);
-    } else {
-        // Fallback to regular show if the method doesn't exist
-        this.items[index].show();
-    }
-    
-    this.currentIndex = index;
-    
-    // Move camera to item position
-    if (this.camera) {
-        const position = new THREE.Vector3(0, 0, 5);
-        const lookAt = new THREE.Vector3(0, 0, 0);
+     * Show item with horizontal transition
+     */
+    showItemWithHorizontalTransition(index, direction) {
+        if (index < 0 || index >= this.items.length) return;
         
-        this.camera.moveTo(position, lookAt);
+        console.log(`Showing item ${index} with horizontal transition ${direction}`);
+        
+        // Hide all items
+        for (const item of this.items) {
+            item.hide();
+        }
+        
+        // Show the selected item with transition effect
+        this.items[index].show(direction);
+        this.currentIndex = index;
+        
+        // Move camera to item position
+        if (this.camera) {
+            const position = new THREE.Vector3(0, 0, 5);
+            const lookAt = new THREE.Vector3(0, 0, 0);
+            
+            this.camera.moveTo(position, lookAt);
+        }
+        
+        // Trigger particle animation for transition effect
+        this.animateParticlesForHorizontalNavigation(direction);
     }
-    
-    // Trigger particle animation for transition effect
-    this.animateParticlesForHorizontalNavigation(direction);
-}
-
 
     /**
      * Add ambient particles to the environment
      */
     addAmbientParticles() {
-        // Autumn colors
+        // Autumn-themed colors
         const colors = [
             new THREE.Color('#FFB178'), // Soft orange
             new THREE.Color('#E78F8E'), // Soft red
@@ -288,7 +280,7 @@ showItemWithHorizontalTransition(index, direction) {
      * Setup artwork items
      */
     setupArtworks() {
-        // Define artwork items
+        // Define artwork items (all GLB models)
         const artworkData = [
             {
                 name: 'ceramic1',
@@ -296,10 +288,8 @@ showItemWithHorizontalTransition(index, direction) {
                 description: 'Cerámica artesanal con esmaltes en tonos tierra y ocre, inspirada en las formas orgánicas de la naturaleza.',
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
-                scale: new THREE.Vector3(2,2,2),
-                model: this.resources.getItem('obj'),  // Reference to the loaded GLB model,
-                geometry: 'glb'
-
+                scale: new THREE.Vector3(2, 2, 2),
+                model: this.resources.getItem('obj')
             },
             {
                 name: 'ceramic2',
@@ -308,8 +298,7 @@ showItemWithHorizontalTransition(index, direction) {
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
-                model: this.resources.getItem('obj2'),  // Reference to the loaded GLB model,
-                geometry: 'glb',
+                model: this.resources.getItem('obj2'),
                 particleColors: [
                     '#556B2F', // Dark Olive Green
                     '#6B8E23', // Olive Drab
@@ -322,11 +311,10 @@ showItemWithHorizontalTransition(index, direction) {
                 name: 'lamina1',
                 title: 'Acuarela Otoñal',
                 description: 'Técnica mixta sobre papel, capturando la esencia de los bosques en otoño con tonos cálidos y texturas.',
-                model: this.resources.getItem('lamina1'),  // Reference to the loaded GLB model,
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
-                geometry: 'glb',
+                model: this.resources.getItem('lamina1'),
                 particleColors: [
                     '#FF7F50', // Coral
                     '#FF4500', // Orange Red
@@ -387,11 +375,10 @@ showItemWithHorizontalTransition(index, direction) {
     
     /**
      * Show a specific artwork item
-     * @param {Number} index - Item index
      */
     showItem(index) {
         if (index < 0 || index >= this.items.length) return;
-        console.log('ITEM: '+this.items[index].name);      
+        
         // Hide all items
         for (const item of this.items) {
             item.hide();
@@ -403,10 +390,8 @@ showItemWithHorizontalTransition(index, direction) {
         
         // Move camera to item position
         if (this.camera) {
-            const item = this.items[index];
             const position = new THREE.Vector3(0, 0, 5);
             const lookAt = new THREE.Vector3(0, 0, 0);
-            
             this.camera.moveTo(position, lookAt);
         }
     }

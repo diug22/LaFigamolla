@@ -1,7 +1,6 @@
 /**
  * Controls class
  * Handles user interactions (touch, mouse) for artwork navigation and viewing
- * Optimized with improved rotation and zoom functionality
  */
 
 import * as THREE from 'three';
@@ -37,12 +36,12 @@ export class Controls {
         this.cameraZoom = 1;
         
         // Swipe detection
-        this.swipeThreshold = 50; // Minimum distance for a swipe
-        this.swipeVerticalThreshold = 50; // Threshold for vertical swipe
+        this.swipeThreshold = 50;
+        this.swipeVerticalThreshold = 50;
         this.swipeDirection = null;
         this.swipeVerticalDirection = null;
         
-        // Enhanced camera settings
+        // Camera settings
         this.defaultDistance = 5;
         this.minDistance = 2;
         this.maxDistance = 8;
@@ -74,7 +73,6 @@ export class Controls {
      * Setup additional orbit-like controls for smoother rotation
      */
     setupOrbitControls() {
-        // Variables for orbit-like controls
         this.orbitTargetPosition = new THREE.Vector3(0, 0, 0);
         this.orbitDistance = this.defaultDistance;
         this.orbitRotation = { x: 0, y: 0 };
@@ -261,14 +259,15 @@ export class Controls {
                 }
             }
             
-            // If not swiping, apply rotation to camera
+            // If not swiping, apply rotation to camera or model
             if (!this.swipeDirection && !this.swipeVerticalDirection) {
                 const currentItem = this.getCurrentItem();
                 
-                if (currentItem && currentItem.geometryType === 'plane' && currentItem.handleManualRotation) {
-                    // Si es un plano y tiene el método de rotación manual, enviar un factor más alto
-                    currentItem.handleManualRotation(this.momentum.x * 200, this.momentum.y * 200); // Duplicado de 100
+                if (currentItem && currentItem.handleManualRotation) {
+                    // Pass rotation to item
+                    currentItem.handleManualRotation(this.momentum.x * 200, this.momentum.y * 200);
                 } else {
+                    // Apply to camera
                     this.applyTouchRotation();
                 }
             }
@@ -290,7 +289,6 @@ export class Controls {
             this.pinchStart = this.pinchCurrent;
         }
     }
-    
     
     /**
      * Handle touch end event
@@ -405,7 +403,6 @@ export class Controls {
             return this.experience.world.items[this.currentIndex];
         }
         return null;
-    
     }
     
     /**
@@ -459,10 +456,14 @@ export class Controls {
         }
         
         if (!this.swipeDirection && !this.swipeVerticalDirection) {
-            // Primero comprobamos si el item actual es un plano para tratarlo de forma especial
+            // Check if current item has custom rotation handler
             const currentItem = this.getCurrentItem();
             
+            if (currentItem && currentItem.handleManualRotation) {
+                currentItem.handleManualRotation(this.momentum.x * 200, this.momentum.y * 200);
+            } else {
                 this.applyTouchRotation();
+            }
         }
     }
     
@@ -508,7 +509,6 @@ export class Controls {
     
     /**
      * Apply rotation based on touch/mouse movement
-     * Improved for smoother rotation
      */
     applyTouchRotation() {
         if (!this.camera || (!this.isDragging && !this.isZooming)) return;
@@ -532,20 +532,18 @@ export class Controls {
             return;
         }
         
-        // For normal dragging, calculate rotation based on touch delta
-        // Aumentar la influencia del movimiento para respuesta más rápida
+        // For normal dragging, calculate rotation
         const rotX = this.touchDelta.y * this.rotationSensitivity * 1.5;
         const rotY = this.touchDelta.x * this.rotationSensitivity * 1.5;
         
-        // Update current rotation with smoother transitions pero más directas
-        // Cambiar el factor de interpolación de 0.3 a 0.5 para respuesta más inmediata
+        // Update rotation with smooth transitions
         this.cameraRotation.x = THREE.MathUtils.lerp(this.cameraRotation.x, this.cameraRotation.x + rotX, 0.5);
         this.cameraRotation.y = THREE.MathUtils.lerp(this.cameraRotation.y, this.cameraRotation.y + rotY, 0.5);
         
-        // Permitir una rotación vertical ligeramente mayor
+        // Limit vertical rotation
         this.cameraRotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.cameraRotation.x));
         
-        // Resto del método sin cambios...
+        // Calculate new camera position
         const distance = this.defaultDistance * this.cameraZoom;
         const cameraX = Math.sin(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
         const cameraY = Math.sin(this.cameraRotation.x) * distance;
@@ -558,13 +556,11 @@ export class Controls {
             cameraZ + this.initialLookAtPosition.z
         );
         
-        // Update camera using its existing methods
+        // Update camera position
         if (this.camera.moveTo) {
-            // Ajustar la duración a un valor más bajo para respuesta más rápida
             this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.2);
         }
     }
-    
     
     /**
      * Apply zoom based on pinch/wheel
@@ -572,7 +568,7 @@ export class Controls {
     applyZoom() {
         if (!this.camera) return;
         
-        // Calculate zoom factor with smoother sensitivity
+        // Calculate zoom factor
         const zoomFactor = this.pinchDelta * this.zoomSensitivity;
         
         // Calculate target zoom with limits
@@ -627,7 +623,7 @@ export class Controls {
     }
     
     /**
-     * Navigate to the next item (slide from right)
+     * Navigate to the next item
      */
     nextItem() {
         if (this.currentIndex < this.totalItems - 1) {
@@ -648,7 +644,7 @@ export class Controls {
     }
     
     /**
-     * Navigate to the previous item (slide from left)
+     * Navigate to the previous item
      */
     previousItem() {
         if (this.currentIndex > 0) {
