@@ -48,6 +48,181 @@ export class UI {
         
         // Auto-hide UI after a short delay when experience starts
     }
+
+    createRotationIndicator() {
+        // Verificar si ya existe
+        if (document.getElementById('rotation-indicator')) return;
+        
+        // Crear contenedor principal
+        const indicator = document.createElement('div');
+        indicator.id = 'rotation-indicator';
+        indicator.className = 'rotation-indicator';
+        
+        // Estilos base
+        indicator.style.position = 'fixed';
+        indicator.style.left = '50%';
+        indicator.style.top = '50%';
+        indicator.style.transform = 'translate(-50%, -50%)';
+        indicator.style.width = '150px';
+        indicator.style.height = '150px';
+        indicator.style.pointerEvents = 'none';
+        indicator.style.zIndex = '500';
+        indicator.style.opacity = '0';
+        indicator.style.transition = 'opacity 0.5s ease';
+        
+        // Crear círculo principal
+        const circle = document.createElement('div');
+        circle.className = 'rotation-circle';
+        circle.style.position = 'absolute';
+        circle.style.width = '100%';
+        circle.style.height = '100%';
+        circle.style.borderRadius = '50%';
+        circle.style.border = '2px dashed rgba(255, 255, 255, 0.3)';
+        circle.style.boxSizing = 'border-box';
+        
+        // Añadir puntos de arrastre
+        const createDragPoint = (angle, size = 10) => {
+            const point = document.createElement('div');
+            point.className = 'drag-point';
+            const rad = angle * Math.PI / 180;
+            const radius = 75 - size/2; // Ajustar según tamaño del contenedor
+            
+            point.style.position = 'absolute';
+            point.style.width = `${size}px`;
+            point.style.height = `${size}px`;
+            point.style.borderRadius = '50%';
+            point.style.backgroundColor = 'white';
+            point.style.left = `${radius * Math.cos(rad) + 75 - size/2}px`;
+            point.style.top = `${radius * Math.sin(rad) + 75 - size/2}px`;
+            point.style.opacity = '0.8';
+            
+            return point;
+        };
+        
+        // Añadir 4 puntos en diferentes posiciones
+        [0, 90, 180, 270].forEach(angle => {
+            circle.appendChild(createDragPoint(angle));
+        });
+        
+        // Crear elemento para cursor
+        const cursor = document.createElement('div');
+        cursor.className = 'drag-cursor';
+        cursor.style.position = 'absolute';
+        cursor.style.width = '20px';
+        cursor.style.height = '20px';
+        cursor.style.borderRadius = '50%';
+        cursor.style.border = '2px solid white';
+        cursor.style.boxSizing = 'border-box';
+        cursor.style.left = '65px'; // Centro del círculo
+        cursor.style.top = '65px';
+        
+        // Crear la animación del cursor
+        const cursorPath = document.createElement('div');
+        cursorPath.className = 'cursor-path';
+        cursorPath.style.position = 'absolute';
+        cursorPath.style.width = '100%';
+        cursorPath.style.height = '100%';
+        cursorPath.style.borderRadius = '50%';
+        cursorPath.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+        cursorPath.style.boxSizing = 'border-box';
+        
+        // Añadir animación de recorrido del cursor
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes rotateCursor {
+                0% { transform: translate(-50%, -50%) rotate(0deg) translate(50px) rotate(0deg); }
+                100% { transform: translate(-50%, -50%) rotate(360deg) translate(50px) rotate(-360deg); }
+            }
+            
+            @keyframes handDrag {
+                0%, 100% { transform: translate(0, 0); }
+                50% { transform: translate(8px, 8px); }
+            }
+            
+            .drag-cursor {
+                animation: rotateCursor 4s infinite linear;
+                transform-origin: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .rotation-circle {
+                animation: pulse 3s infinite ease-in-out;
+            }
+            
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); opacity: 0.8; }
+                50% { transform: scale(1.05); opacity: 1; }
+            }
+            
+            .drag-point {
+                animation: blink 2s infinite alternate;
+            }
+            
+            @keyframes blink {
+                0% { opacity: 0.4; }
+                100% { opacity: 0.9; }
+            }
+        `;
+        
+        // Añadir icono de mano
+        const hand = document.createElement('div');
+        hand.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                <path d="M9,11.24V7.5C9,6.12 10.12,5 11.5,5S14,6.12 14,7.5v3.74c1.21,-0.81 2,-2.18 2,-3.74C16,5.01 13.99,3 11.5,3S7,5.01 7,7.5C7,9.06 7.79,10.43 9,11.24zM18.84,15.87l-4.54,-2.26c-0.17,-0.07 -0.35,-0.11 -0.54,-0.11H13v-6C13,6.67 12.33,6 11.5,6S10,6.67 10,7.5v10.74c-0.61,0.55 -2.33,2.01 -4.12,2.01c-0.53,0 -1.01,-0.21 -1.37,-0.56c-0.35,-0.36 -0.55,-0.84 -0.55,-1.36c0,-0.37 0.1,-0.77 0.3,-1.2c0.2,-0.43 0.47,-0.82 0.7,-1.08c0.25,-0.27 0.25,-0.68 0,-0.94c-0.25,-0.26 -0.65,-0.26 -0.9,0C3.82,15.34 3,16.42 3,17.34c0,0.84 0.32,1.64 0.92,2.23c0.59,0.59 1.39,0.91 2.23,0.91c2.19,0 3.87,-1.3 4.35,-1.67c0,0 0,0.08 0,0.08c0,0.97 0.79,1.76 1.76,1.76c0.44,0 0.85,-0.17 1.16,-0.47c0.31,0.3 0.72,0.47 1.16,0.47c0.97,0 1.76,-0.79 1.76,-1.76c0,-0.19 -0.04,-0.37 -0.1,-0.54c0.61,-0.33 1.03,-0.97 1.03,-1.71c0,-0.44 -0.14,-0.84 -0.39,-1.16C18.11,15.88 18.47,15.64 18.84,15.87z"/>
+            </svg>
+        `;
+        hand.style.position = 'absolute';
+        hand.style.animation = 'handDrag 1s infinite ease-in-out';
+        
+        // Añadir los elementos al DOM
+        cursor.appendChild(hand);
+        indicator.appendChild(cursorPath);
+        indicator.appendChild(circle);
+        indicator.appendChild(cursor);
+        document.head.appendChild(style);
+        document.body.appendChild(indicator);
+        
+        // Guardar referencia
+        this.elements.rotationIndicator = indicator;
+        
+        return indicator;
+    }
+
+
+    
+    /**
+     * Mostrar el indicador de rotación
+     */
+    showRotationIndicator() {
+        // No mostrar si ya se ha visto antes
+        if (localStorage.getItem('rotationIndicatorSeen')) return;
+        
+        // Crear si no existe
+        if (!this.elements.rotationIndicator) {
+            this.createRotationIndicator();
+        }
+        
+        // Mostrar con animación
+        this.elements.rotationIndicator.style.opacity = '1';
+        
+        // Ocultar después de 4 segundos
+        setTimeout(() => {
+            this.hideRotationIndicator();
+            // Marcar como visto
+            localStorage.setItem('rotationIndicatorSeen', 'true');
+        }, 4000);
+    }
+
+    /**
+     * Ocultar el indicador de rotación
+     */
+    hideRotationIndicator() {
+        if (this.elements.rotationIndicator) {
+            this.elements.rotationIndicator.style.opacity = '0';
+        }
+    }
     
     /**
      * Create info bubble element for swipe-up interaction

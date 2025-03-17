@@ -1,6 +1,7 @@
 /**
  * Controls class
  * Handles user interactions (touch, mouse) for artwork navigation and viewing
+ * Implements trackball rotation for intuitive 3D manipulation
  */
 
 import * as THREE from 'three';
@@ -26,6 +27,12 @@ export class Controls {
         this.touchCurrent = { x: 0, y: 0 };
         this.touchDelta = { x: 0, y: 0 };
         
+        // Trackball rotation
+        this.trackballRadius = 0.8; // Virtual sphere radius as a fraction of the smallest screen dimension
+        this.rotationMatrix = new THREE.Matrix4();
+        this.currentRotation = new THREE.Quaternion();
+        this.targetRotation = new THREE.Quaternion();
+        
         // Pinch/zoom
         this.pinchStart = 0;
         this.pinchCurrent = 0;
@@ -48,13 +55,6 @@ export class Controls {
         this.rotationSensitivity = 0.005;
         this.zoomSensitivity = 0.001;
         this.dampingFactor = 0.95;
-
-        // Estado de rotación trackball
-        this.trackballActive = false;
-        this.trackballStart = { x: 0, y: 0 };
-        this.trackballPrevious = { x: 0, y: 0 };
-        this.trackballAxis = new THREE.Vector3();
-        this.trackballQuaternion = new THREE.Quaternion();
         
         // Camera motion
         this.momentum = { x: 0, y: 0 };
@@ -81,7 +81,6 @@ export class Controls {
             x: 0,
             y: 0,
             time: Date.now()
-
         };
         
         // Initial camera position/target for resets
@@ -93,18 +92,85 @@ export class Controls {
         
         // Setup
         this.setupEventListeners();
-        this.setupOrbitControls();
+        this.setupTrackballControls();
     }
     
     /**
-     * Setup additional orbit-like controls for smoother rotation
+     * Setup trackball controls
      */
-    setupOrbitControls() {
-        this.orbitTargetPosition = new THREE.Vector3(0, 0, 0);
-        this.orbitDistance = this.defaultDistance;
-        this.orbitRotation = { x: 0, y: 0 };
-        this.orbitVelocity = { x: 0, y: 0 };
-        this.damping = 0.92;
+    setupTrackballControls() {
+        // Initialize rotation matrix to identity
+        this.rotationMatrix.identity();
+        this.currentRotation.identity();
+        this.targetRotation.identity();
+        
+        // Set initial rotation velocity
+        this.rotationVelocity = new THREE.Vector2(0, 0);
+        this.damping = 0.98; // Increased from 0.92 for more persistent rotation
+        
+        // Create axis of rotation visualization for debugging if needed
+        this.axisOfRotation = new THREE.Vector3(0, 1, 0);
+        
+        // Rotation sensitivity - higher value means more rotation for the same mouse/touch movement
+        this.trackballSensitivity = 2.5; // Default was effectively 1.0
+    }
+    
+    /**
+     * Projects a 2D screen point onto the trackball sphere
+     * @param {Number} x - Screen X coordinate
+     * @param {Number} y - Screen Y coordinate
+     * @returns {THREE.Vector3} - 3D point on the trackball sphere
+     */
+    projectOntoSphere(x, y) {
+        // Calculate normalized device coordinates (-1 to 1)
+        const width = this.sizes.width;
+        const height = this.sizes.height;
+        const radius = Math.min(width, height) * this.trackballRadius;
+        
+        // Convert screen coordinates to normalized device coordinates
+        const nx = (x / width) * 2 - 1;
+        const ny = -((y / height) * 2 - 1);
+        
+        // Calculate the squared distance from the center of the screen
+        const dist2 = nx * nx + ny * ny;
+        
+        let nz;
+        // If the point is inside the trackball sphere
+        if (dist2 <= 1.0) {
+            // Project the point onto the sphere (Pythagoras)
+            nz = Math.sqrt(1.0 - dist2);
+        } else {
+            // Project the point onto the hyperbolic sheet
+            nz = 1.0 / Math.sqrt(dist2);
+            // Normalize x and y
+            const norm = 1.0 / Math.sqrt(dist2);
+            nx *= norm;
+            ny *= norm;
+        }
+        
+        return new THREE.Vector3(nx, ny, nz).normalize();
+    }
+    
+    /**
+     * Calculates rotation from two trackball points
+     * @param {THREE.Vector3} start - Starting point on trackball
+     * @param {THREE.Vector3} end - Ending point on trackball
+     * @returns {THREE.Quaternion} - Resulting rotation
+     */
+    getRotationBetweenVectors(start, end) {
+        const axis = new THREE.Vector3().crossVectors(start, end).normalize();
+        
+        // If axis is zero (points are the same or opposite), no rotation
+        if (axis.lengthSq() < 0.0001) {
+            return new THREE.Quaternion();
+        }
+        
+        const angle = Math.acos(Math.min(1.0, Math.max(-1.0, start.dot(end))));
+        
+        // Store axis for visualization if needed
+        this.axisOfRotation.copy(axis);
+        
+        return new THREE.Quaternion().setFromAxisAngle(axis, angle);
     }
     
     /**
@@ -186,6 +252,7 @@ export class Controls {
         
         // Reset momentum
         this.momentum = { x: 0, y: 0 };
+        this.rotationVelocity.set(0, 0);
         
         // Single touch (drag)
         if (event.touches.length === 1) {
@@ -198,16 +265,13 @@ export class Controls {
             this.touchDelta.x = 0;
             this.touchDelta.y = 0;
             
-            // Iniciar trackball
-            this.trackballActive = true;
-            this.trackballStart.x = this.touchStart.x;
-            this.trackballStart.y = this.touchStart.y;
-            this.trackballPrevious.x = this.trackballStart.x;
-            this.trackballPrevious.y = this.trackballStart.y;
+            // Store the initial trackball point
+            this.startTrackballPoint = this.projectOntoSphere(this.touchStart.x, this.touchStart.y);
             
-            // Almacenar tiempo para posible doble tap
+            // Store time for possible double tap
             this.touchStartTime = Date.now();
-            // Mostrar hint de zoom si es la primera interacción del usuario
+            
+            // Show zoom hint if it's the user's first interaction
             if (!this.zoomConfig.zoomHintShown) {
                 setTimeout(() => {
                     this.showGestureHint("Pinch to zoom, double tap to focus");
@@ -220,14 +284,14 @@ export class Controls {
             this.isDragging = false;
             this.isZooming = true;
             
-            // Reiniciar valores de pellizco
+            // Reset pinch values
             this.pinchStart = 0;
             this.zoomConfig.zoomStartValue = this.zoomConfig.currentZoom;
             
-            // Procesar el primer evento de pellizco
+            // Process the first pinch event
             this.handlePinchZoom(event);
             
-            // Mostrar hint visual de gesto
+            // Show gesture hint
             this.showGestureHint("Pinch to zoom in/out");
         }
     }
@@ -258,10 +322,10 @@ export class Controls {
             this.touchDelta.x = (this.touchCurrent.x - this.touchStart.x) * 0.8;
             this.touchDelta.y = (this.touchCurrent.y - this.touchStart.y) * 0.8;
             
-            // Calculate momentum with reduced acceleration
+            // Calculate velocity for momentum - increased multiplier for more significant effect
             if (now - this.lastPosition.time > 10) {
-                this.momentum.x = (x - this.lastPosition.x) * 0.02;
-                this.momentum.y = (y - this.lastPosition.y) * 0.02;
+                this.rotationVelocity.x = (x - this.lastPosition.x) * 0.06; // Increased from 0.02
+                this.rotationVelocity.y = (y - this.lastPosition.y) * 0.06; // Increased from 0.02
                 
                 this.lastPosition = {
                     x: x,
@@ -291,19 +355,91 @@ export class Controls {
                 }
             }
             
+            // If not swiping, apply trackball rotation
             if (!this.swipeDirection && !this.swipeVerticalDirection) {
-                if (this.trackballActive) {
-                    this.calculateTrackballRotation(this.touchCurrent.x, this.touchCurrent.y);
+                const currentItem = this.getCurrentItem();
+                
+                if (currentItem && currentItem.handleTrackballRotation) {
+                    // Apply rotation to the current item if it has a custom handler
+                    this.applyTrackballRotation(currentItem);
                 } else {
-                    // Código de fallback a la rotación anterior
-                    const currentItem = this.getCurrentItem();
-                    if (currentItem && currentItem.handleManualRotation) {
-                        currentItem.handleManualRotation(this.momentum.x * 0.8, this.momentum.y * 0.8);
-                    } else {
-                        this.applyTouchRotation();
-                    }
+                    // Otherwise apply to the camera
+                    this.applyTrackballRotation();
                 }
             }
+        }
+    }
+    
+    /**
+     * Apply trackball rotation based on touch/mouse movement
+     * @param {Object} item - Optional item to rotate instead of camera
+     */
+    applyTrackballRotation(item = null) {
+        if (!this.isDragging) return;
+        
+        // Get the current point on the trackball
+        const currentTrackballPoint = this.projectOntoSphere(this.touchCurrent.x, this.touchCurrent.y);
+        
+        // Calculate rotation between start and current points
+        const rotationDelta = this.getRotationBetweenVectors(this.startTrackballPoint, currentTrackballPoint);
+        
+        if (item) {
+            // Apply rotation to the item with increased sensitivity
+            item.applyTrackballRotation(rotationDelta, this.rotationVelocity);
+        } else {
+            // Apply rotation to the camera's target orientation with increased sensitivity
+            // Use a temporary quaternion to apply a more pronounced rotation 
+            const amplifiedRotation = new THREE.Quaternion();
+            amplifiedRotation.copy(rotationDelta);
+            
+            // Adjust rotation to be more pronounced (effectively increasing sensitivity)
+            // This technique helps maintain the rotation axis but increases the angle
+            const angle = 2.0 * Math.acos(amplifiedRotation.w);
+            if (angle > 0.0001) { // Avoid division by zero
+                const sinHalfAngle = Math.sin(angle / 2);
+                const axis = new THREE.Vector3(
+                    amplifiedRotation.x / sinHalfAngle,
+                    amplifiedRotation.y / sinHalfAngle,
+                    amplifiedRotation.z / sinHalfAngle
+                );
+                // Create new quaternion with amplified angle but same axis
+                const newAngle = angle * this.trackballSensitivity; // Apply sensitivity multiplier
+                amplifiedRotation.setFromAxisAngle(axis, newAngle);
+            }
+            
+            // Apply the amplified rotation
+            this.targetRotation.multiplyQuaternions(amplifiedRotation, this.currentRotation);
+            this.currentRotation.slerp(this.targetRotation, 0.3); // Faster follow-up
+            
+            // Update the camera position based on the rotation
+            this.updateCameraPosition();
+        }
+        
+        // Update start point for the next frame
+        this.startTrackballPoint = currentTrackballPoint;
+    }
+    
+    /**
+     * Update camera position based on current rotation and zoom
+     */
+    updateCameraPosition() {
+        if (!this.camera) return;
+        
+        // Calculate the camera position based on the rotation
+        const distance = this.defaultDistance * this.cameraZoom;
+        
+        // Start with the initial position
+        const initialPosition = new THREE.Vector3(0, 0, distance);
+        
+        // Apply the current rotation to the position
+        initialPosition.applyQuaternion(this.currentRotation);
+        
+        // Add the target position (usually the center of the scene)
+        const newPosition = initialPosition.add(this.initialLookAtPosition);
+        
+        // Update camera position
+        if (this.camera.moveTo) {
+            this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.2);
         }
     }
     
@@ -344,16 +480,6 @@ export class Controls {
                 this.hideArtworkInfo();
             }
         }
-
-        if (!this.swipeDirection && !this.swipeVerticalDirection && touchDuration < 300) {
-            const currentItem = this.getCurrentItem();
-            if (currentItem && currentItem.applyInertia && 
-                Math.abs(this.momentum.x) + Math.abs(this.momentum.y) > 0.01) {
-                // Aplicar inercia con un factor que logre un efecto suave
-                const inertiaFactor = 12;
-                currentItem.applyInertia(this.momentum.x * inertiaFactor, this.momentum.y * inertiaFactor);
-            }
-        }
         
         // Reset states but keep momentum for smooth deceleration
         this.isDragging = false;
@@ -361,15 +487,13 @@ export class Controls {
         this.pinchDelta = 0;
         this.swipeDirection = null;
         this.swipeVerticalDirection = null;
-        this.trackballActive = false;
-
     }
     
     /**
      * Handle double tap for quick zoom
      */
     onDoubleTap(x, y) {
-        // Obtener objeto en la posición del doble tap
+        // Get object at the double tap position
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2(
             (x / window.innerWidth) * 2 - 1,
@@ -378,41 +502,25 @@ export class Controls {
         
         raycaster.setFromCamera(mouse, this.camera.instance);
         
-        // Buscar intersecciones con objetos en la escena
+        // Look for intersections with objects in the scene
         const currentItem = this.getCurrentItem();
         if (!currentItem || !currentItem.mesh) return;
         
-        // Decidir si hacer zoom in o out
+        // Decide whether to zoom in or out
         if (this.zoomConfig.currentZoom > 1.5) {
-            // Ya estamos en zoom in, hacer zoom out
+            // Already zoomed in, zoom out
             this.zoomConfig.targetZoom = this.zoomConfig.defaultZoom;
             this.zoomConfig.zoomCenterObject = null;
         } else {
-            // Hacer zoom in hacia el objeto
+            // Zoom in towards the object
             this.zoomToObject(currentItem.mesh, 2.5);
         }
         
-        // Iniciar animación
+        // Start animation
         this.startZoomAnimation();
         
-        // Mostrar indicador
+        // Show indicator
         this.showZoomIndicator(this.zoomConfig.targetZoom);
-    }
-    
-    /**
-     * Zoom to a specific point on screen
-     */
-    zoomToPoint(x, y) {
-        if (!this.camera) return;
-        
-        // Apply a focused zoom
-        this.cameraZoom = Math.max(
-            this.minDistance / this.defaultDistance, 
-            this.cameraZoom * 0.5
-        );
-        
-        // Apply the zoom
-        this.applyTouchRotation();
     }
     
     /**
@@ -429,16 +537,13 @@ export class Controls {
         this.touchDelta.x = 0;
         this.touchDelta.y = 0;
         this.swipeDirection = null;
-
-        // Iniciar trackball
-        this.trackballActive = true;
-        this.trackballStart.x = this.touchStart.x;
-        this.trackballStart.y = this.touchStart.y;
-        this.trackballPrevious.x = this.trackballStart.x;
-        this.trackballPrevious.y = this.trackballStart.y;
         
         // Reset momentum
         this.momentum = { x: 0, y: 0 };
+        this.rotationVelocity.set(0, 0);
+        
+        // Store the initial trackball point
+        this.startTrackballPoint = this.projectOntoSphere(this.touchStart.x, this.touchStart.y);
         
         // Store last position for momentum
         this.lastPosition = {
@@ -478,17 +583,20 @@ export class Controls {
         this.touchDelta.x = this.touchCurrent.x - this.touchStart.x;
         this.touchDelta.y = this.touchCurrent.y - this.touchStart.y;
         
-        // Calculate momentum
-        if (now - this.lastPosition.time > 20) {
-            this.momentum.x = (x - this.lastPosition.x) * 0.01;
-            this.momentum.y = (y - this.lastPosition.y) * 0.01;
-            
-            this.lastPosition = {
-                x: x,
-                y: y,
-                time: now
-            };
-        }
+        // Calculate velocity for momentum - with much higher sensitivity
+        // Calculate instantaneous velocity with higher multiplier
+        const deltaTime = Math.max(1, now - this.lastPosition.time); // Avoid division by zero
+        this.rotationVelocity.x = (x - this.lastPosition.x) / deltaTime * 0.5; // Much higher value
+        this.rotationVelocity.y = (y - this.lastPosition.y) / deltaTime * 0.5; // Much higher value
+        
+        // Debug log
+        console.log(`Mouse move velocity: ${this.rotationVelocity.x.toFixed(5)}, ${this.rotationVelocity.y.toFixed(5)}`);
+        
+        this.lastPosition = {
+            x: x,
+            y: y,
+            time: now
+        };
         
         // Detect horizontal swipe direction (for artwork navigation)
         if (Math.abs(this.touchDelta.x) > Math.abs(this.touchDelta.y)) {
@@ -515,10 +623,10 @@ export class Controls {
             // Check if current item has custom rotation handler
             const currentItem = this.getCurrentItem();
             
-            if (currentItem && currentItem.handleManualRotation) {
-                currentItem.handleManualRotation(this.momentum.x * 0.8, this.momentum.y * 0.8);
+            if (currentItem && currentItem.handleTrackballRotation) {
+                this.applyTrackballRotation(currentItem);
             } else {
-                this.applyTouchRotation();
+                this.applyTrackballRotation();
             }
         }
     }
@@ -528,6 +636,24 @@ export class Controls {
      */
     onMouseUp(event) {
         if (!this.isActive) return;
+        
+        // Get current item to apply final rotation impulse
+        const currentItem = this.getCurrentItem();
+        
+        // If we weren't swiping, apply a final velocity boost on release
+        if (!this.swipeDirection && !this.swipeVerticalDirection && currentItem) {
+            // Give a final velocity boost for more dramatic effect
+            const boostFactor = 3.0;
+            
+            if (currentItem.handleTrackballRotation) {
+                currentItem.rotationVelocity = {
+                    x: this.rotationVelocity.x * boostFactor,
+                    y: this.rotationVelocity.y * boostFactor
+                };
+                
+                console.log(`Final velocity boost: ${currentItem.rotationVelocity.x.toFixed(5)}, ${currentItem.rotationVelocity.y.toFixed(5)}`);
+            }
+        }
         
         // Handle horizontal swipe for artwork navigation
         if (this.swipeDirection === 'left') {
@@ -541,20 +667,10 @@ export class Controls {
         } else if (this.swipeVerticalDirection === 'down') {
             this.hideArtworkInfo();
         }
-
-        if (!this.swipeDirection && !this.swipeVerticalDirection) {
-            const currentItem = this.getCurrentItem();
-            if (currentItem && currentItem.applyInertia && 
-                Math.abs(this.momentum.x) + Math.abs(this.momentum.y) > 0.01) {
-                const inertiaFactor = 12;
-                currentItem.applyInertia(this.momentum.x * inertiaFactor, this.momentum.y * inertiaFactor);
-            }
-        }
         
-        // Reset state but keep momentum for smooth deceleration
+        // Reset state but keep velocity for smooth deceleration
         this.isDragging = false;
         this.swipeDirection = null;
-        this.trackballActive = false;
         this.swipeVerticalDirection = null;
     }
     
@@ -566,32 +682,32 @@ export class Controls {
         
         event.preventDefault();
         
-        // Dirección de scroll (+1 hacia abajo, -1 hacia arriba)
+        // Scroll direction (+1 down, -1 up)
         const direction = Math.sign(event.deltaY);
         
-        // Calcular velocidad basada en la velocidad de la rueda
+        // Calculate speed based on wheel velocity
         const speed = this.zoomConfig.mouseWheelSpeed * Math.min(Math.abs(event.deltaY), 100) / 100;
         
-        // Calcular nuevo zoom objetivo
+        // Calculate new target zoom
         const newZoom = this.zoomConfig.targetZoom * (1 - direction * speed);
         
-        // Limitar zoom al mínimo y máximo
+        // Limit zoom to min and max
         this.zoomConfig.targetZoom = Math.max(
             this.zoomConfig.minZoom,
             Math.min(this.zoomConfig.maxZoom, newZoom)
         );
         
-        // Almacenar posición del ratón para zoom hacia ese punto
+        // Store mouse position for zoom towards that point
         this.zoomConfig.zoomCenter.x = (event.clientX / window.innerWidth) * 2 - 1;
         this.zoomConfig.zoomCenter.y = -((event.clientY / window.innerHeight) * 2 - 1);
         
-        // Iniciar animación de zoom si no está en progreso
+        // Start zoom animation if not in progress
         this.startZoomAnimation();
         
-        // Notificar cambio de zoom mediante un evento
+        // Notify zoom change via event
         this.emit('zoomChange', this.zoomConfig.targetZoom);
         
-        // Mostrar hint visual de zoom si es la primera vez
+        // Show zoom hint if it's the first time
         if (!this.zoomConfig.zoomHintShown) {
             this.showGestureHint(direction > 0 ? "Zoom out" : "Zoom in");
             this.zoomConfig.zoomHintShown = true;
@@ -599,316 +715,139 @@ export class Controls {
     }
     
     /**
-     * Apply rotation based on touch/mouse movement
+     * Handle pinch zoom (replacing the existing function)
      */
-    applyTouchRotation() {
-        if (!this.camera || (!this.isDragging && !this.isZooming)) return;
-        
-        // Special case for pinch zoom
-        if (this.isZooming && !this.isDragging) {
-            const distance = this.defaultDistance * this.cameraZoom;
-            const cameraX = Math.sin(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
-            const cameraY = Math.sin(this.cameraRotation.x) * distance;
-            const cameraZ = Math.cos(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
-            
-            const newPosition = new THREE.Vector3(
-                cameraX + this.initialLookAtPosition.x,
-                cameraY + this.initialLookAtPosition.y,
-                cameraZ + this.initialLookAtPosition.z
-            );
-            
-            if (this.camera.moveTo) {
-                this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.3);
-            }
-            return;
-        }
-        
-        // For normal dragging, calculate rotation
-        const rotX = this.touchDelta.y * this.rotationSensitivity * 1.5;
-        const rotY = this.touchDelta.x * this.rotationSensitivity * 1.5;
-        
-        // Update rotation with smooth transitions
-        this.cameraRotation.x = THREE.MathUtils.lerp(this.cameraRotation.x, this.cameraRotation.x + rotX, 0.5);
-        this.cameraRotation.y = THREE.MathUtils.lerp(this.cameraRotation.y, this.cameraRotation.y + rotY, 0.5);
-        
-        // Limit vertical rotation
-        this.cameraRotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.cameraRotation.x));
-        
-        // Calculate new camera position
-        const distance = this.defaultDistance * this.cameraZoom;
-        const cameraX = Math.sin(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
-        const cameraY = Math.sin(this.cameraRotation.x) * distance;
-        const cameraZ = Math.cos(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
-        
-        // Create new position vector
-        const newPosition = new THREE.Vector3(
-            cameraX + this.initialLookAtPosition.x,
-            cameraY + this.initialLookAtPosition.y,
-            cameraZ + this.initialLookAtPosition.z
-        );
-        
-        // Update camera position
-        if (this.camera.moveTo) {
-            this.camera.moveTo(newPosition, this.initialLookAtPosition, 0.2);
-        }
-    }
-
-    /* Calcula la rotación tipo trackball basada en movimientos del puntero
-    * @param {Number} currentX - Posición X actual del cursor
-    * @param {Number} currentY - Posición Y actual del cursor
-    */
-   calculateTrackballRotation(currentX, currentY) {
-       if (!this.trackballActive) return;
-       
-       const currentItem = this.getCurrentItem();
-       if (!currentItem || !currentItem.handleTrackballRotation) return;
-       
-       // Calcular delta desde el punto anterior
-       const deltaX = currentX - this.trackballPrevious.x;
-       const deltaY = currentY - this.trackballPrevious.y;
-       
-       // Actualizar posición previa
-       this.trackballPrevious.x = currentX;
-       this.trackballPrevious.y = currentY;
-       
-       // Si no hay suficiente movimiento, salir
-       if (Math.abs(deltaX) < 1.0 && Math.abs(deltaY) < 1.0) return;
-       
-       // Tamaño de la pantalla para normalización
-       const width = this.sizes.width;
-       const height = this.sizes.height;
-       
-       // Sensibilidad ajustable
-       const rotationSpeed = 4.0;
-       
-       // Calcular eje de rotación perpendicular al movimiento del cursor
-       // Esto hace que el objeto gire como si estuvieras "arrastrando" su superficie
-       this.trackballAxis.set(
-           deltaY / height * rotationSpeed,
-           deltaX / width * rotationSpeed,
-           0
-       ).normalize();
-       
-       // Calcular ángulo de rotación basado en la distancia recorrida
-       const angle = Math.sqrt(deltaX * deltaX + deltaY * deltaY) * 0.01;
-       
-       // Crear quaternion de rotación
-       this.trackballQuaternion.setFromAxisAngle(this.trackballAxis, angle);
-       
-       // Aplicar rotación al modelo
-       currentItem.handleTrackballRotation(this.trackballQuaternion);
-       
-       // Calcular momentum para inercia
-       this.momentum.x = deltaX * 0.01;
-       this.momentum.y = deltaY * 0.01;
-   }
-   
-    
-    /**
-     * Apply zoom based on pinch/wheel
-     */
-    applyZoom() {
-        if (!this.camera) return;
-        
-        // Calculate zoom factor
-        const zoomFactor = this.pinchDelta * this.zoomSensitivity;
-        
-        // Calculate target zoom with limits
-        const targetZoom = Math.max(
-            this.minDistance / this.defaultDistance,
-            Math.min(
-                this.maxDistance / this.defaultDistance,
-                this.cameraZoom - zoomFactor
-            )
-        );
-        
-        // Smooth transition to target zoom
-        this.cameraZoom = THREE.MathUtils.lerp(this.cameraZoom, targetZoom, 0.2);
-        
-        // Reset pinch delta
-        this.pinchDelta = 0;
-        
-        // Apply zoom by updating camera position
-        this.applyTouchRotation();
-    }
-    
-    // Reemplaza la función de pinch zoom existente por esta mejorada
     handlePinchZoom(event) {
         if (!this.isActive || !this.isZooming) return;
         
-        // Calcular distancia actual entre dedos
+        // Calculate current distance between fingers
         const touch1 = event.touches[0];
         const touch2 = event.touches[1];
         const dx = touch1.clientX - touch2.clientX;
         const dy = touch1.clientY - touch2.clientY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Si es el primer evento, inicializar
+        // If it's the first event, initialize
         if (this.pinchStart === 0) {
             this.pinchStart = distance;
             this.zoomConfig.zoomStartValue = this.zoomConfig.currentZoom;
             return;
         }
         
-        // Calcular factor de zoom basado en la diferencia de distancia
+        // Calculate zoom factor based on distance difference
         const pinchRatio = distance / this.pinchStart;
         const zoomDelta = (pinchRatio - 1) * this.zoomConfig.pinchSpeed;
         
-        // Aplicar zoom basado en el movimiento de pellizco
+        // Apply zoom based on pinch movement
         const newZoom = this.zoomConfig.zoomStartValue * (1 + zoomDelta * 20);
         
-        // Limitar al min/max zoom
+        // Limit to min/max zoom
         this.zoomConfig.targetZoom = Math.max(
             this.zoomConfig.minZoom,
             Math.min(this.zoomConfig.maxZoom, newZoom)
         );
         
-        // Calcular el centro del pellizco para hacer zoom hacia ese punto
+        // Calculate the pinch center for zooming towards that point
         const centerX = (touch1.clientX + touch2.clientX) / 2;
         const centerY = (touch1.clientY + touch2.clientY) / 2;
         
         this.zoomConfig.zoomCenter.x = (centerX / window.innerWidth) * 2 - 1;
         this.zoomConfig.zoomCenter.y = -((centerY / window.innerHeight) * 2 - 1);
         
-        // Iniciar animación de zoom
+        // Start zoom animation
         this.startZoomAnimation();
         
-        // Emitir evento de cambio de zoom
+        // Emit zoom change event
         this.emit('zoomChange', this.zoomConfig.targetZoom);
         
-        // Mostrar indicador de zoom en pantalla
+        // Show zoom indicator on screen
         this.showZoomIndicator(this.zoomConfig.targetZoom);
     }
 
-    // Nueva función para iniciar la animación de zoom
+    // Function to start zoom animation
     startZoomAnimation() {
-        // Marcar que hay un zoom en progreso
+        // Mark that zoom is in progress
         this.zoomConfig.zoomInProgress = true;
         
-        // Cancelar animación anterior si existe
+        // Cancel previous animation if exists
         if (this.zoomConfig.zoomAnimation) {
             cancelAnimationFrame(this.zoomConfig.zoomAnimation);
         }
         
-        // Función para la animación del zoom
+        // Function for zoom animation
         const animateZoom = () => {
-            // Calcular interpolación suave entre zoom actual y objetivo
+            // Calculate smooth interpolation between current and target zoom
             this.zoomConfig.currentZoom += (this.zoomConfig.targetZoom - this.zoomConfig.currentZoom) 
                 * this.zoomConfig.zoomSmoothness;
             
-            // Actualizar la cámara basado en el nuevo zoom
+            // Update camera based on new zoom
             this.updateCameraZoom();
             
-            // Continuar la animación si aún no estamos lo suficientemente cerca del objetivo
+            // Continue animation if we're not close enough to the target
             if (Math.abs(this.zoomConfig.currentZoom - this.zoomConfig.targetZoom) > 0.001) {
                 this.zoomConfig.zoomAnimation = requestAnimationFrame(animateZoom);
             } else {
-                // Finalizar la animación
+                // Finalize animation
                 this.zoomConfig.zoomInProgress = false;
                 this.zoomConfig.currentZoom = this.zoomConfig.targetZoom;
                 this.updateCameraZoom();
             }
         };
         
-        // Iniciar la animación
+        // Start animation
         this.zoomConfig.zoomAnimation = requestAnimationFrame(animateZoom);
     }
 
-    // Nueva función para actualizar la cámara durante el zoom
+    // Function to update camera during zoom
     updateCameraZoom() {
         if (!this.camera) return;
         
-        // Obtener factor de zoom relativo al valor predeterminado
+        // Get zoom factor relative to default value
         const zoomFactor = this.zoomConfig.currentZoom / this.zoomConfig.defaultZoom;
         
-        // Calcular distancia basada en el zoom
-        const distance = this.defaultDistance / zoomFactor;
+        // Store the new zoom level
+        this.cameraZoom = 1 / zoomFactor;
         
-        // Posición actual de la cámara
-        const cameraPos = new THREE.Vector3();
-        this.camera.instance.getWorldPosition(cameraPos);
-        
-        // Dirección de la cámara
-        const cameraDir = new THREE.Vector3();
-        this.camera.instance.getWorldDirection(cameraDir);
-        
-        // Calcular nueva posición basada en zoom y centro
-        let newPosition;
-        
-        if (this.zoomConfig.zoomCenterObject) {
-            // Zoom hacia un objeto específico
-            const targetPos = new THREE.Vector3();
-            this.zoomConfig.zoomCenterObject.getWorldPosition(targetPos);
-            
-            // Calcular dirección hacia el objeto
-            const direction = new THREE.Vector3()
-                .subVectors(targetPos, cameraPos)
-                .normalize();
-            
-            // Nueva posición
-            newPosition = new THREE.Vector3()
-                .copy(targetPos)
-                .sub(direction.multiplyScalar(distance));
-        } else {
-            // Zoom normal
-            const cameraX = Math.sin(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
-            const cameraY = Math.sin(this.cameraRotation.x) * distance;
-            const cameraZ = Math.cos(this.cameraRotation.y) * Math.cos(this.cameraRotation.x) * distance;
-            
-            newPosition = new THREE.Vector3(
-                cameraX + this.initialLookAtPosition.x,
-                cameraY + this.initialLookAtPosition.y,
-                cameraZ + this.initialLookAtPosition.z
-            );
-        }
-        
-        // Aplicar la nueva posición con movimiento suave
-        if (this.camera.moveTo) {
-            // Duración más corta para que se sienta más responsivo
-            const duration = 0.15;
-            this.camera.moveTo(newPosition, this.initialLookAtPosition, duration);
-        }
+        // Update camera position
+        this.updateCameraPosition();
     }
 
-    // Mostrar indicador de nivel de zoom en pantalla
+    // Show zoom level indicator on screen
     showZoomIndicator(zoomLevel) {
-        // Verificar si el UI existe
+        // Check if UI exists
         if (!this.ui) return;
         
-        // Calcular porcentaje de zoom
+        // Calculate zoom percentage
         const zoomPercent = Math.round(zoomLevel * 100);
         
-        // Mostrar hint con el nivel de zoom
+        // Show hint with zoom level
         this.showGestureHint(`Zoom: ${zoomPercent}%`);
     }
 
-    // Nuevo método para hacer zoom hacia un objeto específico (llamado cuando se da doble click)
+    // Method to zoom towards a specific object (called on double click)
     zoomToObject(object, targetZoom = null) {
         if (!object || !this.camera) return;
         
-        // Guardar objeto como centro de zoom
+        // Save object as zoom center
         this.zoomConfig.zoomCenterObject = object;
         
-        // Establecer nivel de zoom, o usar 2.5x como predeterminado
+        // Set zoom level, or use 2.5x as default
         this.zoomConfig.targetZoom = targetZoom || 2.5;
         
-        // Iniciar animación
+        // Start animation
         this.startZoomAnimation();
         
-        // Emitir evento de zoom
+        // Emit zoom event
         this.emit('zoomChange', this.zoomConfig.targetZoom);
         
-        // Mostrar indicador
+        // Show indicator
         this.showZoomIndicator(this.zoomConfig.targetZoom);
         
-        // Cancelar el centro de zoom después de completar la animación
+        // Clear zoom center after animation completes
         setTimeout(() => {
             this.zoomConfig.zoomCenterObject = null;
         }, 1000);
     }
-
-
-
     
     /**
      * Navigate to the next item
@@ -979,9 +918,10 @@ export class Controls {
      */
     resetCameraViewHorizontal(direction) {
         // Reset rotation and zoom
-        this.cameraRotation = { x: 0, y: 0 };
+        this.currentRotation.identity();
+        this.targetRotation.identity();
         this.cameraZoom = 1;
-        this.momentum = { x: 0, y: 0 };
+        this.rotationVelocity.set(0, 0);
         
         // Emit event for world to transition the artwork
         this.emit('horizontalTransition', direction);
@@ -1000,9 +940,10 @@ export class Controls {
      * Reset camera to default view
      */
     resetCameraView() {
-        this.cameraRotation = { x: 0, y: 0 };
+        this.currentRotation.identity();
+        this.targetRotation.identity();
         this.cameraZoom = 1;
-        this.momentum = { x: 0, y: 0 };
+        this.rotationVelocity.set(0, 0);
         
         if (this.camera && this.camera.moveTo) {
             this.camera.moveTo(
@@ -1061,33 +1002,46 @@ export class Controls {
     }
     
     /**
-     * Apply momentum effect for smoother camera movement
+     * Apply momentum effect for smoother rotation
      */
     applyMomentum() {
         if (!this.isInertiaActive || this.isDragging) return;
         
-        // Reduce momentum over time
-        this.momentum.x *= this.dampingFactor;
-        this.momentum.y *= this.dampingFactor;
+        // Only apply momentum if there's significant velocity
+        const velocityMagnitude = this.rotationVelocity.length();
+        if (velocityMagnitude < 0.001) return;
         
-        // Only apply if momentum is significant
-        if (Math.abs(this.momentum.x) < 0.01 && Math.abs(this.momentum.y) < 0.01) return;
+        // Reduce velocity over time (damping)
+        this.rotationVelocity.multiplyScalar(this.damping);
         
-        // Apply momentum to rotation
-        this.cameraRotation.y += this.momentum.x * this.rotationSensitivity * 2;
-        this.cameraRotation.x += this.momentum.y * this.rotationSensitivity * 2;
+        // Create movement vector for trackball
+        const movement = this.rotationVelocity.clone();
         
-        // Limit vertical rotation
-        this.cameraRotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.cameraRotation.x));
+        // Create start and end points for trackball rotation
+        const center = { x: this.sizes.width / 2, y: this.sizes.height / 2 };
+        const startPoint = this.projectOntoSphere(center.x, center.y);
+        const endPoint = this.projectOntoSphere(center.x + movement.x * 100, center.y + movement.y * 100);
+        
+        // Calculate rotation from these points
+        const momentumRotation = this.getRotationBetweenVectors(startPoint, endPoint);
+        
+        // Apply rotation
+        this.currentRotation.multiplyQuaternions(momentumRotation, this.currentRotation);
         
         // Update camera position
-        this.applyTouchRotation();
+        this.updateCameraPosition();
     }
     
     /**
      * Update controls on each frame
      */
     update() {
+        // Smoothly interpolate between current and target rotation
+        if (!this.isDragging && !this.currentRotation.equals(this.targetRotation)) {
+            this.currentRotation.slerp(this.targetRotation, 0.1);
+            this.updateCameraPosition();
+        }
+        
         // Apply momentum effect for smooth deceleration
         this.applyMomentum();
     }

@@ -32,6 +32,13 @@ export class ArtworkItem {
         this.isAnimating = false;
         this.rotationSpeed = 0.005;
         
+        // Trackball rotation properties
+        this.currentRotation = new THREE.Quaternion();
+        this.targetRotation = new THREE.Quaternion();
+        this.rotationVelocity = new THREE.Vector2(0, 0);
+        this.rotationDamping = 0.985; // Increased from 0.95 for more persistent rotation
+        this.rotationSensitivity = 2.5; // Increased sensitivity for more dramatic rotation
+        
         // Setup
         this.container = new THREE.Group();
         this.container.name = this.name;
@@ -39,8 +46,6 @@ export class ArtworkItem {
         this.container.rotation.copy(this.rotation);
         this.container.scale.copy(this.scale);
         this.container.visible = false;
-
-
         
         this.scene.add(this.container);
         
@@ -82,6 +87,47 @@ export class ArtworkItem {
         this.mesh = this.modelScene; // For consistency with effects methods
         
         console.log(`GLB model loaded for ${this.name}`);
+    }
+    
+    /**
+     * Apply trackball rotation to the item
+     * @param {THREE.Quaternion} rotationDelta - Rotation to apply
+     * @param {THREE.Vector2} velocity - Velocity for momentum
+     */
+    applyTrackballRotation(rotationDelta, velocity) {
+        if (!this.isVisible || !this.modelScene) return;
+        
+        // Amplify velocity dramatically for much stronger effect
+        this.rotationVelocity.x = velocity.x * 15.0;
+        this.rotationVelocity.y = velocity.y * 15.0;
+        
+        // DIRECT ROTATION: Apply rotation directly to the model
+        // Create rotation matrices based on mouse/touch movement
+        const rotationX = new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0, 1, 0),
+            -velocity.x * 5.0
+        );
+        
+        const rotationY = new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(1, 0, 0),
+            velocity.y * 5.0
+        );
+        
+        // Apply rotation directly
+        this.currentRotation.multiply(rotationX).multiply(rotationY);
+        this.targetRotation.copy(this.currentRotation);
+        
+        // Apply rotation directly to modelScene
+        this.modelScene.quaternion.copy(this.currentRotation);
+        
+        // Disable auto-rotation when user interacts
+        this.isAnimating = false;
+        
+        // Keep rotation going for a long time
+        clearTimeout(this.animationTimeout);
+        this.animationTimeout = setTimeout(() => {
+            this.isAnimating = true;
+        }, 30000); // Extended to 30 seconds to essentially prevent auto-rotation
     }
     
     /**
@@ -252,49 +298,46 @@ export class ArtworkItem {
         this.particles = starGroup;
     }
     
-        /**
-         * Método para restablecer las estrellas a sus posiciones originales
-         * Añadir este método a la clase ArtworkItem
-         */
-        resetParticles() {
-            if (!this.particles) return;
-            
-            this.particles.children.forEach(child => {
-                if (child.isMesh) {
-                    // Restaurar opacidad original
-                    child.material.opacity = child.userData.originalOpacity;
-                    
-                    // Resetear posición si tiene una guardada
-                    if (child.userData.originalPosition) {
-                        child.position.x = child.userData.originalPosition.x;
-                        child.position.y = child.userData.originalPosition.y;
-                        child.position.z = child.userData.originalPosition.z;
-                    }
-                }
-                else if (child.isLine) {
-                    // Restaurar opacidad de las líneas
-                    child.material.opacity = child.userData.originalOpacity;
-                    
-                    // Actualizar puntos de la línea
-                    if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
-                        const star1 = this.particles.children[child.userData.star1];
-                        const star2 = this.particles.children[child.userData.star2];
-                        
-                        if (star1 && star2) {
-                            const points = [
-                                star1.position.clone(),
-                                star2.position.clone()
-                            ];
-                            
-                            child.geometry.setFromPoints(points);
-                            child.geometry.attributes.position.needsUpdate = true;
-                        }
-                    }
-                }
-            });
-        }
+    /**
+     * Método para restablecer las estrellas a sus posiciones originales
+     */
+    resetParticles() {
+        if (!this.particles) return;
         
-    
+        this.particles.children.forEach(child => {
+            if (child.isMesh) {
+                // Restaurar opacidad original
+                child.material.opacity = child.userData.originalOpacity;
+                
+                // Resetear posición si tiene una guardada
+                if (child.userData.originalPosition) {
+                    child.position.x = child.userData.originalPosition.x;
+                    child.position.y = child.userData.originalPosition.y;
+                    child.position.z = child.userData.originalPosition.z;
+                }
+            }
+            else if (child.isLine) {
+                // Restaurar opacidad de las líneas
+                child.material.opacity = child.userData.originalOpacity;
+                
+                // Actualizar puntos de la línea
+                if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
+                    const star1 = this.particles.children[child.userData.star1];
+                    const star2 = this.particles.children[child.userData.star2];
+                    
+                    if (star1 && star2) {
+                        const points = [
+                            star1.position.clone(),
+                            star2.position.clone()
+                        ];
+                        
+                        child.geometry.setFromPoints(points);
+                        child.geometry.attributes.position.needsUpdate = true;
+                    }
+                }
+            }
+        });
+    }
     
     /**
      * Show the item with optional transition effect
@@ -305,11 +348,12 @@ export class ArtworkItem {
         
         // Reset position and rotation
         this.container.position.copy(this.position);
-        this.container.rotation.copy(this.rotation);
-
-        this.rotationQuaternion = new THREE.Quaternion();
-        this.rotationQuaternion.setFromEuler(this.container.rotation);
-        this.targetRotationQuaternion = this.rotationQuaternion.clone();
+        
+        // Reset trackball rotation
+        this.currentRotation.identity();
+        this.targetRotation.identity();
+        this.modelScene.quaternion.identity();
+        
         // Apply special entrance effect for horizontal transitions
         if (direction) {
             // Apply entrance effect based on direction
@@ -335,14 +379,6 @@ export class ArtworkItem {
         
         // Start animation
         this.isAnimating = true;
-
-        if (this.world && this.world.experience && 
-            this.world.experience.ui && 
-            this.world.experience.ui.showGestureHint) {
-            setTimeout(() => {
-                this.world.experience.ui.showGestureHint("Arrastra para rotar");
-            }, 2000);
-        }
     }
     
     /**
@@ -358,43 +394,55 @@ export class ArtworkItem {
      * Update item on each frame
      */
     update() {
-        if (!this.isVisible) return;
+        if (!this.isVisible || !this.modelScene) return;
         
-        // Rotate item
+        // Apply auto-rotation if active (less important now)
         if (this.isAnimating) {
-            // Rotación automática - más lenta para un efecto más sutil
-            this.container.rotation.y += this.rotationSpeed * 0.7;
-        } 
-        else if (this.targetRotationQuaternion) {
-            // Factor de suavizado
-            const smoothFactor = 0.1;
+            // Create a rotation about the Y axis (reduced speed)
+            const autoRotation = new THREE.Quaternion().setFromAxisAngle(
+                new THREE.Vector3(0, 1, 0), 
+                this.rotationSpeed * 0.5
+            );
             
-            // Crear quaternion temporal para SLERP (interpolación esférica)
-            const tempQuaternion = new THREE.Quaternion();
-            tempQuaternion.setFromEuler(this.container.rotation);
-            
-            // Interpolar suavemente hacia la rotación objetivo
-            tempQuaternion.slerp(this.targetRotationQuaternion, smoothFactor);
-            
-            // Aplicar la rotación interpolada
-            this.container.quaternion.copy(tempQuaternion);
+            // Apply to current rotation
+            this.currentRotation.multiplyQuaternions(autoRotation, this.currentRotation);
         }
-        // Interpolación suave hacia la rotación objetivo si existe
-        else if (this.targetRotation) {
-            // Factor de suavizado (valor bajo = más suave)
-            const smoothFactor = 0.08;
+        
+        // POWERFUL MOMENTUM: Apply strong continuous rotation based on velocity
+        if (!this.isAnimating && (Math.abs(this.rotationVelocity.x) > 0.00001 || Math.abs(this.rotationVelocity.y) > 0.00001)) {
+            // Create X and Y rotations directly from velocity components
+            const rotX = new THREE.Quaternion().setFromAxisAngle(
+                new THREE.Vector3(1, 0, 0),
+                this.rotationVelocity.y * 0.1
+            );
             
-            // Aplicar interpolación para movimiento suave
-            this.container.rotation.x += (this.targetRotation.x - this.container.rotation.x) * smoothFactor;
-            this.container.rotation.y += (this.targetRotation.y - this.container.rotation.y) * smoothFactor;
+            const rotY = new THREE.Quaternion().setFromAxisAngle(
+                new THREE.Vector3(0, 1, 0),
+                -this.rotationVelocity.x * 0.1
+            );
+            
+            // Apply rotations directly to the current rotation
+            this.currentRotation.multiply(rotY).multiply(rotX);
+            
+            // Apply directly to the model with no interpolation
+            this.modelScene.quaternion.copy(this.currentRotation);
+            
+            // Very slow damping (0.995 is almost no damping)
+            this.rotationVelocity.x *= 0.995;
+            this.rotationVelocity.y *= 0.995;
+            
+            // Only stop at extremely low values
+            if (Math.abs(this.rotationVelocity.x) < 0.00001) this.rotationVelocity.x = 0;
+            if (Math.abs(this.rotationVelocity.y) < 0.00001) this.rotationVelocity.y = 0;
+            
+            // Debug
+            console.log(`Rotation velocity: ${this.rotationVelocity.x.toFixed(5)}, ${this.rotationVelocity.y.toFixed(5)}`);
+        } else {
+            // If no active rotation, just apply current rotation to model
+            this.modelScene.quaternion.copy(this.currentRotation);
         }
         
         // Update particles
-        /**
- * Método para actualizar las estrellas de cada obra
- * Reemplaza la sección de update() en ArtworkItem que maneja partículas
- */
-// Update particles
         if (this.particles) {
             const time = Date.now() / 1000; // tiempo en segundos
             
@@ -473,145 +521,41 @@ export class ArtworkItem {
     }
     
     /**
-     * Handle manual rotation for the model
+     * Handle trackball rotation for the model
+     * This is a compatibility method to support old code
      * @param {Number} deltaX - Horizontal movement
      * @param {Number} deltaY - Vertical movement
      */
     handleManualRotation(deltaX, deltaY) {
-        if (!this.isVisible) return;
-        
-        const rotYFactor = 0.005;
-        const rotXFactor = 0.005;
-
-        if (!this.targetRotation) {
-            this.targetRotation = {
-                x: this.container.rotation.x,
-                y: this.container.rotation.y
-            };
-        }
-        
-        this.targetRotation.y += deltaX * rotYFactor;
-
-        const newRotX = this.targetRotation.x + deltaY * rotXFactor;
-        this.targetRotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, newRotX));
-        
-        // Desactivar animación automática mientras el usuario interactúa
+        console.warn('handleManualRotation is deprecated. Use applyTrackballRotation instead.');
         this.isAnimating = false;
         
-        // Reiniciar animación después de una pausa en la interacción
+        // Create rotation from delta movement
+        const rotationX = new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0, 1, 0),
+            deltaX * 0.01
+        );
+        
+        const rotationY = new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(1, 0, 0),
+            deltaY * 0.01
+        );
+        
+        // Apply rotation
+        this.currentRotation.multiply(rotationX).multiply(rotationY);
+        this.targetRotation.copy(this.currentRotation);
+        
+        // Apply rotation to model
+        if (this.modelScene) {
+            this.modelScene.quaternion.copy(this.currentRotation);
+        }
+        
+        // Restart animation after a pause
         clearTimeout(this.animationTimeout);
         this.animationTimeout = setTimeout(() => {
             this.isAnimating = true;
-        }, 5000);
+        }, 3000);
     }
-
-    // Añadir un nuevo método para manejar la inercia después de la rotación
-    /**
-     * Apply inertia effect after manual rotation
-     * @param {Number} momentumX - Horizontal momentum
-     * @param {Number} momentumY - Vertical momentum
-     */
-    applyInertia(momentumX, momentumY) {
-        if (!this.isVisible) return;
-        
-        // Inicializar inercia si no existe
-        if (!this.inertia) {
-            this.inertia = { x: 0, y: 0 };
-        }
-        
-        // Aplicar momentum como inercia inicial
-        this.inertia.x = momentumX * 0.2;
-        this.inertia.y = momentumY * 0.2;
-        
-        // Detener cualquier animación de inercia previa
-        if (this.inertiaInterval) {
-            clearInterval(this.inertiaInterval);
-        }
-        
-        // Actualizar targetRotation con inercia que se desvanece
-        this.inertiaInterval = setInterval(() => {
-            if (Math.abs(this.inertia.x) < 0.001 && Math.abs(this.inertia.y) < 0.001) {
-                clearInterval(this.inertiaInterval);
-                this.inertiaInterval = null;
-                return;
-            }
-            
-            if (this.targetRotationQuaternion) {
-                // Crear eje para inercia (perpendicular al movimiento)
-                const axis = new THREE.Vector3(this.inertia.y, this.inertia.x, 0).normalize();
-                const inertiaQuaternion = new THREE.Quaternion();
-                
-                this.inertiaInterval = setInterval(() => {
-                    if (Math.abs(this.inertia.x) < 0.001 && Math.abs(this.inertia.y) < 0.001) {
-                        clearInterval(this.inertiaInterval);
-                        this.inertiaInterval = null;
-                        return;
-                    }
-                    
-                    // Calcular ángulo para inercia
-                    const angle = Math.sqrt(this.inertia.x * this.inertia.x + this.inertia.y * this.inertia.y) * 0.1;
-                    
-                    // Crear quaternion de inercia
-                    inertiaQuaternion.setFromAxisAngle(axis, angle);
-                    
-                    // Aplicar al quaternion de rotación objetivo
-                    if (this.targetRotationQuaternion) {
-                        this.targetRotationQuaternion.premultiply(inertiaQuaternion);
-                    }
-                    
-                    // Reducir inercia gradualmente - factor de amortiguación
-                    this.inertia.x *= 0.93;
-                    this.inertia.y *= 0.93;
-                }, 16);
-            }
-            if (this.targetRotation) {
-                this.targetRotation.y += this.inertia.x;
-                
-                const newRotX = this.targetRotation.x + this.inertia.y;
-                this.targetRotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, newRotX));
-            }
-            
-            // Reducir inercia gradualmente - factor de amortiguación
-            this.inertia.x *= 0.93; // Un valor más cercano a 1 = más deslizamiento
-            this.inertia.y *= 0.93;
-        }, 16); // Aproximadamente 60fps
-    }
-
-    /**
- * Handle trackball rotation from pointer movement
- * @param {THREE.Quaternion} quaternion - Quaternion representing rotation
- */
-handleTrackballRotation(quaternion) {
-    if (!this.isVisible) return;
-    
-    // Asegurarnos de que tengamos un quaternion de rotación
-    if (!this.rotationQuaternion) {
-        this.rotationQuaternion = new THREE.Quaternion();
-        this.rotationQuaternion.setFromEuler(this.container.rotation);
-    }
-    
-    // Calcular nueva rotación
-    // Multiplicamos el quaternion actual por el nuevo para acumular rotaciones
-    this.rotationQuaternion.premultiply(quaternion);
-    
-    // Configurar rotación como target para animación suave
-    if (!this.targetRotationQuaternion) {
-        this.targetRotationQuaternion = new THREE.Quaternion();
-    }
-    
-    // Copiar al quaternion objetivo para animación suave
-    this.targetRotationQuaternion.copy(this.rotationQuaternion);
-    
-    // Desactivar animación automática mientras el usuario interactúa
-    this.isAnimating = false;
-    
-    // Reiniciar animación después de una pausa en la interacción
-    clearTimeout(this.animationTimeout);
-    this.animationTimeout = setTimeout(() => {
-        this.isAnimating = true;
-    }, 5000); // Tiempo antes de reanudar la animación automática
-}
-
     
     /**
      * Clean up and destroy resources
@@ -620,16 +564,6 @@ handleTrackballRotation(quaternion) {
         // Remove from scene
         if (this.container.parent) {
             this.container.parent.remove(this.container);
-        }
-
-        if (this.inertiaInterval) {
-            clearInterval(this.inertiaInterval);
-            this.inertiaInterval = null;
-        }
-
-        if (this.animationTimeout) {
-            clearTimeout(this.animationTimeout);
-            this.animationTimeout = null;
         }
         
         // Dispose of GLB model
