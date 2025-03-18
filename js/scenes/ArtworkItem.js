@@ -88,8 +88,15 @@ export class ArtworkItem {
         this.container.add(this.modelScene);
         this.mesh = this.modelScene; // For consistency with effects methods
 
+        // Inicializar el controlador de rotación con configuración específica
         this.rotationController = new EnhancedRotation(this.world.experience, this.modelScene);
-
+        // Ajustes específicos para experiencia móvil
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            // En móviles, hacer que la rotación sea más suave
+            this.rotationController.config.sensitivity = 1.2; // Mayor sensibilidad para pantallas táctiles
+            this.rotationController.config.damping = 0.99; // Mayor inercia
+            this.rotationController.config.autoRotateSpeed = 0.7; // Rotación auto más lenta
+        }
         
         console.log(`GLB model loaded for ${this.name}`);
     }
@@ -102,6 +109,13 @@ export class ArtworkItem {
     applyTrackballRotation(rotationDelta, velocity) {
         if (!this.isVisible || !this.modelScene) return;
         
+        // Si tenemos un controlador de rotación, delegar a él
+        if (this.rotationController) {
+            // No necesitamos hacer nada aquí, EnhancedRotation lo maneja todo
+            return;
+        }
+        
+        // Código de respaldo para compatibilidad con versiones anteriores
         // Amplify velocity dramatically for much stronger effect
         this.rotationVelocity.x = velocity.x * 10.0;
         this.rotationVelocity.y = velocity.y * 10.0;
@@ -127,12 +141,6 @@ export class ArtworkItem {
         
         // Disable auto-rotation when user interacts
         this.isAnimating = false;
-        
-        // Keep rotation going for a long time
-        clearTimeout(this.animationTimeout);
-        this.animationTimeout = setTimeout(() => {
-            this.isAnimating = true;
-        }, 30000); // Extended to 30 seconds to essentially prevent auto-rotation
     }
     
     /**
@@ -354,9 +362,21 @@ export class ArtworkItem {
         // Reset position and rotation
         this.container.position.copy(this.position);
         
-        // Reset trackball rotation
+        // Reset trackball rotation y reiniciar autorotación
         if (this.rotationController) {
             this.rotationController.startAutoRotation();
+            
+            // Si estamos en móvil, ajustar propiedades específicas para mejorar experiencia
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                // Mostrar tutorial de rotación al mostrar una nueva pieza
+                if (this.world.experience.ui && 
+                    this.world.experience.ui.showGestureHint) {
+                    // Mostrar rotación después de un breve retardo
+                    setTimeout(() => {
+                        this.world.experience.ui.showGestureHint("Desliza para rotar");
+                    }, 1000);
+                }
+            }
         }
         
         // Apply special entrance effect for horizontal transitions
@@ -405,12 +425,12 @@ export class ArtworkItem {
     update() {
         if (!this.isVisible || !this.modelScene) return;
 
+        // Actualizar el controlador de rotación mejorado
         if (this.rotationController) {
             this.rotationController.update();
         }
-        
-        // Apply auto-rotation if active (less important now)
-        /*else if (this.isAnimating) {
+        // Código heredado para compatibilidad con versiones anteriores
+        else if (this.isAnimating) {
             // Create a rotation about the Y axis (reduced speed)
             const autoRotation = new THREE.Quaternion().setFromAxisAngle(
                 new THREE.Vector3(0, 1, 0), 
@@ -419,41 +439,10 @@ export class ArtworkItem {
             
             // Apply to current rotation
             this.currentRotation.multiplyQuaternions(autoRotation, this.currentRotation);
-        }*/
-        
-        // POWERFUL MOMENTUM: Apply strong continuous rotation based on velocity
-        /*if (!this.isAnimating && (Math.abs(this.rotationVelocity.x) > 0.00001 || Math.abs(this.rotationVelocity.y) > 0.00001)) {
-            // Create X and Y rotations directly from velocity components
-            const rotX = new THREE.Quaternion().setFromAxisAngle(
-                new THREE.Vector3(1, 0, 0),
-                this.rotationVelocity.y * 0.1
-            );
             
-            const rotY = new THREE.Quaternion().setFromAxisAngle(
-                new THREE.Vector3(0, 1, 0),
-                -this.rotationVelocity.x * 0.1
-            );
-            
-            // Apply rotations directly to the current rotation
-            this.currentRotation.multiply(rotY).multiply(rotX);
-            
-            // Apply directly to the model with no interpolation
+            // Apply to model
             this.modelScene.quaternion.copy(this.currentRotation);
-            
-            // Very slow damping (0.995 is almost no damping)
-            this.rotationVelocity.x *= 0.995;
-            this.rotationVelocity.y *= 0.995;
-            
-            // Only stop at extremely low values
-            if (Math.abs(this.rotationVelocity.x) < 0.00001) this.rotationVelocity.x = 0;
-            if (Math.abs(this.rotationVelocity.y) < 0.00001) this.rotationVelocity.y = 0;
-            
-            // Debug
-            console.log(`Rotation velocity: ${this.rotationVelocity.x.toFixed(5)}, ${this.rotationVelocity.y.toFixed(5)}`);
-        } else {
-            // If no active rotation, just apply current rotation to model
-            this.modelScene.quaternion.copy(this.currentRotation);
-        }*/
+        }
         
         // Update particles
         if (this.particles) {
@@ -595,6 +584,7 @@ export class ArtworkItem {
             });
         }
 
+        // Limpiar el controlador de rotación
         if (this.rotationController) {
             this.rotationController.destroy();
             this.rotationController = null;
