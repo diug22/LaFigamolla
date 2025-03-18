@@ -497,6 +497,30 @@ button.zoom-button:hover {
     pointer-events: auto;
 }
 
+info-button {
+    background: none;
+    border: none;
+    color: #e4e3d3;
+    font-size: 16px;
+    cursor: pointer;
+    pointer-events: auto;
+    padding: 0;
+    text-transform: none; /* Eliminamos el text-transform para mantener el estilo original */
+    font-weight: 300;
+    letter-spacing: 1px;
+    transition: color 0.3s ease;
+}
+
+.info-button:hover {
+    color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    .info-button {
+        font-size: 14px;
+    }
+}
+
 @media (max-width: 768px) {
     .info-panel {
         bottom: 70px;

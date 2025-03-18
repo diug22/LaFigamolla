@@ -1,5 +1,5 @@
 /**
- * Main Experience class
+ * Main Experience class - Updated version for Laqueno
  * Manages the entire 3D experience including renderer, camera, scenes, and UI
  */
 
@@ -32,6 +32,9 @@ export class Experience {
         // Create the scene FIRST - before any components that depend on it
         this.scene = new THREE.Scene();
         console.log('Scene created');
+        
+        // Set the scene background color to match Laqueno theme
+        this.scene.background = new THREE.Color('#2b2e1f');
         
         // Initialize components
         this.sizes = new Sizes();
@@ -97,7 +100,8 @@ export class Experience {
         const resources = [
             { name: 'obj', type: 'glb', path: 'public/models/obra.glb' },
             { name: 'obj2', type: 'glb', path: 'public/models/obra2.glb' },
-            { name: 'lamina1', type: 'glb', path: 'public/models/lamina1.glb' }        ];
+            { name: 'lamina1', type: 'glb', path: 'public/models/lamina1.glb' }
+        ];
         
         // Start loading
         this.resources.load(resources);

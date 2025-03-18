@@ -71,15 +71,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }, 500);
     });
     
-    // Setup contact button
-    document.getElementById('contact-button').addEventListener('click', () => {
-        document.getElementById('contact-panel').classList.add('active');
-    });
-    
-    // Setup close contact button
-    document.getElementById('close-contact').addEventListener('click', () => {
-        document.getElementById('contact-panel').classList.remove('active');
-    });
+
     
     // Initial setup - show instructions after a short delay
     setTimeout(() => {

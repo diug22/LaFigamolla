@@ -1,5 +1,5 @@
 /**
- * World class
+ * World class - Updated for Laqueno
  * Manages the 3D world and all artwork objects
  */
 
@@ -52,16 +52,16 @@ export class World {
      */
     setupEnvironment() {
         // Set background color
-        this.scene.background = new THREE.Color('#050810');
+        this.scene.background = new THREE.Color('#2b2e1f'); // Laqueno theme color
         
         // Add subtle fog
-        this.scene.fog = new THREE.FogExp2('#050810', 0.035);
+        this.scene.fog = new THREE.FogExp2('#2b2e1f', 0.035);
         
         // Create environment group
         this.environment = new THREE.Group();
         this.scene.add(this.environment);
         
-        // Add ambient particles
+        // Add ambient particles - moved to the right side
         this.addAmbientParticles();
     }
 
@@ -69,16 +69,16 @@ export class World {
      * Animate particles for transitions between artworks
      */
     animateParticlesForHorizontalNavigation(direction) {
-        // Solo continuar si tenemos constelaciones
+        // Only continue if we have constellations
         if (!this.particles) return;
         
-        console.log(`Animando constelaciones para navegación horizontal ${direction}`);
+        console.log(`Animating constellations for horizontal navigation ${direction}`);
         
-        // Velocidad y dirección de la animación
+        // Animation speed and direction
         const speed = direction === 'left' ? -0.25 : 0.25;
         const targetX = direction === 'left' ? -15 : 15;
         
-        // Guardar las posiciones originales para restaurarlas después
+        // Save original positions to restore later
         if (!this.originalParticlePositions) {
             this.originalParticlePositions = [];
             
@@ -88,7 +88,7 @@ export class World {
                     children: []
                 };
                 
-                // Guardar datos de cada hijo (estrellas y líneas)
+                // Save data for each child (stars and lines)
                 constellation.children.forEach(child => {
                     if (child.isMesh) {
                         constellationData.children.push({
@@ -104,45 +104,45 @@ export class World {
             });
         }
         
-        // Animación activa
+        // Active animation
         let animating = true;
         
-        // Función para animar las constelaciones en cada frame
+        // Function to animate constellations each frame
         const animateConstellations = () => {
             if (!animating) return;
             
             let allConstellationsReached = true;
             
-            // Mover cada constelación hacia el objetivo
+            // Move each constellation toward the target
             this.particles.children.forEach(constellation => {
-                // Mover en la dirección de la navegación
+                // Move in the navigation direction
                 constellation.position.x += speed;
                 
-                // Añadir efecto de desvanecimiento gradual
+                // Add gradual fade-out effect
                 constellation.children.forEach(child => {
                     if (child.material) {
                         child.material.opacity *= 0.95;
                     }
                 });
                 
-                // Comprobar si la constelación ha alcanzado el destino
+                // Check if the constellation has reached its destination
                 if ((direction === 'left' && constellation.position.x > targetX) || 
                     (direction === 'right' && constellation.position.x < targetX)) {
                     allConstellationsReached = false;
                 }
             });
             
-            // Animar también las partículas del ítem actual si existen
+            // Also animate the current item's particles if they exist
             if (this.items[this.currentIndex] && this.items[this.currentIndex].particles) {
                 this.items[this.currentIndex].particles.children.forEach(particle => {
                     if (particle.isMesh) {
-                        particle.position.x += speed * 1.5; // Ligeramente más rápido
-                        particle.material.opacity *= 0.9; // Desvanecimiento más rápido
+                        particle.position.x += speed * 1.5; // Slightly faster
+                        particle.material.opacity *= 0.9; // Faster fade-out
                     }
                 });
             }
             
-            // Si todas las constelaciones han alcanzado su destino, restaurar posiciones
+            // If all constellations have reached their destination, restore positions
             if (allConstellationsReached) {
                 animating = false;
                 this.resetParticlePositions();
@@ -151,7 +151,7 @@ export class World {
             }
         };
         
-        // Iniciar animación
+        // Start animation
         animateConstellations();
     }
     
@@ -161,41 +161,41 @@ export class World {
     resetParticlePositions() {
         if (!this.particles) return;
         
-        // Para cada constelación
+        // For each constellation
         this.particles.children.forEach((constellation, index) => {
-            // Calcular nueva posición aleatoria
+            // Calculate new random position on the right side
             const newPosition = new THREE.Vector3(
-                (Math.random() - 0.5) * 40,
+                (Math.random() * 20) + 10, // Position on the right side
                 (Math.random() - 0.5) * 30,
                 -30 - Math.random() * 20
             );
             
-            // Aplicar nueva posición con una pequeña variación
+            // Apply new position with a small variation
             constellation.position.x = newPosition.x;
             constellation.position.y = newPosition.y;
             constellation.position.z = newPosition.z;
             
-            // Reiniciar velocidades de movimiento con dirección aleatoria
+            // Reset movement speeds with random direction
             constellation.userData.movementSpeed = {
                 x: (Math.random() - 0.5) * 0.002,
                 y: (Math.random() - 0.5) * 0.002,
                 z: (Math.random() - 0.5) * 0.001
             };
             
-            // Reiniciar velocidades de rotación
+            // Reset rotation speeds
             constellation.userData.rotationSpeed = {
                 x: (Math.random() - 0.5) * 0.0001,
                 y: (Math.random() - 0.5) * 0.0001,
                 z: (Math.random() - 0.5) * 0.0001
             };
             
-            // Reiniciar fase de animación para cada estrella y línea
+            // Reset animation phase for each star and line
             constellation.children.forEach(child => {
                 if (child.isMesh) {
-                    // Actualizar fase de pulsación
+                    // Update pulse phase
                     child.userData.pulsePhase = Math.random() * Math.PI * 2;
                     
-                    // Si se ha guardado la posición original, reiniciarla
+                    // If original position has been saved, reset it
                     if (child.userData.originalPosition) {
                         child.position.copy(child.userData.originalPosition);
                     }
@@ -206,7 +206,7 @@ export class World {
             });
         });
         
-        // También restaurar estrellas de los ítems actuales si existen
+        // Also restore stars of current items if they exist
         if (this.items[this.currentIndex] && this.items[this.currentIndex].resetParticles) {
             this.items[this.currentIndex].resetParticles();
         }
@@ -242,44 +242,44 @@ export class World {
     }
 
     /**
-     * Add ambient particles to the environment
+     * Add ambient particles to the environment - positioned on the right side
      */
     addAmbientParticles() {
-        // Crear grupo para contener todas las constelaciones
+        // Create group to contain all constellations
         const constellationsGroup = new THREE.Group();
         this.scene.add(constellationsGroup);
         
-        // Número de constelaciones a crear
+        // Number of constellations to create
         const numConstellations = this.experience.sizes.isMobile ? 5 : 8;
         
-        // Crear cada constelación
+        // Create each constellation
         for (let c = 0; c < numConstellations; c++) {
-            // Crear un grupo para esta constelación
+            // Create a group for this constellation
             const constellationGroup = new THREE.Group();
             
-            // Posición aleatoria para el centro de la constelación
+            // Random position for the constellation center - placed on the right side
             const centerPosition = new THREE.Vector3(
-                (Math.random() - 0.5) * 40,
+                (Math.random() * 20) + 10, // Position on the right side (x > 0)
                 (Math.random() - 0.5) * 30,
                 -30 - Math.random() * 20
             );
             
             constellationGroup.position.copy(centerPosition);
             
-            // Número aleatorio de estrellas (3-7 por constelación)
+            // Random number of stars (3-7 per constellation)
             const starCount = 3 + Math.floor(Math.random() * 5);
             
-            // Array para almacenar las estrellas de esta constelación
+            // Array to store the stars in this constellation
             const stars = [];
             
-            // Crear material para las estrellas
+            // Create material for the stars - use Laqueno color palette
             const starMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0xffffff,
+                color: 0xe4e3d3, // Cream color to match Laqueno theme
                 transparent: true,
                 opacity: 0.8
             });
             
-            // Geometría para las estrellas - diferentes tamaños
+            // Geometry for the stars - different sizes
             const starGeometries = [
                 new THREE.SphereGeometry(0.05, 8, 8),
                 new THREE.SphereGeometry(0.08, 8, 8),
@@ -287,23 +287,23 @@ export class World {
                 new THREE.SphereGeometry(0.15, 8, 8)
             ];
             
-            // Crear estrellas para esta constelación
+            // Create stars for this constellation
             for (let i = 0; i < starCount; i++) {
-                // Posición aleatoria dentro del radio de la constelación
+                // Random position within the constellation radius
                 const position = new THREE.Vector3(
                     (Math.random() - 0.5) * 8,
                     (Math.random() - 0.5) * 8,
                     (Math.random() - 0.5) * 4
                 );
                 
-                // Seleccionar una geometría aleatoria
+                // Select a random geometry
                 const geometry = starGeometries[Math.floor(Math.random() * starGeometries.length)];
                 
-                // Crear la estrella
+                // Create the star
                 const star = new THREE.Mesh(geometry, starMaterial.clone());
                 star.position.copy(position);
                 
-                // Añadir propiedades de animación
+                // Add animation properties
                 star.userData.originalOpacity = 0.6 + Math.random() * 0.4;
                 star.userData.pulseSpeed = 0.3 + Math.random() * 0.5;
                 star.userData.pulsePhase = Math.random() * Math.PI * 2;
@@ -312,25 +312,25 @@ export class World {
                 star.userData.movementOffset = Math.random() * Math.PI * 2;
                 star.material.opacity = star.userData.originalOpacity;
                 
-                // Añadir al grupo de la constelación y guardar referencia
+                // Add to the constellation group and save reference
                 constellationGroup.add(star);
                 stars.push(star);
             }
             
-            // Crear líneas para conectar las estrellas
+            // Create lines to connect the stars with Laqueno colors
             const lineMaterial = new THREE.LineBasicMaterial({ 
-                color: 0xffffff,
+                color: 0xa6a995, // Soft gray-green to match Laqueno theme
                 transparent: true,
                 opacity: 0.3,
                 linewidth: 1
             });
             
-            // Generar las conexiones - cada estrella se conecta a 1-2 estrellas cercanas
+            // Generate connections - each star connects to 1-2 nearby stars
             for (let i = 0; i < stars.length; i++) {
-                // Decidir cuántas conexiones tendrá esta estrella
+                // Decide how many connections this star will have
                 const connectionCount = Math.min(stars.length - 1, 1 + Math.floor(Math.random() * 2));
                 
-                // Calcular distancias a todas las demás estrellas
+                // Calculate distances to all other stars
                 const distances = [];
                 for (let j = 0; j < stars.length; j++) {
                     if (i !== j) {
@@ -341,41 +341,41 @@ export class World {
                     }
                 }
                 
-                // Ordenar por distancia
+                // Sort by distance
                 distances.sort((a, b) => a.distance - b.distance);
                 
-                // Conectar con las estrellas más cercanas
+                // Connect with the closest stars
                 for (let c = 0; c < connectionCount; c++) {
-                    // Evitar duplicados de líneas (solo conectar si j > i)
+                    // Avoid duplicate lines (only connect if j > i)
                     const targetIndex = distances[c].index;
                     if (targetIndex > i) {
-                        // Crear puntos para la línea
+                        // Create points for the line
                         const points = [
                             stars[i].position.clone(),
                             stars[targetIndex].position.clone()
                         ];
                         
-                        // Crear geometría y mesh para la línea
+                        // Create geometry and mesh for the line
                         const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
                         const line = new THREE.Line(lineGeometry, lineMaterial.clone());
                         
-                        // Propiedades de animación para la línea
+                        // Animation properties for the line
                         line.userData.originalOpacity = 0.1 + Math.random() * 0.3;
                         line.userData.pulseSpeed = 0.2 + Math.random() * 0.4;
                         line.userData.pulsePhase = Math.random() * Math.PI * 2;
                         line.material.opacity = line.userData.originalOpacity;
                         
-                        // Añadir referencia a las estrellas que conecta
+                        // Add reference to the stars it connects
                         line.userData.star1 = i;
                         line.userData.star2 = targetIndex;
                         
-                        // Añadir al grupo
+                        // Add to the group
                         constellationGroup.add(line);
                     }
                 }
             }
             
-            // Añadir movimiento global a la constelación
+            // Add global movement to the constellation
             constellationGroup.userData.rotationSpeed = {
                 x: (Math.random() - 0.5) * 0.0001,
                 y: (Math.random() - 0.5) * 0.0001,
@@ -388,11 +388,11 @@ export class World {
                 z: (Math.random() - 0.5) * 0.001
             };
             
-            // Añadir el grupo de la constelación al grupo principal
+            // Add the constellation group to the main group
             constellationsGroup.add(constellationGroup);
         }
         
-        // Guardar referencia al grupo de constelaciones
+        // Save reference to the constellations group
         this.particles = constellationsGroup;
     }
     
@@ -406,6 +406,9 @@ export class World {
                 name: 'ceramic1',
                 title: 'Vasija Otoñal',
                 description: 'Cerámica artesanal con esmaltes en tonos tierra y ocre, inspirada en las formas orgánicas de la naturaleza.',
+                dimensions: '30 × 15 × 15 cm',
+                material: 'Cerámica esmaltada',
+                year: '2025',
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(3.5, 3.5, 3.5),
@@ -415,32 +418,38 @@ export class World {
                 name: 'ceramic2',
                 title: 'Cuenco Textural',
                 description: 'Pieza de cerámica con relieves táctiles que evocan la corteza de los árboles en otoño.',
+                dimensions: '25 × 20 × 20 cm',
+                material: 'Arcilla blanca con óxidos',
+                year: '2025',
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
                 model: this.resources.getItem('obj2'),
                 particleColors: [
-                    '#556B2F', // Dark Olive Green
-                    '#6B8E23', // Olive Drab
-                    '#808000', // Olive
-                    '#BDB76B', // Dark Khaki
-                    '#F0E68C'  // Khaki
+                    '#c1c4b1', // Laqueno light
+                    '#a6a995', // Laqueno medium
+                    '#e4e3d3', // Laqueno cream
+                    '#5e634d', // Laqueno dark
+                    '#2b2e1f'  // Laqueno background
                 ]
             },
             {
                 name: 'lamina1',
                 title: 'Acuarela Otoñal',
                 description: 'Técnica mixta sobre papel, capturando la esencia de los bosques en otoño con tonos cálidos y texturas.',
+                dimensions: '40 × 30 cm',
+                material: 'Técnica mixta sobre papel',
+                year: '2024',
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
                 model: this.resources.getItem('lamina1'),
                 particleColors: [
-                    '#FF7F50', // Coral
-                    '#FF4500', // Orange Red
-                    '#FF8C00', // Dark Orange
-                    '#FFA500', // Orange
-                    '#FFBF00'  // Amber
+                    '#e4e3d3', // Laqueno cream
+                    '#c1c4b1', // Laqueno light
+                    '#a6a995', // Laqueno medium
+                    '#5e634d', // Laqueno dark
+                    '#2b2e1f'  // Laqueno background
                 ]
             }
         ];
@@ -483,12 +492,12 @@ export class World {
         this.scene.add(mainLight);
         
         // Fill light
-        const fillLight = new THREE.DirectionalLight(0xffd0b0, 0.7); // Warm fill light
+        const fillLight = new THREE.DirectionalLight(0xe4e3d3, 0.7); // Laqueno cream color
         fillLight.position.set(-5, 3, -5);
         this.scene.add(fillLight);
         
         // Rim light
-        const rimLight = new THREE.DirectionalLight(0xa0d0ff, 0.5); // Cool rim light
+        const rimLight = new THREE.DirectionalLight(0xc1c4b1, 0.5); // Laqueno light color
         rimLight.position.set(0, -5, -5);
         this.scene.add(rimLight);
     }
@@ -537,9 +546,9 @@ export class World {
         
         // Update particles
         if (this.particles) {
-            // Actualizar cada grupo de constelación
+            // Update each constellation group
             for (const constellation of this.particles.children) {
-                // Aplicar rotación y movimiento global a la constelación
+                // Apply global rotation and movement to the constellation
                 constellation.rotation.x += constellation.userData.rotationSpeed.x;
                 constellation.rotation.y += constellation.userData.rotationSpeed.y;
                 constellation.rotation.z += constellation.userData.rotationSpeed.z;
@@ -548,32 +557,43 @@ export class World {
                 constellation.position.y += constellation.userData.movementSpeed.y;
                 constellation.position.z += constellation.userData.movementSpeed.z;
                 
-                // Límites de movimiento - hacer que vuelvan al área visible
-                const maxDistance = 50;
-                if (Math.abs(constellation.position.x) > maxDistance) {
+                // Movement boundaries - make them return to the visible area on the right side
+                const maxDistanceX = 50;
+                const maxDistanceY = 40;
+                const maxDistanceZ = 60;
+                
+                // Keep particles mainly on the right side
+                if (constellation.position.x < 0) {
+                    constellation.position.x = (Math.random() * 20) + 10; // Reset to right side
+                    constellation.userData.movementSpeed.x = Math.abs(constellation.userData.movementSpeed.x);
+                }
+                
+                if (constellation.position.x > maxDistanceX) {
                     constellation.userData.movementSpeed.x *= -1;
                 }
-                if (Math.abs(constellation.position.y) > maxDistance) {
+                
+                if (Math.abs(constellation.position.y) > maxDistanceY) {
                     constellation.userData.movementSpeed.y *= -1;
                 }
-                if (Math.abs(constellation.position.z) > maxDistance) {
+                
+                if (Math.abs(constellation.position.z) > maxDistanceZ) {
                     constellation.userData.movementSpeed.z *= -1;
                 }
                 
-                // Para cada elemento de la constelación (estrellas y líneas)
+                // For each element of the constellation (stars and lines)
                 constellation.children.forEach(child => {
-                    const time = this.experience.time.elapsed / 1000; // tiempo en segundos
+                    const time = this.experience.time.elapsed / 1000; // time in seconds
                     
                     if (child.isMesh) {
-                        // Es una estrella - animar brillo pulsante
+                        // Star - animate pulsating brightness
                         const pulseValue = 0.5 + 0.5 * Math.sin(
                             time * child.userData.pulseSpeed + child.userData.pulsePhase
                         );
                         
-                        // Aplicar opacidad pulsante
+                        // Apply pulsating opacity
                         child.material.opacity = child.userData.originalOpacity * pulseValue;
                         
-                        // Pequeño movimiento de oscilación
+                        // Small oscillation movement
                         const xMove = child.userData.movementAmplitude * Math.sin(
                             time * child.userData.movementSpeed + child.userData.movementOffset
                         );
@@ -581,28 +601,28 @@ export class World {
                             time * child.userData.movementSpeed * 0.8 + child.userData.movementOffset
                         );
                         
-                        // Guardar posición original si es la primera vez
+                        // Save original position if it's the first time
                         if (!child.userData.originalPosition) {
                             child.userData.originalPosition = child.position.clone();
                         }
                         
-                        // Aplicar movimiento basado en la posición original
+                        // Apply movement based on original position
                         child.position.x = child.userData.originalPosition.x + xMove;
                         child.position.y = child.userData.originalPosition.y + yMove;
                         
-                        // Añadir un pequeño efecto de escala pulsante
+                        // Add small pulsating scale effect
                         const scaleFactor = 0.9 + 0.2 * pulseValue;
                         child.scale.set(scaleFactor, scaleFactor, scaleFactor);
                     } 
                     else if (child.isLine) {
-                        // Es una línea - hacer que su opacidad siga a las estrellas
+                        // Line - make its opacity follow the stars
                         const pulseValue = 0.5 + 0.5 * Math.sin(
                             time * child.userData.pulseSpeed + child.userData.pulsePhase
                         );
                         
                         child.material.opacity = child.userData.originalOpacity * pulseValue;
                         
-                        // Actualizar puntos de la línea para seguir el movimiento de las estrellas
+                        // Update line points to follow star movement
                         if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
                             const star1 = constellation.children[child.userData.star1];
                             const star2 = constellation.children[child.userData.star2];

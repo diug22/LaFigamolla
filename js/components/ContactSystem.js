@@ -1,11 +1,6 @@
 /**
- * Contact System
- * Sistema de contacto unificado para PC y móvil
- * 
- * Este sistema implementa:
- * 1. Un botón de contacto atractivo 
- * 2. Una tarjeta de contacto elegante con el mismo aspecto en PC y móvil
- * 3. Animaciones suaves y estilo profesional
+ * Contact System - Updated for Laqueno
+ * Handles contact card UI and interactions
  */
 
 export class ContactSystem {
@@ -13,148 +8,81 @@ export class ContactSystem {
         this.experience = experience;
         this.sizes = experience.sizes;
         
-        // Crear elementos
-        this.createContactButton();
+        // Create elements
         this.createContactCard();
         
-        // Configurar event listeners
+        // Setup event listeners
         this.setupEventListeners();
     }
     
     /**
-     * Crear un botón de contacto atractivo con icono
-     */
-    createContactButton() {
-        // Eliminar botón existente si está presente
-        const existingButton = document.getElementById('contact-button');
-        if (existingButton) {
-            existingButton.remove();
-        }
-        
-        // Crear nuevo botón
-        const button = document.createElement('button');
-        button.id = 'contact-button';
-        button.className = 'contact-button';
-        button.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
-            </svg>
-        `;
-        
-        // Añadir estilos
-        const style = document.createElement('style');
-        style.textContent = `
-            .contact-button {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 56px;
-                height: 56px;
-                border-radius: 28px;
-                background-color: #1a1a1a;
-                color: white;
-                border: none;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-                z-index: 1000;
-                transition: all 0.3s ease;
-                outline: none;
-            }
-            
-            .contact-button:hover {
-                transform: scale(1.05);
-                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
-                background-color: #333;
-            }
-            
-            .contact-button svg {
-                width: 24px;
-                height: 24px;
-            }
-        `;
-        
-        document.head.appendChild(style);
-        document.body.appendChild(button);
-        
-        this.contactButton = button;
-    }
-    
-    /**
-     * Crear la tarjeta de contacto con un diseño elegante, unificado para móvil y PC
+     * Create contact card with Laqueno style
      */
     createContactCard() {
-        // Eliminar tarjeta existente si está presente
+        // Remove existing card if present
         const existingCard = document.getElementById('contact-card');
         if (existingCard) {
             existingCard.remove();
         }
         
-        // Crear contenedor de la tarjeta
+        // Create card container
         const card = document.createElement('div');
         card.id = 'contact-card';
         card.className = 'contact-card';
         
-        // Crear contenido de la tarjeta
+        // Create card content with Laqueno styling
         card.innerHTML = `
             <div class="contact-card-content">
-                <button class="card-close-button">×</button>
-                <h2>LA FIGAMOLLA</h2>
+                <button class="card-close-button">&times;</button>
+                <h2>LAQUENO</h2>
                 <div class="card-separator"></div>
                 <h3>CONTACTO</h3>
                 
-                <div class="contact-info">
-                    <p>¿Interesado en alguna de nuestras piezas o en encargar algo personalizado?</p>
+                <div class="contact-details">
+                    <div class="contact-detail">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        <div>
+                            <strong>Email</strong>
+                            <span>info@laqueno.com</span>
+                        </div>
+                    </div>
                     
-                    <div class="contact-details">
-                        <div class="contact-detail">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                <polyline points="22,6 12,13 2,6"></polyline>
-                            </svg>
-                            <div>
-                                <strong>Email</strong>
-                                <span>info@lafigamolla.com</span>
-                            </div>
+                    <div class="contact-detail">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                        <div>
+                            <strong>Instagram</strong>
+                            <span>@laqueno.studio</span>
                         </div>
-                        
-                        <div class="contact-detail">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                            </svg>
-                            <div>
-                                <strong>Instagram</strong>
-                                <span>@lafigamolla</span>
-                            </div>
-                        </div>
-                        
-                        <div class="contact-detail">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                            <div>
-                                <strong>Taller</strong>
-                                <span>Calle Cerámica, 23 - Barcelona</span>
-                            </div>
+                    </div>
+                    
+                    <div class="contact-detail">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <div>
+                            <strong>Estudio</strong>
+                            <span>Calle Cerámica, 23 - Barcelona</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="social-links">
-                    <a href="https://instagram.com/lafigamolla" class="social-link" aria-label="Instagram">
+                    <a href="https://instagram.com/laqueno.studio" class="social-link" aria-label="Instagram">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                             <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                             <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
                         </svg>
                     </a>
-                    <a href="mailto:info@lafigamolla.com" class="social-link" aria-label="Email">
+                    <a href="mailto:info@laqueno.com" class="social-link" aria-label="Email">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                             <polyline points="22,6 12,13 2,6"></polyline>
@@ -169,7 +97,7 @@ export class ContactSystem {
             </div>
         `;
         
-        // Añadir estilos
+        // Add styles
         const style = document.createElement('style');
         style.textContent = `
             .contact-card {
@@ -181,12 +109,13 @@ export class ContactSystem {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background-color: rgba(0, 0, 0, 0.5);
-                backdrop-filter: blur(5px);
+                background-color: rgba(43, 46, 31, 0.95);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
                 z-index: 1000;
                 opacity: 0;
                 pointer-events: none;
-                transition: opacity 0.3s ease;
+                transition: opacity 0.5s ease;
             }
             
             .contact-card.visible {
@@ -195,17 +124,13 @@ export class ContactSystem {
             }
             
             .contact-card-content {
-                width: 90%;
-                max-width: 400px;
-                background-color: #1a1a1a;
-                color: white;
-                border-radius: 8px;
-                padding: 30px;
+                max-width: 500px;
+                padding: 40px;
                 position: relative;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
                 transform: translateY(20px);
                 opacity: 0;
                 transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                text-align: center;
             }
             
             .contact-card.visible .contact-card-content {
@@ -215,129 +140,109 @@ export class ContactSystem {
             
             .card-close-button {
                 position: absolute;
-                top: 15px;
-                right: 15px;
-                width: 30px;
-                height: 30px;
-                border-radius: 50%;
+                top: 0;
+                right: 0;
+                background: none;
                 border: none;
-                background-color: rgba(255, 255, 255, 0.1);
-                color: white;
-                font-size: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                color: #e4e3d3;
+                font-size: 24px;
                 cursor: pointer;
-                transition: all 0.2s ease;
-            }
-            
-            .card-close-button:hover {
-                background-color: rgba(255, 255, 255, 0.2);
             }
             
             .contact-card-content h2 {
-                font-size: 24px;
-                margin: 0;
-                letter-spacing: 1px;
-                text-align: center;
+                font-size: 32px;
+                font-weight: 300;
+                letter-spacing: 2px;
+                margin-bottom: 20px;
+                color: #e4e3d3;
             }
             
             .contact-card-content h3 {
-                font-size: 18px;
-                font-weight: normal;
-                margin: 0 0 20px 0;
-                letter-spacing: 1px;
-                text-align: center;
+                font-size: 16px;
+                font-weight: 300;
+                letter-spacing: 3px;
+                margin-bottom: 30px;
+                color: #a6a995;
             }
             
             .card-separator {
-                width: 50px;
-                height: 2px;
-                background-color: rgba(255, 255, 255, 0.3);
-                margin: 15px auto;
-            }
-            
-            .contact-info {
-                margin-bottom: 25px;
-            }
-            
-            .contact-info p {
-                text-align: center;
-                margin-bottom: 20px;
-                font-size: 14px;
-                line-height: 1.5;
-                color: rgba(255, 255, 255, 0.8);
+                width: 40px;
+                height: 1px;
+                background-color: #a6a995;
+                margin: 0 auto 30px;
             }
             
             .contact-details {
                 display: flex;
                 flex-direction: column;
-                gap: 15px;
+                gap: 20px;
+                margin-bottom: 40px;
+                text-align: left;
             }
             
             .contact-detail {
                 display: flex;
-                align-items: center;
+                align-items: flex-start;
                 gap: 15px;
             }
             
             .contact-detail svg {
                 opacity: 0.7;
+                width: 20px;
+                height: 20px;
                 flex-shrink: 0;
+                margin-top: 2px;
             }
             
             .contact-detail div {
                 display: flex;
                 flex-direction: column;
-                gap: 2px;
+                gap: 5px;
             }
             
             .contact-detail strong {
                 font-size: 14px;
                 font-weight: 500;
-                color: rgba(255, 255, 255, 0.7);
+                color: #a6a995;
+                letter-spacing: 1px;
             }
             
             .contact-detail span {
-                font-size: 16px;
+                font-size: 18px;
+                color: #e4e3d3;
             }
             
             .social-links {
                 display: flex;
                 justify-content: center;
                 gap: 20px;
-                margin-top: 25px;
             }
             
             .social-link {
                 width: 50px;
                 height: 50px;
                 border-radius: 50%;
-                background-color: rgba(255, 255, 255, 0.1);
-                color: white;
+                background-color: rgba(228, 227, 211, 0.1);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                text-decoration: none;
-                transition: all 0.2s ease;
+                color: #e4e3d3;
+                transition: all 0.3s ease;
             }
             
             .social-link:hover {
-                background-color: rgba(255, 255, 255, 0.2);
+                background-color: rgba(228, 227, 211, 0.2);
                 transform: translateY(-3px);
             }
             
-            @media (max-width: 767px) {
+            @media (max-width: 768px) {
                 .contact-card-content {
-                    padding: 25px 20px;
-                }
-                
-                .contact-detail strong {
-                    font-size: 13px;
+                    padding: 30px 20px;
+                    width: 90%;
                 }
                 
                 .contact-detail span {
-                    font-size: 15px;
+                    font-size: 16px;
                 }
                 
                 .social-link {
@@ -354,28 +259,25 @@ export class ContactSystem {
     }
     
     /**
-     * Configurar todos los event listeners
+     * Setup event listeners for contact card
      */
     setupEventListeners() {
-        // Botón de contacto
-        this.contactButton.addEventListener('click', () => {
-            this.showContactCard();
-        });
-        
-        // Botón de cerrar
+        // Close button
         const closeButton = this.contactCard.querySelector('.card-close-button');
-        closeButton.addEventListener('click', () => {
-            this.hideContactCard();
-        });
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                this.hideContactCard();
+            });
+        }
         
-        // Cerrar al hacer clic fuera
+        // Close when clicking outside the content
         this.contactCard.addEventListener('click', (e) => {
             if (e.target === this.contactCard) {
                 this.hideContactCard();
             }
         });
         
-        // Manejar tecla escape para cerrar
+        // Close with Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.hideContactCard();
@@ -384,14 +286,14 @@ export class ContactSystem {
     }
     
     /**
-     * Mostrar tarjeta de contacto
+     * Show contact card
      */
     showContactCard() {
         this.contactCard.classList.add('visible');
     }
     
     /**
-     * Ocultar tarjeta de contacto
+     * Hide contact card
      */
     hideContactCard() {
         this.contactCard.classList.remove('visible');

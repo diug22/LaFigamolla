@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>La Figamolla - Portfolio Artístico</title>
+    <title>Laqueno - Constelaciones de Objetos</title>
     <link rel="stylesheet" href="/css/style.css">
-    <meta name="description" content="Portfolio artístico de La Figamolla, especializado en cerámica, láminas y esculturas con una experiencia inmersiva en 3D.">
-    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Laqueno - Portfolio artístico especializado en cerámica, esculturas y objetos con una experiencia inmersiva en 3D.">
+    <meta name="theme-color" content="#2b2e1f">
     <script type="importmap">
         {
             "imports": {
@@ -14,75 +14,39 @@
               "three/examples/jsm/loaders/GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/loaders/GLTFLoader.js",
               "three/examples/jsm/loaders/DRACOLoader.js": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/loaders/DRACOLoader.js"
             }
-          }
-          
-        </script>
+        }
+    </script>
 </head>
 <body>
-    <!-- Pantalla de carga -->
+    <!-- Loading screen -->
     <div class="loading-overlay" id="loading-overlay">
-        <div class="loading-logo">LaqueNO</div>
+        <div class="loading-logo">LAQUENO</div>
         <div class="loading-bar-container">
             <div class="loading-bar" id="loading-bar"></div>
         </div>
         <div class="loading-text" id="loading-text">Cargando experiencia...</div>
     </div>
 
-    <!-- Instrucciones iniciales -->
+    <!-- Initial instructions -->
     <div class="instructions" id="instructions">
+        <h2>Bienvenido a Laqueno</h2>
+        <p>Explora nuestra colección de objetos a través de esta experiencia inmersiva.</p>
+        <p>Desliza para navegar entre las piezas.</p>
+        <p>Toca una pieza para ver más detalles.</p>
+        <p>Gira para cambiar la perspectiva.</p>
         <button id="start-experience">Comenzar Experiencia</button>
     </div>
 
-    <!-- Canvas para Three.js -->
+    <!-- Canvas for Three.js -->
     <canvas id="experience-canvas"></canvas>
 
-    <!-- Interfaz de usuario -->
-    <div class="ui-container">
-        <div class="header">
-            <h1 class="title">LaqueNO</h1>
-            <p class="subtitle">PORTFOLIO INMERSIVO</p>
-        </div>
-        <div class="footer">
-            <div class="nav-dots" id="nav-dots">
-                <!-- Dots generados dinámicamente -->
-            </div>
-        </div>
-    </div>
+    <!-- UI Container - will be created dynamically -->
+    <!-- Info Panel - will be created dynamically -->
 
-    <!-- Panel de información -->
-    <div class="info-panel" id="info-panel">
-        <button class="close-btn" id="close-info">&times;</button>
-        <h2 class="info-title" id="info-title">Título de la obra</h2>
-        <p class="info-description" id="info-description">Descripción detallada de la obra...</p>
-        <p class="info-details" id="info-dimensions">Dimensiones: 30cm x 20cm x 15cm</p>
-        <p class="info-details" id="info-material">Material: Cerámica artesanal</p>
-        <p class="info-details" id="info-year">Año: 2025</p>
-    </div>
-
-    <!-- Pista de gestos -->
+    <!-- Gesture hint -->
     <div class="gesture-hint" id="gesture-hint">Desliza para explorar más obras</div>
 
-    <!-- Botón de contacto -->
-    <button class="contact-button" id="contact-button">✉</button>
-
-    <!-- Panel de contacto -->
-    <div class="contact-panel" id="contact-panel">
-        <button class="close-contact" id="close-contact">&times;</button>
-        <h2 class="contact-title">CONTACTO</h2>
-        <div class="contact-info">
-            <p>¿Interesado en alguna de nuestras piezas o en encargar algo personalizado?</p>
-            <p><strong>Email:</strong> info@lafigamolla.com</p>
-            <p><strong>Instagram:</strong> @lafigamolla</p>
-            <p><strong>Taller:</strong> Calle Cerámica, 23 - Barcelona</p>
-        </div>
-        <div class="social-links">
-            <a href="#" class="social-link">📸</a>
-            <a href="#" class="social-link">📱</a>
-            <a href="#" class="social-link">📧</a>
-        </div>
-    </div>
-
-    <!-- Script principal -->
+    <!-- Script loading -->
     <script type="module" src="/js/main.js"></script>
 </body>
 </html>
