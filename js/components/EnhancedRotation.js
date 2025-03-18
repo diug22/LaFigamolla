@@ -23,11 +23,11 @@ export class EnhancedRotation {
         // Configuration
         this.config = {
             autoRotate: true,
-            autoRotateSpeed: 1.0, // Degrees per second
-            damping: 0.98,        // Momentum reduction per frame (higher = more persistent rotation)
-            sensitivity: 0.8,      // Rotation sensitivity multiplier
+            autoRotateSpeed: 0.3, // Degrees per second
+            damping: 0.96,        // Momentum reduction per frame (higher = more persistent rotation)
+            sensitivity: 0.4,      // Rotation sensitivity multiplier
             enableReset: true,     // Enable double-click to reset
-            resetTime: 1.0         // Time to reset rotation in seconds
+            resetTime: 1.5         // Time to reset rotation in seconds
         };
         
         // State
@@ -145,7 +145,7 @@ export class EnhancedRotation {
         this.state.isDragging = false;
         
         // Add a velocity boost for more dramatic rotation
-        this.state.rotationVelocity.multiplyScalar(1.2);
+        this.state.rotationVelocity.multiplyScalar(0.8);
     }
     
     /**
@@ -201,7 +201,7 @@ export class EnhancedRotation {
         this.state.isDragging = false;
         
         // Add a velocity boost for more dramatic rotation on touch devices
-        this.state.rotationVelocity.multiplyScalar(2.0);
+        this.state.rotationVelocity.multiplyScalar(0.7);
     }
     
     /**
@@ -232,13 +232,13 @@ export class EnhancedRotation {
         // Create a quaternion for X rotation (around Y axis)
         const rotationY = new THREE.Quaternion().setFromAxisAngle(
             new THREE.Vector3(0, 1, 0),
-            -deltaX * Math.PI
+            -deltaX * Math.PI  * 0.6
         );
         
         // Create a quaternion for Y rotation (around X axis)
         const rotationX = new THREE.Quaternion().setFromAxisAngle(
             new THREE.Vector3(1, 0, 0),
-            -deltaY * Math.PI
+            -deltaY * Math.PI  * 0.6
         );
         
         // Combine rotations
@@ -330,7 +330,7 @@ export class EnhancedRotation {
         // Apply auto-rotation
         if (this.config.autoRotate && !this.state.isDragging) {
             // Convert degrees per second to radians per frame
-            const speed = this.config.autoRotateSpeed * Math.PI / 1200;
+            const speed = this.config.autoRotateSpeed * Math.PI / 1800;
             const rotation = new THREE.Quaternion().setFromAxisAngle(
                 new THREE.Vector3(0, 1, 0), 
                 speed * this.time.delta / 1000
@@ -381,4 +381,4 @@ export class EnhancedRotation {
         window.removeEventListener('mousemove', this._boundMouseMove);
         window.removeEventListener('mouseup', this._boundMouseUp);
     }
-}
+} 

@@ -43,8 +43,8 @@ export class Controls {
         this.cameraZoom = 1;
         
         // Swipe detection
-        this.swipeThreshold = 50;
-        this.swipeVerticalThreshold = 50;
+        this.swipeThreshold = 'ontouchstart' in window ? 70 : 50; // Mayor umbral en móviles
+        this.swipeVerticalThreshold = 'ontouchstart' in window ? 70 : 50;
         this.swipeDirection = null;
         this.swipeVerticalDirection = null;
         
@@ -251,7 +251,6 @@ export class Controls {
     onTouchStart(event) {
         if (!this.isActive) return;
         
-        event.preventDefault();
         
         // Reset momentum
         this.momentum = { x: 0, y: 0 };
@@ -259,11 +258,23 @@ export class Controls {
 
         const currentItem = this.getCurrentItem();
         if (currentItem && currentItem.rotationController && 
+            event.touches.length === 1 && 
             event.target === this.canvas) {
-            // Let the artwork's rotation controller handle it
             this.allowArtworkRotation = true;
+            // Guardar tiempo para posible doble tap
+            this.touchStartTime = Date.now();
+            
+            // Almacenar posición inicial para detectar si es un swipe
+            this.touchStart.x = event.touches[0].clientX;
+            this.touchStart.y = event.touches[0].clientY;
+            this.touchCurrent.x = this.touchStart.x;
+            this.touchCurrent.y = this.touchStart.y;
+            this.touchDelta.x = 0;
+            this.touchDelta.y = 0;
+            
             return;
         }
+        
         
         this.allowArtworkRotation = false;
         
@@ -315,11 +326,42 @@ export class Controls {
     onTouchMove(event) {
         if (!this.isActive) return;
         
-        event.preventDefault();
-
+        if (this.isDragging || this.isZooming) {
+            event.preventDefault();
+        }
         if (this.isZooming && event.touches.length === 2) {
             this.handlePinchZoom(event);
             return;
+        }
+
+        if (this.allowArtworkRotation) {
+            const currentItem = this.getCurrentItem();
+            if (currentItem && currentItem.rotationController) {
+                // Solo registramos el movimiento para detectar swipes
+                if (event.touches.length === 1) {
+                    const x = event.touches[0].clientX;
+                    const y = event.touches[0].clientY;
+                    
+                    this.touchCurrent.x = x;
+                    this.touchCurrent.y = y;
+                    
+                    // Calcular delta para detección de swipe
+                    this.touchDelta.x = (this.touchCurrent.x - this.touchStart.x);
+                    this.touchDelta.y = (this.touchCurrent.y - this.touchStart.y);
+                    
+                    // Detectar si es un swipe horizontal significativo
+                    if (Math.abs(this.touchDelta.x) > this.swipeThreshold * 1.5 && 
+                        Math.abs(this.touchDelta.x) > Math.abs(this.touchDelta.y) * 2) {
+                        // Es claramente un intento de swipe horizontal, no rotación
+                        if (this.touchDelta.x > 0) {
+                            this.swipeDirection = 'right';
+                        } else {
+                            this.swipeDirection = 'left';
+                        }
+                    }
+                }
+                return;
+            }
         }
         
         // Single touch (drag)
@@ -464,7 +506,41 @@ export class Controls {
         
         const now = Date.now();
         const touchDuration = now - this.touchStartTime;
-        
+        if (this.allowArtworkRotation) {
+            // Para swipes rápidos horizontales claros, cambiar de obra
+            if (touchDuration < 400 && Math.abs(this.touchDelta.x) > this.swipeThreshold * 1.5 &&
+                Math.abs(this.touchDelta.x) > Math.abs(this.touchDelta.y) * 2) {
+                
+                if (this.touchDelta.x > 0) {
+                    this.previousItem();
+                } else {
+                    this.nextItem();
+                }
+                
+                // Resetear estados después de la navegación
+                this.allowArtworkRotation = false;
+                this.isDragging = false;
+                this.isZooming = false;
+                this.swipeDirection = null;
+                return;
+            }
+            
+            // Detectar doble tap para zoom o reset
+            if (touchDuration < 300 && Math.abs(this.touchDelta.x) < 10 && Math.abs(this.touchDelta.y) < 10) {
+                const currentTime = now;
+                const tapLength = currentTime - this.lastTapTime;
+                
+                if (tapLength < 300 && tapLength > 0) {
+                    // Doble tap detectado
+                    this.onDoubleTap(this.touchCurrent.x, this.touchCurrent.y);
+                    event.preventDefault();
+                }
+                
+                this.lastTapTime = currentTime;
+            }
+            
+            return;
+        }
         // Detect quick tap (for double tap detection)
         if (touchDuration < 300 && Math.abs(this.touchDelta.x) < 10 && Math.abs(this.touchDelta.y) < 10) {
             const currentTime = now;
@@ -749,10 +825,11 @@ export class Controls {
         
         // Calculate zoom factor based on distance difference
         const pinchRatio = distance / this.pinchStart;
-        const zoomDelta = (pinchRatio - 1) * this.zoomConfig.pinchSpeed;
+        const zoomDelta = (pinchRatio - 1) * this.zoomConfig.pinchSpeed * 2;
         
         // Apply zoom based on pinch movement
-        const newZoom = this.zoomConfig.zoomStartValue * (1 + zoomDelta * 20);
+        const newZoom = this.zoomConfig.zoomStartValue * (1 + zoomDelta * 30);  // Aumentar factor de 20 a 30
+
         
         // Limit to min/max zoom
         this.zoomConfig.targetZoom = Math.max(
@@ -767,6 +844,7 @@ export class Controls {
         this.zoomConfig.zoomCenter.x = (centerX / window.innerWidth) * 2 - 1;
         this.zoomConfig.zoomCenter.y = -((centerY / window.innerHeight) * 2 - 1);
         
+        this.zoomConfig.zoomSmoothness = 0.12;
         // Start zoom animation
         this.startZoomAnimation();
         
