@@ -97,13 +97,13 @@ export class UI {
         
         infoPanel.innerHTML = `
             <button class="close-btn" id="close-info">&times;</button>
-            <h2 class="info-title" id="info-title">Título de la obra</h2>
+            <h2 class="info-title" id="info-title">Nombre de la pieza</h2>
             <div class="info-separator"></div>
             <p class="info-description" id="info-description">Descripción detallada de la obra...</p>
             <div class="info-details">
-                <p id="info-dimensions">Dimensiones: 30cm x 20cm x 15cm</p>
-                <p id="info-material">Material: Cerámica artesanal</p>
-                <p id="info-year">Año: 2025</p>
+                <p id="info-dimensions" class="info-field">Dimensiones: 30cm x 20cm x 15cm</p>
+                <p id="info-material" class="info-field">Material: Cerámica artesanal</p>
+                <p id="info-year" class="info-field">Año: 2025</p>
             </div>
         `;
         
@@ -117,6 +117,9 @@ export class UI {
         this.elements.infoDimensions = infoPanel.querySelector('#info-dimensions');
         this.elements.infoMaterial = infoPanel.querySelector('#info-material');
         this.elements.infoYear = infoPanel.querySelector('#info-year');
+
+        // Auto-close timer reference
+        this.infoPanelTimer = null;
     }
     
     /**
@@ -125,6 +128,74 @@ export class UI {
     addStyles() {
         const style = document.createElement('style');
         style.textContent = `
+
+        .info-panel {
+    position: fixed;
+    bottom: 80px; /* Posicionado por encima del botón del carrusel */
+    left: 50%;
+    transform: translateX(-50%) translateY(100%); /* Centrado horizontal y fuera de pantalla inicialmente */
+    width: 90%;
+    max-width: 500px; /* Ancho máximo reducido */
+    background-color: rgba(43, 46, 31, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 25px 30px;
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Sombra sutil */
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 20;
+    max-height: 50vh; /* Altura máxima reducida */
+    overflow-y: auto;
+}
+
+.info-panel.active {
+    transform: translateX(-50%) translateY(0); /* Solo mueve hacia arriba, mantiene centrado */
+}
+
+/* Ajustes para el contenido más compacto */
+.info-title {
+    font-size: 22px;
+    margin-bottom: 12px;
+}
+
+.info-separator {
+    margin-bottom: 15px;
+}
+
+.info-description {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.info-details {
+    font-size: 12px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.info-field {
+    margin: 5px 0;
+}
+
+/* Ajustes para móviles */
+@media (max-width: 768px) {
+    .info-panel {
+        width: 85%;
+        padding: 20px;
+        bottom: 70px; /* Ligeramente más arriba en móviles */
+        max-height: 40vh; /* Altura máxima más reducida en móviles */
+    }
+    
+    .info-title {
+        font-size: 18px;
+    }
+    
+    .info-description {
+        font-size: 13px;
+        margin-bottom: 15px;
+    }
+}
             /* Laqueno UI styles */
             body {
                 background-color: #2b2e1f;
@@ -396,6 +467,21 @@ export class UI {
                 this.hideInfoPanel();
             });
         }
+
+        // Reset auto-close timer when interacting with info panel
+        if (this.elements.infoPanel) {
+            this.elements.infoPanel.addEventListener('mousemove', () => {
+                if (this.infoPanelVisible) {
+                    this.resetInfoPanelTimer();
+                }
+            });
+            
+            this.elements.infoPanel.addEventListener('touchstart', () => {
+                if (this.infoPanelVisible) {
+                    this.resetInfoPanelTimer();
+                }
+            });
+        }
         
         // Contact link
         if (this.elements.contactLink) {
@@ -456,8 +542,20 @@ export class UI {
                 this.elements.infoButton.style.pointerEvents = 'none';
             }
         }
+        this.resetInfoPanelTimer();
     }
     
+    resetInfoPanelTimer() {
+        // Clear any existing timer
+        if (this.infoPanelTimer) {
+            clearTimeout(this.infoPanelTimer);
+        }
+        
+        // Set new timer for 10 seconds
+        this.infoPanelTimer = setTimeout(() => {
+            this.hideInfoPanel();
+        }, 10000);
+    }
     /**
      * Hide info panel
      */
@@ -470,6 +568,12 @@ export class UI {
             if (this.elements.infoButton) {
                 this.elements.infoButton.style.opacity = '1';
                 this.elements.infoButton.style.pointerEvents = 'auto';
+            }
+            
+            // Clear auto-close timer
+            if (this.infoPanelTimer) {
+                clearTimeout(this.infoPanelTimer);
+                this.infoPanelTimer = null;
             }
         }
     }
@@ -575,6 +679,7 @@ export class UI {
         
         const item = this.world.items[index];
         
+        // Set basic fields that should always be present
         if (this.elements.infoTitle) {
             this.elements.infoTitle.textContent = item.title || 'Sin título';
         }
@@ -583,16 +688,32 @@ export class UI {
             this.elements.infoDescription.textContent = item.description || 'Sin descripción';
         }
         
+        // Set optional fields and hide them if not available
         if (this.elements.infoDimensions) {
-            this.elements.infoDimensions.textContent = `Dimensiones: ${item.dimensions || 'Modelo 3D'}`;
+            if (item.dimensions) {
+                this.elements.infoDimensions.textContent = `Dimensiones: ${item.dimensions}`;
+                this.elements.infoDimensions.style.display = 'block';
+            } else {
+                this.elements.infoDimensions.style.display = 'none';
+            }
         }
         
         if (this.elements.infoMaterial) {
-            this.elements.infoMaterial.textContent = `Material: ${item.material || 'Cerámica'}`;
+            if (item.material) {
+                this.elements.infoMaterial.textContent = `Material: ${item.material}`;
+                this.elements.infoMaterial.style.display = 'block';
+            } else {
+                this.elements.infoMaterial.style.display = 'none';
+            }
         }
         
         if (this.elements.infoYear) {
-            this.elements.infoYear.textContent = `Año: ${item.year || '2025'}`;
+            if (item.year) {
+                this.elements.infoYear.textContent = `Año: ${item.year}`;
+                this.elements.infoYear.style.display = 'block';
+            } else {
+                this.elements.infoYear.style.display = 'none';
+            }
         }
     }
     

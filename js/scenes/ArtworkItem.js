@@ -16,6 +16,9 @@ export class ArtworkItem {
         this.name = data.name;
         this.title = data.title;
         this.description = data.description;
+        this.dimensions = data.dimensions;
+        this.material = data.material;
+        this.year = data.year;
         this.position = data.position || new THREE.Vector3(0, 0, 0);
         this.rotation = data.rotation || new THREE.Euler(0, 0, 0);
         this.scale = data.scale || new THREE.Vector3(1, 1, 1);

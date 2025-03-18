@@ -443,48 +443,7 @@ button.zoom-button:hover {
     transform: scale(1.05);
 }
 
-/* Panel de información */
-.info-panel {
-    position: fixed;
-    bottom: 80px;
-    left: 20px;
-    right: 20px;
-    background-color: rgba(0,0,0,0.8);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-radius: 15px;
-    padding: 20px;
-    transform: translateY(150%);
-    transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-    z-index: 3;
-    pointer-events: auto;
-    max-height: 60vh;
-    overflow-y: auto;
-    max-width: 90%;
-}
 
-.info-panel.active {
-    transform: translateY(0);
-}
-
-.info-title {
-    font-size: 1.4rem;
-    margin-bottom: 10px;
-    font-weight: 400;
-}
-
-.info-description {
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-bottom: 15px;
-    opacity: 0.9;
-}
-
-.info-details {
-    font-size: 0.8rem;
-    opacity: 0.7;
-    margin-bottom: 5px;
-}
 
 .close-btn {
     position: absolute;
