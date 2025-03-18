@@ -37,13 +37,23 @@ export class EnhancedRotation {
             rotationVelocity: new THREE.Vector2(),
             currentRotation: new THREE.Quaternion(),
             targetRotation: new THREE.Quaternion(),
-            initialRotation: new THREE.Quaternion() // For reset functionality
+            initialRotation: new THREE.Quaternion(), // For reset functionality
+            lastTapTime: 0 // Para detectar doble tap en móviles
         };
         
         // Save initial rotation
         if (this.modelContainer) {
             this.state.initialRotation.copy(this.modelContainer.quaternion);
         }
+        
+        // Event handler bindings para evitar problemas con removeEventListener
+        this._boundMouseDown = this.onMouseDown.bind(this);
+        this._boundMouseMove = this.onMouseMove.bind(this);
+        this._boundMouseUp = this.onMouseUp.bind(this);
+        this._boundTouchStart = this.onTouchStart.bind(this);
+        this._boundTouchMove = this.onTouchMove.bind(this);
+        this._boundTouchEnd = this.onTouchEnd.bind(this);
+        this._boundDoubleClick = this.onDoubleClick.bind(this);
         
         // Initialize
         this.init();
@@ -66,18 +76,18 @@ export class EnhancedRotation {
         const canvas = this.experience.canvas;
         
         // Mouse events
-        canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
-        window.addEventListener('mousemove', this.onMouseMove.bind(this));
-        window.addEventListener('mouseup', this.onMouseUp.bind(this));
+        canvas.addEventListener('mousedown', this._boundMouseDown);
+        window.addEventListener('mousemove', this._boundMouseMove);
+        window.addEventListener('mouseup', this._boundMouseUp);
         
-        // Touch events
-        canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
-        canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
-        canvas.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
+        // Touch events - usando los métodos vinculados
+        canvas.addEventListener('touchstart', this._boundTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', this._boundTouchMove, { passive: false });
+        canvas.addEventListener('touchend', this._boundTouchEnd, { passive: false });
         
         // Double-click/tap for reset
         if (this.config.enableReset) {
-            canvas.addEventListener('dblclick', this.onDoubleClick.bind(this));
+            canvas.addEventListener('dblclick', this._boundDoubleClick);
         }
     }
     
@@ -106,7 +116,7 @@ export class EnhancedRotation {
      * Handle mouse down event
      */
     onMouseDown(event) {
-        event.preventDefault();
+        // No usar preventDefault aquí para permitir que el evento llegue a Controls.js
         
         // Start dragging
         this.state.isDragging = true;
@@ -142,14 +152,24 @@ export class EnhancedRotation {
      * Handle touch start event
      */
     onTouchStart(event) {
-        event.preventDefault();
-        
+        // Solo una prevención condicional para evitar conflictos
         if (event.touches.length === 1) {
+            // Importante: no prevenir por defecto para permitir otros gestos
+            // event.preventDefault();
+            
             this.state.isDragging = true;
             this.state.previousPosition.set(
                 event.touches[0].clientX,
                 event.touches[0].clientY
             );
+            
+            // Detectar doble tap
+            const now = Date.now();
+            const tapLength = now - this.state.lastTapTime;
+            if (tapLength < 300 && tapLength > 0) {
+                this.resetRotation();
+            }
+            this.state.lastTapTime = now;
             
             // Stop auto-rotation during manual control
             this.pauseAutoRotation();
@@ -160,9 +180,11 @@ export class EnhancedRotation {
      * Handle touch move event
      */
     onTouchMove(event) {
-        event.preventDefault();
-        
+        // Solo prevenir por defecto si estamos arrastrando
         if (!this.state.isDragging || event.touches.length !== 1) return;
+        
+        // Importante: permitir scrolling y otros gestos si no estamos rotando
+        // event.preventDefault();
         
         const currentPosition = new THREE.Vector2(
             event.touches[0].clientX,
@@ -347,16 +369,16 @@ export class EnhancedRotation {
     destroy() {
         const canvas = this.experience.canvas;
         
-        // Remove mouse events
+        // Remove mouse events with bound handlers
         if (canvas) {
-            canvas.removeEventListener('mousedown', this.onMouseDown);
-            canvas.removeEventListener('dblclick', this.onDoubleClick);
-            canvas.removeEventListener('touchstart', this.onTouchStart);
-            canvas.removeEventListener('touchmove', this.onTouchMove);
-            canvas.removeEventListener('touchend', this.onTouchEnd);
+            canvas.removeEventListener('mousedown', this._boundMouseDown);
+            canvas.removeEventListener('dblclick', this._boundDoubleClick);
+            canvas.removeEventListener('touchstart', this._boundTouchStart);
+            canvas.removeEventListener('touchmove', this._boundTouchMove);
+            canvas.removeEventListener('touchend', this._boundTouchEnd);
         }
         
-        window.removeEventListener('mousemove', this.onMouseMove);
-        window.removeEventListener('mouseup', this.onMouseUp);
+        window.removeEventListener('mousemove', this._boundMouseMove);
+        window.removeEventListener('mouseup', this._boundMouseUp);
     }
 }
