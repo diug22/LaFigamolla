@@ -28,29 +28,50 @@
         <div class="loading-text" id="loading-text">Cargando experiencia...</div>
     </div>
 
+    <!-- Instructions Popup con versiones para escritorio y móvil -->
+    <!-- Instructions Popup con versiones para escritorio y móvil -->
     <div class="instructions-popup" id="instructions-popup">
         <div class="instructions-curtain">
             <button class="close-instructions" id="close-instructions">&times;</button>
             
-            <div class="plant-icon">
-                <img src="public/images/planta.png" alt="Planta">
-            </div>
-            
             <h2 class="instructions-title">¿Cómo Funciona?</h2>
             
-            <div class="instructions-grid">
+            <div class="instructions-container">
+                <!-- Primera caja de instrucción -->
                 <div class="instruction-box">
-                    <div class="instruction-icon">
-                        <img src="public/images/raton.png" alt="Raton"  width="95%"  >
+                    <!-- Iconos para PC -->
+                    <div class="instruction-icon desktop-only">
+                        <img src="public/images/raton.png" alt="Ratón para Zoom" width="95%">
                     </div>
-                    <p>Doble Click para<br>hacer zoom</p>
+                    <!-- Iconos para Móvil -->
+                    <div class="instruction-icon mobile-only">
+                        <img src="public/images/raton.png" alt="Gesto Pinch para Zoom" width="95%">
+                    </div>
+                    <!-- Texto específico por dispositivo -->
+                    <p class="desktop-only">Doble Click para<br>hacer zoom</p>
+                    <p class="mobile-only">Pellizca con dos dedos<br>para hacer zoom</p>
                 </div>
-                <div class="instruction-box">
-                    <div class="instruction-icon">
-                        <!-- Desktop icon -->
-                        <img src="public/images/clic.png" alt="clic" height="95%" width="95%" >
+                
+                <!-- Planta en el centro -->
+                <div class="plant-icon-container">
+                    <div class="plant-icon">
+                        <img src="public/images/planta.png" alt="Planta">
                     </div>
-                    <p>Desliza para<br>rotar el objeto</p>
+                </div>
+                
+                <!-- Segunda caja de instrucción -->
+                <div class="instruction-box">
+                    <!-- Iconos para PC -->
+                    <div class="instruction-icon desktop-only">
+                        <img src="public/images/clic.png" alt="Clic y Arrastrar" height="95%" width="95%">
+                    </div>
+                    <!-- Iconos para Móvil -->
+                    <div class="instruction-icon mobile-only">
+                        <img src="public/images/clic.png" alt="Deslizar para Rotar" height="95%" width="95%">
+                    </div>
+                    <!-- Texto específico por dispositivo -->
+                    <p class="desktop-only">Clic y arrastra para<br>rotar el objeto</p>
+                    <p class="mobile-only">Desliza para<br>rotar el objeto</p>
                 </div>
             </div>
             
