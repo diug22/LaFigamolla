@@ -225,6 +225,224 @@ canvas {
     }
 }
 
+/* Add these styles to css/style.css */
+
+/* Instructions Popup */
+.instructions-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s;
+    pointer-events: none;
+}
+
+.instructions-popup.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.instructions-curtain {
+    position: relative;
+    width: 100%;
+    height: 80vh;  /* Cover about 4/5 of the screen */
+    background: #EBECCBC9;  /* Updated to the specified color */
+    padding: 60px 40px 40px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(20px);
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.instructions-popup.visible .instructions-curtain {
+    transform: translateY(0);
+}
+
+.close-instructions {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    background: none;
+    border: none;
+    color: #2b2e1f;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.plant-icon {
+    width: 250px;
+    height: auto;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.plant-icon img {
+    max-width: 100%;
+    height: auto;
+}
+
+.instructions-title {
+    font-size: 30px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    color: #2b2e1f;
+    margin-bottom: 50px;
+    position: relative;
+}
+
+.instructions-title:after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 1px;
+    background-color: #5e634d;
+}
+
+.instructions-grid {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 40px;
+    justify-content: center;
+}
+
+.instruction-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.3s ease;
+    border: 5px solid #5A5E39; /* Added complete border declaration */
+    padding: 30px 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    width: 200px;
+}
+
+.instruction-box:hover {
+    transform: translateY(-5px);
+}
+
+.instruction-icon {
+    margin-bottom: 20px;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    padding: 15px;
+}
+
+.mobile-icon {
+    display: none;
+}
+
+.instruction-box p {
+    font-size: 18px;
+    color: #2b2e1f;
+    line-height: 1.4;
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+.button-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.start-button {
+    background-color: #5e634d;
+    color: #e4e3d3;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 40px;
+    font-size: 16px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.start-button:hover {
+    background-color: #6b7158;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .instructions-curtain {
+        padding: 30px 20px 20px;
+        height: 85vh;
+    }
+    
+    .close-instructions {
+        top: 15px;
+        right: 15px;
+        font-size: 24px;
+    }
+    
+    .instructions-title {
+        font-size: 24px;
+        margin-bottom: 30px;
+    }
+    
+    .instructions-grid {
+        flex-direction: column;
+        gap: 20px;
+        margin-bottom: 30px;
+        width: 100%;
+    }
+    
+    .instruction-box {
+        width: 100%;
+        max-width: 280px;
+        padding: 20px 15px;
+    }
+    
+    .instruction-icon {
+        margin-bottom: 15px;
+        width: 60px;
+        height: 60px;
+        padding: 10px;
+    }
+    
+    .desktop-icon {
+        display: none;
+    }
+    
+    .mobile-icon {
+        display: block;
+    }
+    
+    .instruction-box p {
+        font-size: 16px;
+    }
+    
+    .plant-icon {
+
+       
+
+    }
+    
+    .start-button {
+        padding: 10px 30px;
+        font-size: 15px;
+    }
+}
 /* Pista de gestos */
 .gesture-hint {
     position: fixed;
@@ -426,7 +644,7 @@ canvas {
     opacity: 0;
     transition: opacity 0.3s ease;
     z-index: 100;
-    display: inline-flex;
+    /*display: inline-flex;*/
     align-items: center;
     justify-content: center;
     backdrop-filter: blur(4px);
@@ -435,6 +653,7 @@ canvas {
     user-select: none;
     pointer-events: none;
     width: 10%;
+    display: none
 }
 
 

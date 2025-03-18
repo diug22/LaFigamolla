@@ -48,15 +48,42 @@ window.addEventListener('DOMContentLoaded', () => {
             
             // Show gesture hint after a delay
             setTimeout(() => {
-                const gestureHint = document.getElementById('gesture-hint');
-                if (gestureHint) {
-                    gestureHint.classList.add('visible');
-                    setTimeout(() => {
-                        gestureHint.classList.remove('visible');
-                    }, 3000);
+                loadingOverlay.style.display = 'none';
+                
+                // Show instructions popup
+                const instructionsPopup = document.getElementById('instructions-popup');
+                if (instructionsPopup) {
+                    instructionsPopup.classList.add('visible');
+                    
+                    // Setup event listeners for instructions popup
+                    const startButton = document.getElementById('start-button');
+                    const closeButton = document.getElementById('close-instructions');
+                    
+                    const hideInstructions = () => {
+                        instructionsPopup.classList.remove('visible');
+                        
+                        // Show gesture hint after instructions are closed
+                        setTimeout(() => {
+                            const gestureHint = document.getElementById('gesture-hint');
+                            if (gestureHint) {
+                                gestureHint.classList.add('visible');
+                                setTimeout(() => {
+                                    gestureHint.classList.remove('visible');
+                                }, 3000);
+                            }
+                        }, 500);
+                    };
+                    
+                    if (startButton) {
+                        startButton.addEventListener('click', hideInstructions);
+                    }
+                    
+                    if (closeButton) {
+                        closeButton.addEventListener('click', hideInstructions);
+                    }
                 }
-            }, 2000);
-        }, 800);
+            }, 300);
+        }, 300);
     };
     
     // Track when we started loading

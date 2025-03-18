@@ -28,6 +28,38 @@
         <div class="loading-text" id="loading-text">Cargando experiencia...</div>
     </div>
 
+    <div class="instructions-popup" id="instructions-popup">
+        <div class="instructions-curtain">
+            <button class="close-instructions" id="close-instructions">&times;</button>
+            
+            <div class="plant-icon">
+                <img src="public/images/planta.png" alt="Planta">
+            </div>
+            
+            <h2 class="instructions-title">¿Cómo Funciona?</h2>
+            
+            <div class="instructions-grid">
+                <div class="instruction-box">
+                    <div class="instruction-icon">
+                        <img src="public/images/raton.png" alt="Raton"  width="95%"  >
+                    </div>
+                    <p>Doble Click para<br>hacer zoom</p>
+                </div>
+                <div class="instruction-box">
+                    <div class="instruction-icon">
+                        <!-- Desktop icon -->
+                        <img src="public/images/clic.png" alt="clic" height="95%" width="95%" >
+                    </div>
+                    <p>Desliza para<br>rotar el objeto</p>
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button class="start-button" id="start-button">Empezar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Canvas for Three.js -->
     <canvas id="experience-canvas"></canvas>
 
