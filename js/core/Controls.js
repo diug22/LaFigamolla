@@ -86,6 +86,9 @@ export class Controls {
         // Initial camera position/target for resets
         this.initialCameraPosition = new THREE.Vector3(0, 0, this.defaultDistance);
         this.initialLookAtPosition = new THREE.Vector3(0, 0, 0);
+
+        this.allowArtworkRotation = true;
+
         
         // Event callbacks
         this.callbacks = {};
@@ -253,6 +256,16 @@ export class Controls {
         // Reset momentum
         this.momentum = { x: 0, y: 0 };
         this.rotationVelocity.set(0, 0);
+
+        const currentItem = this.getCurrentItem();
+        if (currentItem && currentItem.rotationController && 
+            event.target === this.canvas) {
+            // Let the artwork's rotation controller handle it
+            this.allowArtworkRotation = true;
+            return;
+        }
+        
+        this.allowArtworkRotation = false;
         
         // Single touch (drag)
         if (event.touches.length === 1) {

@@ -4,6 +4,8 @@
  */
 
 import * as THREE from 'three';
+import { EnhancedRotation } from '../components/EnhancedRotation.js';
+
 
 export class ArtworkItem {
     constructor(world, data) {
@@ -85,6 +87,9 @@ export class ArtworkItem {
         // Add model to container
         this.container.add(this.modelScene);
         this.mesh = this.modelScene; // For consistency with effects methods
+
+        this.rotationController = new EnhancedRotation(this.world.experience, this.modelScene);
+
         
         console.log(`GLB model loaded for ${this.name}`);
     }
@@ -350,9 +355,9 @@ export class ArtworkItem {
         this.container.position.copy(this.position);
         
         // Reset trackball rotation
-        this.currentRotation.identity();
-        this.targetRotation.identity();
-        this.modelScene.quaternion.identity();
+        if (this.rotationController) {
+            this.rotationController.startAutoRotation();
+        }
         
         // Apply special entrance effect for horizontal transitions
         if (direction) {
@@ -387,7 +392,11 @@ export class ArtworkItem {
     hide() {
         this.container.visible = false;
         this.isVisible = false;
-        this.isAnimating = false;
+        
+        // Pause auto-rotation when hidden
+        if (this.rotationController) {
+            this.rotationController.pauseAutoRotation();
+        }
     }
     
     /**
@@ -395,9 +404,13 @@ export class ArtworkItem {
      */
     update() {
         if (!this.isVisible || !this.modelScene) return;
+
+        if (this.rotationController) {
+            this.rotationController.update();
+        }
         
         // Apply auto-rotation if active (less important now)
-        if (this.isAnimating) {
+        /*else if (this.isAnimating) {
             // Create a rotation about the Y axis (reduced speed)
             const autoRotation = new THREE.Quaternion().setFromAxisAngle(
                 new THREE.Vector3(0, 1, 0), 
@@ -406,10 +419,10 @@ export class ArtworkItem {
             
             // Apply to current rotation
             this.currentRotation.multiplyQuaternions(autoRotation, this.currentRotation);
-        }
+        }*/
         
         // POWERFUL MOMENTUM: Apply strong continuous rotation based on velocity
-        if (!this.isAnimating && (Math.abs(this.rotationVelocity.x) > 0.00001 || Math.abs(this.rotationVelocity.y) > 0.00001)) {
+        /*if (!this.isAnimating && (Math.abs(this.rotationVelocity.x) > 0.00001 || Math.abs(this.rotationVelocity.y) > 0.00001)) {
             // Create X and Y rotations directly from velocity components
             const rotX = new THREE.Quaternion().setFromAxisAngle(
                 new THREE.Vector3(1, 0, 0),
@@ -440,7 +453,7 @@ export class ArtworkItem {
         } else {
             // If no active rotation, just apply current rotation to model
             this.modelScene.quaternion.copy(this.currentRotation);
-        }
+        }*/
         
         // Update particles
         if (this.particles) {
@@ -580,6 +593,11 @@ export class ArtworkItem {
                     }
                 }
             });
+        }
+
+        if (this.rotationController) {
+            this.rotationController.destroy();
+            this.rotationController = null;
         }
         
         // Dispose of particles

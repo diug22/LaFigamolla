@@ -459,6 +459,34 @@ export class UI {
         }, 1500); // Mostrar el tutorial después de que se cargue la experiencia
     
     }
+
+    createRotationControls() {
+        // Create a small control panel for rotation settings
+        const controlPanel = document.createElement('div');
+        controlPanel.className = 'rotation-controls';
+        controlPanel.style.position = 'fixed';
+        controlPanel.style.bottom = '20px';
+        controlPanel.style.right = '20px';
+        controlPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        controlPanel.style.padding = '10px';
+        controlPanel.style.borderRadius = '5px';
+        controlPanel.style.zIndex = '100';
+        
+        // Auto-rotation toggle
+        const autoRotateToggle = document.createElement('button');
+        autoRotateToggle.textContent = '🔄 Auto';
+        autoRotateToggle.addEventListener('click', () => {
+            const currentItem = this.experience.world.items[this.experience.world.currentIndex];
+            if (currentItem && currentItem.rotationController) {
+                const controller = currentItem.rotationController;
+                controller.config.autoRotate = !controller.config.autoRotate;
+                autoRotateToggle.style.opacity = controller.config.autoRotate ? '1' : '0.5';
+            }
+        });
+        
+        controlPanel.appendChild(autoRotateToggle);
+        document.body.appendChild(controlPanel);
+    }
     
     // Actualizar indicador de nivel de zoom
     updateZoomIndicator(zoomLevel) {
