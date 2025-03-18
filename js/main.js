@@ -1,5 +1,5 @@
 /**
- * Main entry point for La Figamolla portfolio
+ * Main entry point for Laqueno portfolio
  * This file initializes the 3D experience and handles the loading process
  */
 
@@ -11,7 +11,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingBar = document.getElementById('loading-bar');
     const loadingText = document.getElementById('loading-text');
+    
+    // Remove instructions element if it exists
     const instructions = document.getElementById('instructions');
+    if (instructions) {
+        instructions.style.display = 'none';
+    }
     
     // Update loading progress
     const updateLoading = (progress) => {
@@ -22,60 +27,51 @@ window.addEventListener('DOMContentLoaded', () => {
         // For debugging - log progress
         console.log(`Loading progress: ${percent}%`);
         
-        // If loading is complete, show instructions
+        // If loading is complete, start the experience after minimum display time
         if (percent >= 100) {
-            setTimeout(() => {
-                loadingOverlay.style.opacity = '0';
-                setTimeout(() => {
-                    loadingOverlay.style.display = 'none';
-                    setTimeout(() => {
-                        instructions.style.opacity = '1';
-                    }, 100);
-                }, 800);
-            }, 500);
+            if (Date.now() - startTime >= minDisplayTime) {
+                startExperience();
+            } else {
+                // If minimum time hasn't elapsed, wait for the remainder
+                const remainingTime = minDisplayTime - (Date.now() - startTime);
+                setTimeout(startExperience, remainingTime);
+            }
         }
     };
     
-    // Initialize experience when start button is clicked
-    document.getElementById('start-experience').addEventListener('click', () => {
-        // Hide instructions
-        instructions.style.opacity = '0';
+    // Function to start the experience
+    const startExperience = () => {
+        // Fade out loading overlay
+        loadingOverlay.style.opacity = '0';
         setTimeout(() => {
-            instructions.style.display = 'none';
+            loadingOverlay.style.display = 'none';
             
-            // Initialize the experience
-            const canvas = document.getElementById('experience-canvas');
-            window.experience = new Experience(canvas, updateLoading);
-            
-            // Show loading overlay while experience initializes
-            loadingOverlay.style.display = 'flex';
-            loadingOverlay.style.opacity = '1';
-            loadingBar.style.width = '0%';
-            loadingText.textContent = 'Cargando experiencia... 0%';
-            
-            // Hide loading overlay when experience is ready
-            window.experience.on('ready', () => {
-                loadingOverlay.style.opacity = '0';
-                setTimeout(() => {
-                    loadingOverlay.style.display = 'none';
-                }, 800);
-                
-                // Show gesture hint
-                setTimeout(() => {
-                    document.getElementById('gesture-hint').classList.add('visible');
+            // Show gesture hint after a delay
+            setTimeout(() => {
+                const gestureHint = document.getElementById('gesture-hint');
+                if (gestureHint) {
+                    gestureHint.classList.add('visible');
                     setTimeout(() => {
-                        document.getElementById('gesture-hint').classList.remove('visible');
+                        gestureHint.classList.remove('visible');
                     }, 3000);
-                }, 2000);
-            });
-        }, 500);
-    });
+                }
+            }, 2000);
+        }, 800);
+    };
     
-
+    // Track when we started loading
+    const startTime = Date.now();
+    // Minimum time to display loading screen (1.5 seconds in milliseconds)
+    const minDisplayTime = 1500;
     
-    // Initial setup - show instructions after a short delay
-    setTimeout(() => {
-        // Simulate initial loading complete
-        updateLoading(1);
-    }, 1000);
+    // Initialize the experience immediately
+    const canvas = document.getElementById('experience-canvas');
+    // Initialize the 3D experience
+    window.experience = new Experience(canvas, updateLoading);
+    
+    // Show loading overlay
+    loadingOverlay.style.display = 'flex';
+    loadingOverlay.style.opacity = '1';
+    loadingBar.style.width = '0%';
+    loadingText.textContent = 'Cargando experiencia... 0%';
 });
