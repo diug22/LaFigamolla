@@ -87,69 +87,17 @@ canvas {
 }
 
 .nav-dot {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background-color: rgba(255,255,255,0.3);
+    cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .nav-dot.active {
     background-color: #fff;
-    transform: scale(1.3);
-}
-
-/* Panel de información */
-.info-panel {
-    position: fixed;
-    bottom: 80px;
-    left: 20px;
-    right: 20px;
-    background-color: rgba(0,0,0,0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 20px;
-    transform: translateY(150%);
-    transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-    z-index: 3;
-    pointer-events: auto;
-    max-height: 60vh;
-    overflow-y: auto;
-}
-
-.info-panel.active {
-    transform: translateY(0);
-}
-
-.info-title {
-    font-size: 1.4rem;
-    margin-bottom: 10px;
-    font-weight: 400;
-}
-
-.info-description {
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-bottom: 15px;
-    opacity: 0.9;
-}
-
-.info-details {
-    font-size: 0.8rem;
-    opacity: 0.7;
-    margin-bottom: 5px;
-}
-
-.close-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    pointer-events: auto;
+    transform: scale(1.2);
 }
 
 /* Instrucciones iniciales */
@@ -248,23 +196,28 @@ canvas {
 /* Pista de gestos */
 .gesture-hint {
     position: fixed;
-    bottom: 20px;
+    bottom: 20%;
     left: 50%;
     transform: translateX(-50%);
-    background-color: rgba(255,255,255,0.2);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-size: 16px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1000;
+    text-align: center;
+    max-width: 80%;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    border-radius: 30px;
-    padding: 10px 20px;
-    font-size: 0.8rem;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    z-index: 5;
-    pointer-events: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .gesture-hint.visible {
     opacity: 1;
+    visibility: visible;
 }
 
 /* Botón de contacto */
@@ -355,6 +308,11 @@ canvas {
     transition: all 0.3s ease;
 }
 
+.social-link:hover {
+    background-color: rgba(255,255,255,0.2);
+    transform: translateY(-3px);
+}
+
 .social-link:active {
     transform: scale(0.95);
     background-color: rgba(255,255,255,0.2);
@@ -370,175 +328,99 @@ canvas {
     cursor: pointer;
 }
 
-/* Optimizaciones para dispositivos móviles */
-@media (max-width: 600px) {
-    .title {
-        font-size: 1.4rem;
-    }
-    
-    .subtitle {
-        font-size: 0.8rem;
-    }
-    
-    .info-panel {
-        bottom: 70px;
-        left: 15px;
-        right: 15px;
-        padding: 15px;
-        max-height: 50vh;
-    }
-    
-    .info-title {
-        font-size: 1.2rem;
-    }
-    
-    .info-description {
-        font-size: 0.85rem;
-    }
-    
-    .instructions {
-        padding: 20px;
-        width: 300px;
-    }
-    
-    .instructions h2 {
-        font-size: 1.3rem;
-    }
-    
-    .contact-panel {
-        padding: 20px;
-    }
-    
-    .contact-title {
-        font-size: 1.4rem;
-    }
-}
-
-/* Animaciones */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-
-@keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-/* 
- * Añadir estos estilos a tu archivo CSS para mejorar la visualización de los gestos
- */
-
-/* Mejora en la visualización de pistas de gestos */
-.gesture-hint {
+/* Zoom y rotación */
+.rotation-indicator {
     position: fixed;
-    bottom: 20%;
     left: 50%;
-    transform: translateX(-50%);
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    pointer-events: none;
+    z-index: 500;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.rotation-circle {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    box-sizing: border-box;
+    animation: pulse 3s infinite ease-in-out;
+}
+
+.drag-point {
+    position: absolute;
+    border-radius: 50%;
+    background-color: white;
+    opacity: 0.8;
+    animation: blink 2s infinite alternate;
+}
+
+.drag-cursor {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-sizing: border-box;
+    animation: rotateCursor 4s infinite linear;
+    transform-origin: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cursor-path {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-sizing: border-box;
+}
+
+.zoom-indicator {
+    position: fixed;
+    bottom: 60px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    font-family: Arial, sans-serif;
+    user-select: none;
+    pointer-events: none;
+}
+
+.zoom-tutorial {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
     color: white;
-    padding: 10px 16px;
-    border-radius: 20px;
-    font-size: 16px;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    z-index: 1000;
-    text-align: center;
-    max-width: 80%;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.gesture-hint.visible {
-    opacity: 1;
-    visibility: visible;
-}
-
-/* Estilo para dispositivos móviles */
-@media (max-width: 768px) {
-    .gesture-hint {
-        bottom: 15%;
-        padding: 12px 20px;
-        font-size: 18px;
-        max-width: 90%;
-    }
-}
-
-/* Mejorar la visualización de los puntos de navegación */
-.nav-dots {
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.nav-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.3);
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.nav-dot.active {
-    background-color: white;
-    transform: scale(1.2);
-}
-
-/* En móviles, hacer los puntos más grandes para facilitar el toque */
-@media (max-width: 768px) {
-    .nav-dot {
-        width: 16px;
-        height: 16px;
-        margin: 0 8px;
-    }
-}
-
-/* Mejorar la visualización del panel de información */
-.info-panel {
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    padding: 20px;
-    border-radius: 15px;
-    max-width: 90%;
-    max-height: 80%;
-    overflow-y: auto;
-    transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-    transform: translateY(50px);
+    z-index: 1000;
     opacity: 0;
-    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
 }
 
-.info-panel.active {
-    transform: translateY(0);
-    opacity: 1;
-    visibility: visible;
-}
-
-/* Estilo para dispositivos móviles */
-@media (max-width: 768px) {
-    .info-panel {
-        padding: 16px;
-        max-width: 95%;
-    }
-}
-
-/* Mejorar botones de zoom */
 button.zoom-button {
     width: 50px;
     height: 50px;
@@ -561,23 +443,170 @@ button.zoom-button:hover {
     transform: scale(1.05);
 }
 
-/* Indicador visual de zoom */
-.zoom-indicator {
+/* Panel de información */
+.info-panel {
     position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 10px;
-    font-size: 14px;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    bottom: 80px;
+    left: 20px;
+    right: 20px;
+    background-color: rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 15px;
+    padding: 20px;
+    transform: translateY(150%);
+    transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    z-index: 3;
+    pointer-events: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+    max-width: 90%;
 }
 
-.zoom-indicator.visible {
-    opacity: 1;
-    visibility: visible;
+.info-panel.active {
+    transform: translateY(0);
+}
+
+.info-title {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    font-weight: 400;
+}
+
+.info-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    opacity: 0.9;
+}
+
+.info-details {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-bottom: 5px;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+    .info-panel {
+        bottom: 70px;
+        left: 15px;
+        right: 15px;
+        padding: 16px;
+        max-width: 95%;
+        max-height: 50vh;
+    }
+    
+    .info-title {
+        font-size: 1.2rem;
+    }
+    
+    .info-description {
+        font-size: 0.85rem;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
+@keyframes blink {
+    0% { opacity: 0.4; }
+    100% { opacity: 0.9; }
+}
+
+@keyframes rotateCursor {
+    0% { transform: translate(-50%, -50%) rotate(0deg) translate(50px) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg) translate(50px) rotate(-360deg); }
+}
+
+@keyframes handDrag {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(8px, 8px); }
+}
+
+/* Optimizaciones para dispositivos móviles */
+@media (max-width: 768px) {
+    .title {
+        font-size: 1.4rem;
+    }
+    
+    .subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .instructions {
+        padding: 20px;
+        width: 300px;
+    }
+    
+    .instructions h2 {
+        font-size: 1.3rem;
+    }
+    
+    .contact-panel {
+        padding: 20px;
+    }
+    
+    .contact-title {
+        font-size: 1.4rem;
+    }
+    
+    .nav-dot {
+        width: 16px;
+        height: 16px;
+        margin: 0 8px;
+    }
+    
+    .gesture-hint {
+        bottom: 15%;
+        padding: 12px 20px;
+        font-size: 18px;
+        max-width: 90%;
+    }
+    
+    .contact-card-content {
+        padding: 25px 20px;
+    }
+    
+    .contact-detail strong {
+        font-size: 13px;
+    }
+    
+    .contact-detail span {
+        font-size: 15px;
+    }
+    
+    .social-link {
+        width: 45px;
+        height: 45px;
+    }
 }

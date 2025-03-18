@@ -6,7 +6,6 @@
 import * as THREE from 'three';
 import { EnhancedRotation } from '../components/EnhancedRotation.js';
 
-
 export class ArtworkItem {
     constructor(world, data) {
         this.world = world;
@@ -31,17 +30,8 @@ export class ArtworkItem {
         
         // State
         this.isVisible = false;
-        this.isAnimating = false;
-        this.rotationSpeed = 0.005;
         
-        // Trackball rotation properties
-        this.currentRotation = new THREE.Quaternion();
-        this.targetRotation = new THREE.Quaternion();
-        this.rotationVelocity = new THREE.Vector2(0, 0);
-        this.rotationDamping = 0.985; // Increased from 0.95 for more persistent rotation
-        this.rotationSensitivity = 2.5; // Increased sensitivity for more dramatic rotation
-        
-        // Setup
+        // Container setup
         this.container = new THREE.Group();
         this.container.name = this.name;
         this.container.position.copy(this.position);
@@ -102,7 +92,7 @@ export class ArtworkItem {
     }
     
     /**
-     * Apply trackball rotation to the item
+     * Apply trackball rotation to the item using EnhancedRotation
      * @param {THREE.Quaternion} rotationDelta - Rotation to apply
      * @param {THREE.Vector2} velocity - Velocity for momentum
      */
@@ -114,33 +104,6 @@ export class ArtworkItem {
             // No necesitamos hacer nada aquí, EnhancedRotation lo maneja todo
             return;
         }
-        
-        // Código de respaldo para compatibilidad con versiones anteriores
-        // Amplify velocity dramatically for much stronger effect
-        this.rotationVelocity.x = velocity.x * 10.0;
-        this.rotationVelocity.y = velocity.y * 10.0;
-        
-        // DIRECT ROTATION: Apply rotation directly to the model
-        // Create rotation matrices based on mouse/touch movement
-        const rotationX = new THREE.Quaternion().setFromAxisAngle(
-            new THREE.Vector3(0, 1, 0),
-            -velocity.x * 5.0
-        );
-        
-        const rotationY = new THREE.Quaternion().setFromAxisAngle(
-            new THREE.Vector3(1, 0, 0),
-            velocity.y * 5.0
-        );
-        
-        // Apply rotation directly
-        this.currentRotation.multiply(rotationX).multiply(rotationY);
-        this.targetRotation.copy(this.currentRotation);
-        
-        // Apply rotation directly to modelScene
-        this.modelScene.quaternion.copy(this.currentRotation);
-        
-        // Disable auto-rotation when user interacts
-        this.isAnimating = false;
     }
     
     /**
@@ -149,9 +112,39 @@ export class ArtworkItem {
     resetParticles() {
         if (!this.particles) return;
         
-        // Re-create particles
-        this.container.remove(this.particles);
-        this.addParticles();
+        this.particles.children.forEach(child => {
+            if (child.isMesh) {
+                // Restaurar opacidad original
+                child.material.opacity = child.userData.originalOpacity;
+                
+                // Resetear posición si tiene una guardada
+                if (child.userData.originalPosition) {
+                    child.position.x = child.userData.originalPosition.x;
+                    child.position.y = child.userData.originalPosition.y;
+                    child.position.z = child.userData.originalPosition.z;
+                }
+            }
+            else if (child.isLine) {
+                // Restaurar opacidad de las líneas
+                child.material.opacity = child.userData.originalOpacity;
+                
+                // Actualizar puntos de la línea
+                if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
+                    const star1 = this.particles.children[child.userData.star1];
+                    const star2 = this.particles.children[child.userData.star2];
+                    
+                    if (star1 && star2) {
+                        const points = [
+                            star1.position.clone(),
+                            star2.position.clone()
+                        ];
+                        
+                        child.geometry.setFromPoints(points);
+                        child.geometry.attributes.position.needsUpdate = true;
+                    }
+                }
+            }
+        });
     }
     
     /**
@@ -312,47 +305,6 @@ export class ArtworkItem {
     }
     
     /**
-     * Método para restablecer las estrellas a sus posiciones originales
-     */
-    resetParticles() {
-        if (!this.particles) return;
-        
-        this.particles.children.forEach(child => {
-            if (child.isMesh) {
-                // Restaurar opacidad original
-                child.material.opacity = child.userData.originalOpacity;
-                
-                // Resetear posición si tiene una guardada
-                if (child.userData.originalPosition) {
-                    child.position.x = child.userData.originalPosition.x;
-                    child.position.y = child.userData.originalPosition.y;
-                    child.position.z = child.userData.originalPosition.z;
-                }
-            }
-            else if (child.isLine) {
-                // Restaurar opacidad de las líneas
-                child.material.opacity = child.userData.originalOpacity;
-                
-                // Actualizar puntos de la línea
-                if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
-                    const star1 = this.particles.children[child.userData.star1];
-                    const star2 = this.particles.children[child.userData.star2];
-                    
-                    if (star1 && star2) {
-                        const points = [
-                            star1.position.clone(),
-                            star2.position.clone()
-                        ];
-                        
-                        child.geometry.setFromPoints(points);
-                        child.geometry.attributes.position.needsUpdate = true;
-                    }
-                }
-            }
-        });
-    }
-    
-    /**
      * Show the item with optional transition effect
      */
     show(direction = null) {
@@ -401,9 +353,6 @@ export class ArtworkItem {
             
             animate();
         }
-        
-        // Start animation
-        this.isAnimating = true;
     }
     
     /**
@@ -428,20 +377,6 @@ export class ArtworkItem {
         // Actualizar el controlador de rotación mejorado
         if (this.rotationController) {
             this.rotationController.update();
-        }
-        // Código heredado para compatibilidad con versiones anteriores
-        else if (this.isAnimating) {
-            // Create a rotation about the Y axis (reduced speed)
-            const autoRotation = new THREE.Quaternion().setFromAxisAngle(
-                new THREE.Vector3(0, 1, 0), 
-                this.rotationSpeed * 0.5
-            );
-            
-            // Apply to current rotation
-            this.currentRotation.multiplyQuaternions(autoRotation, this.currentRotation);
-            
-            // Apply to model
-            this.modelScene.quaternion.copy(this.currentRotation);
         }
         
         // Update particles
@@ -520,43 +455,6 @@ export class ArtworkItem {
                 }
             });
         }
-    }
-    
-    /**
-     * Handle trackball rotation for the model
-     * This is a compatibility method to support old code
-     * @param {Number} deltaX - Horizontal movement
-     * @param {Number} deltaY - Vertical movement
-     */
-    handleManualRotation(deltaX, deltaY) {
-        console.warn('handleManualRotation is deprecated. Use applyTrackballRotation instead.');
-        this.isAnimating = false;
-        
-        // Create rotation from delta movement
-        const rotationX = new THREE.Quaternion().setFromAxisAngle(
-            new THREE.Vector3(0, 1, 0),
-            deltaX * 0.01
-        );
-        
-        const rotationY = new THREE.Quaternion().setFromAxisAngle(
-            new THREE.Vector3(1, 0, 0),
-            deltaY * 0.01
-        );
-        
-        // Apply rotation
-        this.currentRotation.multiply(rotationX).multiply(rotationY);
-        this.targetRotation.copy(this.currentRotation);
-        
-        // Apply rotation to model
-        if (this.modelScene) {
-            this.modelScene.quaternion.copy(this.currentRotation);
-        }
-        
-        // Restart animation after a pause
-        clearTimeout(this.animationTimeout);
-        this.animationTimeout = setTimeout(() => {
-            this.isAnimating = true;
-        }, 3000);
     }
     
     /**

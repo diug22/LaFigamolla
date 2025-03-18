@@ -214,12 +214,6 @@ export class Controls {
             case 'ArrowRight':
                 this.nextItem();
                 break;
-            case 'ArrowUp':
-                this.showArtworkInfo();
-                break;
-            case 'ArrowDown':
-                this.hideArtworkInfo();
-                break;
             case 'r':
             case 'R':
                 this.resetCameraView();
@@ -562,12 +556,6 @@ export class Controls {
             } else if (this.swipeDirection === 'right' && Math.abs(this.touchDelta.x) > this.swipeThreshold * 1.2) {
                 this.previousItem();
             }
-            // Handle vertical swipe for artwork information
-            else if (this.swipeVerticalDirection === 'up' && Math.abs(this.touchDelta.y) > this.swipeVerticalThreshold * 1.2) {
-                this.showArtworkInfo();
-            } else if (this.swipeVerticalDirection === 'down' && Math.abs(this.touchDelta.y) > this.swipeVerticalThreshold * 1.2) {
-                this.hideArtworkInfo();
-            }
         }
         
         // Reset states but keep momentum for smooth deceleration
@@ -749,12 +737,6 @@ export class Controls {
             this.nextItem();
         } else if (this.swipeDirection === 'right') {
             this.previousItem();
-        }
-        // Handle vertical swipe for artwork information
-        else if (this.swipeVerticalDirection === 'up') {
-            this.showArtworkInfo();
-        } else if (this.swipeVerticalDirection === 'down') {
-            this.hideArtworkInfo();
         }
         
         // Reset state but keep velocity for smooth deceleration
@@ -982,27 +964,6 @@ export class Controls {
         }
     }
     
-    /**
-     * Show artwork information (triggered by swiping up)
-     */
-    showArtworkInfo() {
-        // Emit event for UI to show info panel
-        this.emit('showInfo', this.currentIndex);
-        
-        // Show gesture hint
-        this.showGestureHint("Swipe down to hide info");
-    }
-    
-    /**
-     * Hide artwork information (triggered by swiping down)
-     */
-    hideArtworkInfo() {
-        // Emit event for UI to hide info panel
-        this.emit('hideInfo');
-        
-        // Show gesture hint
-        this.showGestureHint("Swipe up to show info");
-    }
     
     /**
      * Reset camera view with horizontal transition effect

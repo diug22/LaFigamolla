@@ -32,7 +32,6 @@ export class UI {
         };
         
         // Add info bubble element for swipe-up info display
-        this.createInfoBubble();
         this.createZoomUI();
 
         
@@ -343,27 +342,10 @@ export class UI {
         zoomIndicator.style.userSelect = 'none';
         zoomIndicator.style.pointerEvents = 'none'; // No intercepta eventos
         
-        // Añadir icono de zoom
-        const zoomIcon = document.createElement('span');
-        zoomIcon.innerHTML = '🔍';
-        zoomIcon.style.marginRight = '5px';
-        zoomIcon.style.fontSize = '16px';
-        
-        // Añadir texto para el nivel de zoom
-        const zoomText = document.createElement('span');
-        zoomText.id = 'zoom-level-text';
-        zoomText.textContent = '100%';
-        
-        // Estructura del indicador
-        zoomIndicator.appendChild(zoomIcon);
-        zoomIndicator.appendChild(zoomText);
         
         // Añadir al DOM
         document.body.appendChild(zoomIndicator);
         
-        // Guardar referencia
-        this.elements.zoomIndicator = zoomIndicator;
-        this.elements.zoomText = zoomText;
         
         // Crear tutorial visual para el zoom (aparece solo la primera vez)
         this.createZoomTutorial();
@@ -549,14 +531,6 @@ export class UI {
                 this.hideInfoBubble(); // Hide bubble when changing items
             });
             
-            // Show/hide info events
-            this.controls.on('showInfo', (index) => {
-                this.showInfoBubble(index);
-            });
-            
-            this.controls.on('hideInfo', () => {
-                this.hideInfoBubble();
-            });
             this.controls.on('zoomChange', (zoomLevel) => {
                 this.updateZoomIndicator(zoomLevel);
             });
@@ -806,32 +780,9 @@ export class UI {
      * @param {Object} item - Artwork item data
      */
     showInfoPanel(item) {
-        if (!this.elements.infoPanel) return;
-        
-        // Update info panel content
-        if (this.elements.infoTitle) {
-            this.elements.infoTitle.textContent = item.title || 'Sin título';
+        if (this.elements.infoPanel) {
+            this.elements.infoPanel.classList.add('active');
         }
-        
-        if (this.elements.infoDescription) {
-            this.elements.infoDescription.textContent = item.description || 'Sin descripción';
-        }
-        
-        // Update optional fields if they exist
-        if (this.elements.infoDimensions) {
-            this.elements.infoDimensions.textContent = `Dimensiones: ${item.dimensions || 'Modelo 3D'}`;
-        }
-        
-        if (this.elements.infoMaterial) {
-            this.elements.infoMaterial.textContent = `Material: ${item.material || 'Modelo GLB'}`;
-        }
-        
-        if (this.elements.infoYear) {
-            this.elements.infoYear.textContent = `Año: ${item.year || '2025'}`;
-        }
-        
-        // Show panel
-        this.elements.infoPanel.classList.add('active');
     }
     
     /**
@@ -891,7 +842,7 @@ export class UI {
                 this.elements.infoDescription.textContent = item.description || 'Sin descripción';
             }
             
-            // Hide unnecessary elements or show with default values
+            // Add standard values for other fields
             if (this.elements.infoDimensions) {
                 this.elements.infoDimensions.textContent = 'Dimensiones: Modelo 3D';
             }
@@ -904,8 +855,13 @@ export class UI {
                 this.elements.infoYear.textContent = 'Año: 2025';
             }
             
-            // Show panel
-            this.elements.infoPanel.classList.add('active');
+            // Show panel automatically
+            this.showInfoPanel();
+            
+            // Set a timer to hide it after some seconds (opcional)
+            setTimeout(() => {
+                this.hideInfoPanel();
+            }, 10000); // 5 segundos
         }
     }
     
