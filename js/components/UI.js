@@ -66,7 +66,7 @@ export class UI {
             </div>
             
             <div class="footer">
-                <button class="info-button">Info pieza</button>
+                <button class="info-button">Info piezas</button>
                 <div class="nav-dots" id="nav-dots"></div>
             </div>
         `;

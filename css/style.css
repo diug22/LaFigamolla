@@ -460,14 +460,14 @@ canvas {
     }
     
     .plant-icon {
-        width: 150px;
+        width: 350px;
     }
     
     .plant-icon img{
-        width: 150px;
+        width: 350px;
         height: auto;
         object-fit: contain;
-        transform: translateX(7%);
+        transform: translateX(3%);
     }
     
     .instruction-box {
@@ -497,7 +497,7 @@ canvas {
 }
 
 /* Para pantallas muy pequeñas */
-@media (max-width: 360px) {
+@media (max-width: 380px) {
     .instructions-curtain {
         padding: 35px 15px 25px;
     }
@@ -517,6 +517,13 @@ canvas {
     
     .instruction-box p {
         font-size: 14px;
+    }
+
+    .plant-icon img{
+        width: 200px;
+        height: auto;
+        object-fit: contain;
+        transform: translateX(1%);
     }
 }
 

@@ -504,7 +504,7 @@ export class AmbienceParticles {
         }
         
         // Resetear posiciones cada 30 segundos para prevenir acumulación
-        const resetInterval = 10000; // 30 segundos
+        const resetInterval = 5000; // 30 segundos
         
         if (currentTime - this.lastResetTime > resetInterval) {
             this.resetConstellationPositions();
