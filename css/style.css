@@ -163,9 +163,8 @@ canvas {
 }
 
 .loading-subtitle {
-    font-size: 1rem;
+    font-size: 20px;
     font-weight: 300;
-    letter-spacing: 2px;
     margin-bottom: 30px;
     color: #a6a995; /* Laqueno medium color */
 }
@@ -201,7 +200,7 @@ canvas {
     }
     
     .loading-subtitle {
-        font-size: 0.8rem;
+        font-size: 20px;
     }
     
     .loading-bar-container {

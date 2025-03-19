@@ -138,28 +138,6 @@ export class UI {
         const style = document.createElement('style');
         style.textContent = `
 
-        .info-panel {
-                position: fixed;
-                bottom: 80px; /* Posicionado por encima del botón del carrusel */
-                left: 50%;
-                transform: translateX(-50%) translateY(100%); /* Centrado horizontal y fuera de pantalla inicialmente */
-                width: 90%;
-                max-width: 500px; /* Ancho máximo reducido */
-                background-color: rgba(43, 46, 31, 0.9);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                padding: 25px 30px;
-                border-radius: 8px; /* Bordes redondeados */
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Sombra sutil */
-                transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-                z-index: 20;
-                max-height: 50vh; /* Altura máxima reducida */
-                overflow-y: auto;
-            }
-
-            .info-panel.active {
-                transform: translateX(-50%) translateY(0); /* Solo mueve hacia arriba, mantiene centrado */
-            }
 
             /* Ajustes para el contenido más compacto */
             .info-title {
@@ -190,7 +168,7 @@ export class UI {
             /* Ajustes para móviles */
             @media (max-width: 768px) {
                 .info-panel {
-                    width: 85%;
+                    width: 100%;
                     padding: 20px;
                     bottom: 70px; /* Ligeramente más arriba en móviles */
                     max-height: 40vh; /* Altura máxima más reducida en móviles */
@@ -262,16 +240,6 @@ export class UI {
                 object-fit: contain;
             }
 
-            /* Responsive para dispositivos móviles */
-            @media (max-width: 768px) {
-                .logo-container img {
-                    width: 150px; /* Tamaño reducido para móviles */
-                }
-                
-                .subtitle {
-                    font-size: 12px;
-                }
-            }
 
             /* Para pantallas muy pequeñas */
             @media (max-width: 380px) {
@@ -361,7 +329,7 @@ export class UI {
                 bottom: 0;
                 left: 0;
                 width: 100%;
-                background-color: rgba(43, 46, 31, 0.9);
+                background-color: rgba(43, 46, 31, 0.2);
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
                 padding: 30px 40px;
@@ -461,7 +429,7 @@ export class UI {
                 }
                 
                 .subtitle {
-                    font-size: 12px;
+                    font-size: 17px;
                 }
                 
                 .nav-link {
@@ -478,6 +446,33 @@ export class UI {
                 
                 .close-btn {
                     right: 20px;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .info-panel-mobile {
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    max-height: 80vh; /* Increased from 50vh */
+                    padding: 20px;
+                    transform: translateY(100%);
+                    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+                    z-index: 20;
+                }
+                
+                .info-panel-mobile.active {
+                    transform: translateY(0);
+                    height: auto;
+                    max-height: 80vh;
+                }
+                
+                .info-panel-content {
+                    padding: 0 10px;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
                 }
             }
         `;
