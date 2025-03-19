@@ -46,8 +46,7 @@ export class ContactSystem {
         
         // Create card content with Laqueno styling
         card.innerHTML = `
-            <div class="contact-card-content">
-                <button type="button" id="contact-close-btn" class="contact-card-close-button">&times;</button>
+            <div class="contact-card-content" id="contact-close-btn">
                 <div class="contact-background">
                     <div class="contact-header">
                         <h3>CONTACTO</h3>
@@ -145,40 +144,19 @@ export class ContactSystem {
                 transform: translateY(0);
                 opacity: 1;
             }
-            
-            .contact-card-close-button {
-                position: fixed;
-                top: 150px;
-                right: 20px;
-                background: none;
-                border: none;
-                color: #B9BAAC;
-                font-size: 28px;
-                cursor: pointer;
-                z-index: 101;
-                width: 50px;
-                height: 50px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-                line-height: 1;
-                font-weight: bold;
-                -webkit-tap-highlight-color: transparent;
-                user-select: none;
-                pointer-events: auto;
-                transition: transform 0.2s ease, opacity 0.2s ease;
-            }
-            
-            .contact-card-close-button:hover {
-                transform: scale(1.2);
-                opacity: 0.8;
+
+            .contact-card.closing {
+                opacity: 0;
+                transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
             }
 
-            .contact-card-close-button:active {
-                transform: scale(0.9);
+            .contact-card.closing .contact-card-content {
+                transform: translateY(20px);
+                opacity: 0;
+                transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
             }
             
+
             .contact-background {
                 width: 100%;
                 height: 100%;
@@ -528,12 +506,17 @@ export class ContactSystem {
     /**
      * Hide contact card
      */
-    hideContactCard() {
-        this.contactCard.classList.remove('visible');
-        this.contactCard.style.zIndex = '0';
-
-        
-        // Restore footer visibility
-        this.toggleFooterVisibility(true);
+    hideContactCard () {
+        this.contactCard.classList.add('closing');
+    
+        // Esperar a que termine la animación antes de quitar la visibilidad
+        setTimeout(() => {
+            this.contactCard.classList.remove('visible');
+            this.contactCard.classList.remove('closing');
+            this.contactCard.style.zIndex = '0';
+    
+            // Restore footer visibility
+            this.toggleFooterVisibility(true);
+        }, 700); // Duración de la animación
     }
 }

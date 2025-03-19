@@ -38,8 +38,7 @@ export class AboutSystem {
             <div class="about-background-container">
                 <div class="about-background-image"></div>
             </div>
-            <div class="about-card-content">
-                <button type="button" id="about-close-btn" class="card-close-button">&times;</button>
+            <div class="about-card-content" id="about-close-btn">
                 <div class="about-background">
                     <div class="about-header">
                         <h1 class="about-title">Paula Roman</h1>
@@ -112,6 +111,17 @@ export class AboutSystem {
             .about-card.visible {
                 opacity: 1;
                 pointer-events: auto;
+            }
+
+            .about-card.closing {
+                opacity: 0;
+                transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+            }
+
+            .about-card.closing .about-card-content {
+                transform: translateY(20px);
+                opacity: 0;
+                transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
             }
             
             .about-card-content {
@@ -515,11 +525,17 @@ export class AboutSystem {
      * Hide about card
      */
     hideAboutCard() {
-        this.aboutCard.classList.remove('visible');
-        this.aboutCard.style.zIndex = '0';
-
-        // Restore footer visibility
-        this.toggleFooterVisibility(true);
+        this.aboutCard.classList.add('closing');
+    
+        // Esperar a que termine la animación antes de quitar la visibilidad
+        setTimeout(() => {
+            this.aboutCard.classList.remove('visible');
+            this.aboutCard.classList.remove('closing');
+            this.aboutCard.style.zIndex = '0';
+    
+            // Restore footer visibility
+            this.toggleFooterVisibility(true);
+        }, 700); // Duración de la animación
     }
     
     /**
