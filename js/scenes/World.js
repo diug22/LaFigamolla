@@ -1,3 +1,4 @@
+
 /**
  * World class - Updated for Laqueno
  * Manages the 3D world and all artwork objects
@@ -66,11 +67,12 @@ export class World {
         // Inicializar el sistema de partículas ambientales
         this.ambienceParticles = new AmbienceParticles(this.scene, this.experience, {
             // Aquí puedes configurar las opciones personalizadas
-            minConstellations: this.experience.sizes.isMobile ? 10 : 18,
-            maxConstellations: this.experience.sizes.isMobile ? 15 : 25,
+            minConstellations: this.experience.sizes.isMobile ? 2 : 5,
+            maxConstellations: this.experience.sizes.isMobile ? 6 : 8,
             globalZPosition: -2,
             positionX: { min: -10, max: 10 },
-            positionY: { min: 0, max: 0 },
+            positionY: { min: -5, max: 5 },
+            positionZ: { min: -10, max: -5 },
             backgroundPlane: {
                 enabled: true,
                 width: 120,

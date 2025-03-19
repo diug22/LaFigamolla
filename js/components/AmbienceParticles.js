@@ -122,17 +122,17 @@ export class AmbienceParticles {
         
         // Crear material para las estrellas
         const starMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xffffff,
+            color: 0xb2bb5c,
             transparent: true,
             opacity: this.getRandomInRange(this.config.starOpacity.min, this.config.starOpacity.max)
         });
         
         // Geometrías para las estrellas - diferentes tamaños
         const starGeometries = [
+            new THREE.SphereGeometry(0.04, 8, 8),
+            new THREE.SphereGeometry(0.06, 8, 8),
             new THREE.SphereGeometry(0.08, 8, 8),
-            new THREE.SphereGeometry(0.12, 8, 8),
-            new THREE.SphereGeometry(0.15, 8, 8),
-            new THREE.SphereGeometry(0.2, 8, 8)
+            new THREE.SphereGeometry(0.10, 8, 8)
         ];
         
         // Crear estrellas para esta constelación
@@ -148,7 +148,7 @@ export class AmbienceParticles {
             const geometry = starGeometries[Math.floor(Math.random() * starGeometries.length)];
             
             // Crear estrella con colores más vibrantes
-            const starColors = [0xffffff, 0xe4e3d3, 0xf5f5f5, 0xececec]; // Variaciones de blanco
+            const starColors = [0xb2bb5c, 0xbbc468, 0xc6cf73, 0xd6df85]; // Variaciones de blanco
             const color = starColors[Math.floor(Math.random() * starColors.length)];
             const material = starMaterial.clone();
             material.color.set(color);

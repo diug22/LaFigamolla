@@ -5,6 +5,7 @@
 
 import * as THREE from 'three';
 import { EnhancedRotation } from '../components/EnhancedRotation.js';
+import { BubbleEffect } from '../components/BubbleEffect.js';
 
 export class ArtworkItem {
     constructor(world, data) {
@@ -24,15 +25,20 @@ export class ArtworkItem {
         this.scale = data.scale || new THREE.Vector3(1, 1, 1);
         this.model = data.model; // GLB model reference
         this.particleColors = data.particleColors || [
+            '#c1c4b1', // Laqueno light
+            '#a6a995', // Laqueno medium
+            '#e4e3d3', // Laqueno cream
             '#FFB178', // Default soft orange
             '#E78F8E', // Default soft red
             '#FEEAA7', // Default pale yellow
-            '#D4A373', // Default soft brown
-            '#A8DADC'  // Default pastel green
+            '#D4A373'  // Default soft brown
         ];
         
         // State
         this.isVisible = false;
+        
+        // Effects
+        this.bubbleEffect = null;
         
         // Container setup
         this.container = new THREE.Group();
@@ -46,8 +52,6 @@ export class ArtworkItem {
         
         // Load model
         this.loadGLBModel();
-        
-        // Add effects
     }
     
     /**
@@ -80,17 +84,69 @@ export class ArtworkItem {
         this.container.add(this.modelScene);
         this.mesh = this.modelScene; // For consistency with effects methods
 
-        // Inicializar el controlador de rotación con configuración específica
+        // Initialize bubble effect after model is loaded
+        this.createBubbleEffect();
+
+        // Initialize the rotation controller with specific configuration
         this.rotationController = new EnhancedRotation(this.world.experience, this.modelScene);
-        // Ajustes específicos para experiencia móvil
+        // Specific adjustments for mobile experience
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-            // En móviles, hacer que la rotación sea más suave
-            this.rotationController.config.sensitivity = 1.2; // Mayor sensibilidad para pantallas táctiles
-            this.rotationController.config.damping = 0.99; // Mayor inercia
-            this.rotationController.config.autoRotateSpeed = 0.7; // Rotación auto más lenta
+            // On mobile, make rotation smoother
+            this.rotationController.config.sensitivity = 1.2; // Higher sensitivity for touch screens
+            this.rotationController.config.damping = 0.99; // More inertia
+            this.rotationController.config.autoRotateSpeed = 0.7; // Slower auto rotation
         }
         
         console.log(`GLB model loaded for ${this.name}`);
+    }
+
+    /**
+     * Create bubble effect for this artwork
+     */
+    createBubbleEffect() {
+        // Configure bubble effect with the artwork's colors and specific settings
+        const isMobile = this.world.experience && this.world.experience.sizes && 
+                       this.world.experience.sizes.isMobile;
+        
+        const bubbleOptions = {
+            // Color scheme from artwork data
+            colors: this.particleColors,
+            
+            // Bubble count - fewer on mobile
+            bubbleCount: {
+                min: isMobile ? 8 : 15,
+                max: isMobile ? 15 : 30,
+                initial: isMobile ? 10 : 20
+            },
+            
+            // Bubble size
+            bubbleSize: { 
+                min: 0.015, 
+                max: 0.06
+            },
+            
+            // Bubble speed
+            bubbleSpeed: { 
+                min: 0.005, 
+                max: 0.02 
+            },
+            
+            // Foam settings
+            resetInterval: 12000, // 12 seconds
+            foamHeight: 0.7, // Position for foam formation (above model)
+            foamWidth: 1.2, // Width of foam area
+            foamResetThreshold: 0.65, // When to reset foam
+            
+            // Define emission area at bottom of model
+            emissionArea: {
+                width: 0.7, // Width of emission area
+                height: 0.15, // Height of emission area
+                yOffset: -0.3 // Position below model center
+            }
+        };
+        
+        // Create bubble effect attached to artwork container
+        this.bubbleEffect = new BubbleEffect(this.container, bubbleOptions);
     }
     
     /**
@@ -101,14 +157,12 @@ export class ArtworkItem {
     applyTrackballRotation(rotationDelta, velocity) {
         if (!this.isVisible || !this.modelScene) return;
         
-        // Si tenemos un controlador de rotación, delegar a él
+        // If we have a rotation controller, delegate to it
         if (this.rotationController) {
-            // No necesitamos hacer nada aquí, EnhancedRotation lo maneja todo
+            // No need to do anything here, EnhancedRotation handles everything
             return;
         }
     }
-    
-
     
     /**
      * Show the item with optional transition effect
@@ -120,16 +174,16 @@ export class ArtworkItem {
         // Reset position and rotation
         this.container.position.copy(this.position);
         
-        // Reset trackball rotation y reiniciar autorotación
+        // Reset trackball rotation and restart auto-rotation
         if (this.rotationController) {
-            this.rotationController.resetRotation(true); // Añadir parámetro para forzar reset inmediato
+            this.rotationController.resetRotation(true); // Add parameter to force immediate reset
         
-            // Reiniciar velocidad de rotación
+            // Reset rotation velocity
             if (this.rotationController.state && this.rotationController.state.rotationVelocity) {
                 this.rotationController.state.rotationVelocity.set(0, 0);
             }
             
-            // Iniciar autorotación después de un breve retraso
+            // Start auto-rotation after a brief delay
             setTimeout(() => {
                 this.rotationController.startAutoRotation();
             }, 100);
@@ -178,86 +232,14 @@ export class ArtworkItem {
     update() {
         if (!this.isVisible || !this.modelScene) return;
 
-        // Actualizar el controlador de rotación mejorado
+        // Update the enhanced rotation controller
         if (this.rotationController) {
             this.rotationController.update();
         }
         
-        // Update particles
-        if (this.particles) {
-            const time = Date.now() / 1000; // tiempo en segundos
-            
-            this.particles.children.forEach(child => {
-                if (child.isMesh) {
-                    // Efecto de brillo pulsante para las estrellas
-                    const pulseValue = 0.5 + 0.5 * Math.sin(
-                        time * child.userData.pulseSpeed + child.userData.pulsePhase
-                    );
-                    
-                    // Aplicar opacidad variable
-                    child.material.opacity = child.userData.originalOpacity * pulseValue;
-                    
-                    // Movimiento suave
-                    if (child.userData.originalPosition) {
-                        // Obtener coordenadas esféricas actuales
-                        const position = new THREE.Vector3(
-                            child.position.x,
-                            child.position.y,
-                            child.position.z
-                        );
-                        
-                        const radius = position.length();
-                        let theta = Math.atan2(position.y, position.x);
-                        let phi = Math.acos(position.z / radius);
-                        
-                        // Actualizar coordenadas esféricas
-                        theta += child.userData.movementSpeed.theta;
-                        phi += child.userData.movementSpeed.phi;
-                        const newRadius = radius + child.userData.movementSpeed.radius;
-                        
-                        // Convertir a coordenadas cartesianas
-                        child.position.x = newRadius * Math.sin(phi) * Math.cos(theta);
-                        child.position.y = newRadius * Math.sin(phi) * Math.sin(theta);
-                        child.position.z = newRadius * Math.cos(phi);
-                        
-                        // Mantener las estrellas dentro de límites
-                        const maxRadius = 2.5;
-                        const minRadius = 1;
-                        
-                        if (newRadius > maxRadius || newRadius < minRadius) {
-                            child.userData.movementSpeed.radius *= -1;
-                        }
-                    }
-                    
-                    // Pequeño efecto de escala pulsante
-                    const scale = 0.8 + 0.4 * pulseValue;
-                    child.scale.set(scale, scale, scale);
-                }
-                else if (child.isLine) {
-                    // Actualizar opacidad de las líneas
-                    const pulseValue = 0.5 + 0.5 * Math.sin(
-                        time * child.userData.pulseSpeed + child.userData.pulsePhase
-                    );
-                    
-                    child.material.opacity = child.userData.originalOpacity * pulseValue;
-                    
-                    // Actualizar posición de las líneas para seguir a las estrellas
-                    if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
-                        const star1 = this.particles.children[child.userData.star1];
-                        const star2 = this.particles.children[child.userData.star2];
-                        
-                        if (star1 && star2) {
-                            const points = [
-                                star1.position.clone(),
-                                star2.position.clone()
-                            ];
-                            
-                            child.geometry.setFromPoints(points);
-                            child.geometry.attributes.position.needsUpdate = true;
-                        }
-                    }
-                }
-            });
+        // Update bubble effect
+        if (this.bubbleEffect) {
+            this.bubbleEffect.update();
         }
     }
     
@@ -286,18 +268,16 @@ export class ArtworkItem {
             });
         }
 
-        // Limpiar el controlador de rotación
+        // Clean up the rotation controller
         if (this.rotationController) {
             this.rotationController.destroy();
             this.rotationController = null;
         }
         
-        // Dispose of particles
-        if (this.particles) {
-            for (const particle of this.particles.children) {
-                if (particle.geometry) particle.geometry.dispose();
-                if (particle.material) particle.material.dispose();
-            }
+        // Clean up bubble effect
+        if (this.bubbleEffect) {
+            this.bubbleEffect.destroy();
+            this.bubbleEffect = null;
         }
     }
 }
