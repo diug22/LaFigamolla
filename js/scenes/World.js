@@ -224,6 +224,11 @@ export class World {
         for (const item of this.items) {
             item.hide();
         }
+
+        if (this.items[this.currentIndex] && 
+            this.items[this.currentIndex].rotationController) {
+            this.items[this.currentIndex].rotationController.state.rotationVelocity.set(0, 0);
+        }
         
         // Show the selected item with transition effect
         this.items[index].show(direction);

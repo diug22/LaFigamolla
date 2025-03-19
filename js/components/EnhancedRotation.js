@@ -262,7 +262,7 @@ export class EnhancedRotation {
     /**
      * Reset rotation to initial state with animation
      */
-    resetRotation() {
+    resetRotation(immediate = false) {
         // Stop auto-rotation temporarily
         const wasAutoRotating = this.config.autoRotate;
         this.config.autoRotate = false;
@@ -273,6 +273,13 @@ export class EnhancedRotation {
         // Set target rotation to initial rotation
         this.state.targetRotation.copy(this.state.initialRotation);
         
+        if (immediate) {
+            // Reset immediately without animation
+            this.modelContainer.quaternion.copy(this.state.initialRotation);
+            this.config.autoRotate = wasAutoRotating;
+            return;
+        }
+
         // Animate over time
         let progress = 0;
         const startRotation = this.modelContainer.quaternion.clone();

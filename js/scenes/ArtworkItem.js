@@ -319,19 +319,17 @@ export class ArtworkItem {
         
         // Reset trackball rotation y reiniciar autorotación
         if (this.rotationController) {
-            this.rotationController.startAutoRotation();
-            
-            // Si estamos en móvil, ajustar propiedades específicas para mejorar experiencia
-            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-                // Mostrar tutorial de rotación al mostrar una nueva pieza
-                if (this.world.experience.ui && 
-                    this.world.experience.ui.showGestureHint) {
-                    // Mostrar rotación después de un breve retardo
-                    setTimeout(() => {
-                        this.world.experience.ui.showGestureHint("Desliza para rotar");
-                    }, 1000);
-                }
+            this.rotationController.resetRotation(true); // Añadir parámetro para forzar reset inmediato
+        
+            // Reiniciar velocidad de rotación
+            if (this.rotationController.state && this.rotationController.state.rotationVelocity) {
+                this.rotationController.state.rotationVelocity.set(0, 0);
             }
+            
+            // Iniciar autorotación después de un breve retraso
+            setTimeout(() => {
+                this.rotationController.startAutoRotation();
+            }, 100);
         }
         
         // Apply special entrance effect for horizontal transitions
