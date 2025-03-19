@@ -167,15 +167,26 @@ canvas {
 }
 
 .loading-logo {
+    font-family: 'Optima', 'Segoe UI', sans-serif;
     font-size: 3.5rem;
     font-weight: 300;
     letter-spacing: 4px;
     margin-bottom: 10px;
-    color: #e4e3d3; /* Laqueno cream color */
+    color: #EBECCB /* Laqueno cream color */
+}
+
+.logo-text-normal {
+    font-weight: normal;
 }
 
 .loading-logo .highlight {
-    color: #c1c4b1; /* Laqueno light color */
+    font-weight: bold;
+    color: #EBECCB
+}
+
+.logo-text-punctuation {
+    font-weight: normal;
+    color: #c1c4b1; /* Mismo color que el highlight para consistencia */
 }
 
 .loading-subtitle {

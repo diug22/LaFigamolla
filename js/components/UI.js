@@ -248,11 +248,14 @@ export class UI {
             }
             
             .title {
-                font-size: 48px;
-                font-weight: 300;
-                letter-spacing: 2px;
-                margin-bottom: 5px;
-                color: #e4e3d3;
+                font-family: 'Optima';
+                font-weight: 400;
+                font-size: 74.28px;
+                line-height: 100%;
+                letter-spacing: 0%;
+                text-align: center;
+
+                color: #EBECCB;
             }
             
             .highlight {
