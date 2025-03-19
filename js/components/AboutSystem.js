@@ -31,6 +31,7 @@ export class AboutSystem {
         const card = document.createElement('div');
         card.id = 'about-card';
         card.className = 'about-card';
+        card.style.zIndex = '8';
         
         // Create card content with Laqueno styling
         card.innerHTML = `
@@ -77,7 +78,7 @@ export class AboutSystem {
                 background-color: rgba(225, 226, 202, 0.9);
                 backdrop-filter: blur(5px);
                 -webkit-backdrop-filter: blur(5px);
-                z-index: 8; /* Lower z-index to keep header visible */
+                z-index: 0; /* Lower z-index to keep header visible */
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 0.5s ease;
@@ -480,13 +481,24 @@ export class AboutSystem {
     showAboutCard() {
         this.aboutCard.classList.add('visible');
         
-        // Keep header visible
-        const header = document.querySelector('.header');
-        if (header) {
-            header.style.zIndex = '5';
-            header.style.position = 'relative';
+
+        const contactCard = document.getElementById('contact-card');
+        if (contactCard && contactCard.classList.contains('visible')) {
+            // If we have reference to the contactSystem, use its method
+            if (this.experience && this.experience.ui && this.experience.ui.contactSystem) {
+                this.experience.ui.contactSystem.hideContactCard();
+            } else {
+                // Otherwise remove the visible class
+                contactCard.classList.remove('visible');
+                contactCard.style.zIndex = '0';
+            }
         }
         
+        // Show about card with higher z-index
+        this.aboutCard.classList.add('visible');
+        this.aboutCard.style.zIndex = '2';
+
+
         // Hide the footer
         this.toggleFooterVisibility(false);
         
@@ -504,7 +516,8 @@ export class AboutSystem {
      */
     hideAboutCard() {
         this.aboutCard.classList.remove('visible');
-        
+        this.aboutCard.style.zIndex = '0';
+
         // Restore footer visibility
         this.toggleFooterVisibility(true);
     }

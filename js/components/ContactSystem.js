@@ -108,7 +108,7 @@ export class ContactSystem {
                 background-color: rgba(225, 226, 202, 0.9);
                 backdrop-filter: blur(5px);
                 -webkit-backdrop-filter: blur(5px);
-                z-index: 9;
+                z-index: 0;
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 0.5s ease;
@@ -502,10 +502,18 @@ export class ContactSystem {
         // Make sure AboutSystem is hidden first (if it exists)
         const aboutCard = document.getElementById('about-card');
         if (aboutCard && aboutCard.classList.contains('visible')) {
-            aboutCard.classList.remove('visible');
+            if (this.experience && this.experience.ui && this.experience.ui.aboutSystem) {
+                this.experience.ui.aboutSystem.hideAboutCard();
+            } else {
+                // Otherwise remove the visible class
+                aboutCard.classList.remove('visible');
+                aboutCard.style.zIndex = '0';
+            }
         }
         
         this.contactCard.classList.add('visible');
+        this.contactCard.style.zIndex = '2';
+
         
         // Ensure close button is working after display
         setTimeout(() => this.attachCloseButtonListener(), 100);
@@ -526,6 +534,8 @@ export class ContactSystem {
      */
     hideContactCard() {
         this.contactCard.classList.remove('visible');
+        this.contactCard.style.zIndex = '0';
+
         
         // Restore footer visibility
         this.toggleFooterVisibility(true);
