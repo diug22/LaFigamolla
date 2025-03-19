@@ -34,9 +34,11 @@ export class AboutSystem {
         
         // Create card content with Laqueno styling
         card.innerHTML = `
-            <div class="about-background-image"></div>
+            <div class="about-background-container">
+                <div class="about-background-image"></div>
+            </div>
             <div class="about-card-content">
-                <button class="card-close-button">&times;</button>
+                <button type="button" id="about-close-btn" class="card-close-button">&times;</button>
                 <div class="about-background">
                     <div class="about-header">
                         <h1 class="about-title">Paula Román</h1>
@@ -72,15 +74,25 @@ export class AboutSystem {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background-color: rgba(225, 226, 202, 0.7);
+                background-color: rgba(225, 226, 202, 0.9);
                 backdrop-filter: blur(5px);
                 -webkit-backdrop-filter: blur(5px);
-                z-index: 5; /* Lower z-index to keep header visible */
+                z-index: 3; /* Lower z-index to keep header visible */
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 0.5s ease;
-                padding-top: 100px; /* Add padding for the header */
+                padding-top: 0; /* Remove padding as header should be visible above */
                 overflow: hidden; /* Ensure image doesn't cause scrollbars */
+            }
+            
+            .about-background-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 120%; /* Más ancho que el contenedor padre */
+                height: 120%; /* Más alto que el contenedor padre */
+                overflow: hidden; /* Ocultar el desbordamiento */
+                z-index: 1;
             }
             
             .about-background-image {
@@ -89,11 +101,11 @@ export class AboutSystem {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background-image: url('public/images/about-background.png'); /* Update this path to your image */
+                background-image: url('public/images/about-background.png');
                 background-size: cover;
-                background-position: center;
-                opacity: 0.4;
-                z-index: 1;
+                background-position: center center;
+                opacity: 0.8;
+                transform: translateY(17%) translateX(-15%); /* Se aplica al contenido, no al contenedor */
             }
             
             .about-card.visible {
@@ -112,6 +124,8 @@ export class AboutSystem {
                 opacity: 0;
                 transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
                 z-index: 10;
+                padding-top: 80px; /* Add padding for the header */
+                box-sizing: border-box;
             }
             
             .about-card.visible .about-card-content {
@@ -121,14 +135,28 @@ export class AboutSystem {
             
             .card-close-button {
                 position: absolute;
-                top: 20px;
+                top: 100px;
                 right: 20px;
                 background: none;
                 border: none;
                 color: #2b2e1f;
-                font-size: 24px;
+                font-size: 28px;
                 cursor: pointer;
-                z-index: 20;
+                z-index: 100;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                line-height: 1;
+                font-weight: bold;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            .card-close-button:hover {
+                color: #000;
+                transform: scale(1.1);
             }
             
             .about-background {
@@ -151,24 +179,26 @@ export class AboutSystem {
             }
             
             .about-title {
-                font-size: 80px;
-                font-weight: 300;
-                letter-spacing: 2px;
-                color: #2b2e1f;
-                opacity: 0.7;
-                text-transform: none;
-                text-shadow: 0px 0px 10px rgba(225, 226, 202, 0.8);
+                color: #B9BAAC;
+                font-family: Optima, 'Segoe UI', sans-serif;
+                font-weight: 400;
+                font-size: clamp(60px, 15vw, 179.29px);
+                line-height: 100%;
+                letter-spacing: 0%;
+                text-align: center;
+                margin: 0;
+                width: 100%;
+                display: block;
             }
             
             .about-text {
                 max-width: 800px;
                 text-align: center;
-                margin-bottom: 60px;
                 position: relative;
                 z-index: 16;
-                background-color: rgba(225, 226, 202, 0.5);
                 padding: 20px;
                 border-radius: 10px;
+                margin-bottom: 40px;
             }
             
             .about-text p {
@@ -176,13 +206,13 @@ export class AboutSystem {
                 line-height: 1.6;
                 color: #2b2e1f;
                 font-weight: 500;
+                margin: 0;
             }
             
             .about-footer {
                 text-align: center;
                 position: relative;
                 z-index: 16;
-                background-color: rgba(225, 226, 202, 0.5);
                 padding: 20px;
                 border-radius: 10px;
             }
@@ -191,7 +221,7 @@ export class AboutSystem {
                 font-size: 32px;
                 font-weight: 400;
                 color: #2b2e1f;
-                margin-bottom: 10px;
+                margin: 0 0 10px 0;
             }
             
             .about-subtext {
@@ -199,6 +229,7 @@ export class AboutSystem {
                 line-height: 1.5;
                 color: #2b2e1f;
                 font-weight: 300;
+                margin: 0;
             }
             
             .highlight-no {
@@ -209,17 +240,62 @@ export class AboutSystem {
                 font-weight: bold;
             }
             
+            /* Tablets and Small Laptops */
+            @media (max-width: 1024px) {
+                .about-title {
+                    font-size: clamp(50px, 10vw, 120px);
+                }
+                
+                .about-text {
+                    max-width: 90%;
+                    padding: 15px;
+                }
+                
+                .about-background {
+                    padding: 30px 20px;
+                }
+            }
+            
+            /* Mobile Phones Portrait */
             @media (max-width: 768px) {
+                .about-card {
+                    padding-top: 60px;
+                    align-items: flex-start;
+                    overflow-y: auto;
+                }
+                
                 .about-card-content {
-                    padding: 20px;
+                    padding: 15px;
+                    height: auto;
+                    min-height: 100%;
+                    justify-content: flex-start;
+                    padding-top: 40px;
+                }
+                
+                .about-background {
+                    padding: 20px 15px;
                 }
                 
                 .about-title {
-                    font-size: 50px;
+                    font-size: clamp(40px, 13vw, 60px);
+                    margin-bottom: 20px;
+                }
+                
+                .about-text {
+                    padding: 15px;
+                    width: 100%;
+                    margin-bottom: 30px;
                 }
                 
                 .about-text p {
                     font-size: 16px;
+                    line-height: 1.5;
+                }
+                
+                .about-footer {
+                    padding: 15px;
+                    width: 100%;
+                    margin-bottom: 80px;
                 }
                 
                 .about-subtitle {
@@ -228,6 +304,91 @@ export class AboutSystem {
                 
                 .about-subtext {
                     font-size: 14px;
+                }
+                
+                .card-close-button {
+                    top: 15px;
+                    right: 15px;
+                    font-size: 28px;
+                    width: 50px;
+                    height: 50px;
+                }
+                
+                /* Adjust background image for mobile */
+                .about-background-container {
+                    width: 150%;
+                    height: 150%;
+                }
+                
+                .about-background-image {
+                    transform: translateY(15%) translateX(-5%);
+                }
+            }
+            
+            /* Small Mobile Phones */
+            @media (max-width: 380px) {
+                .about-title {
+                    font-size: 36px;
+                }
+                
+                .about-text p {
+                    font-size: 14px;
+                }
+                
+                .about-subtitle {
+                    font-size: 20px;
+                }
+                
+                .about-subtext {
+                    font-size: 13px;
+                }
+                
+                .about-background-container {
+                    width: 170%;
+                    height: 170%;
+                }
+            }
+            
+            /* Mobile Landscape Mode */
+            @media (max-height: 500px) and (orientation: landscape) {
+                .about-card-content {
+                    padding-top: 20px;
+                    overflow-y: auto;
+                }
+                
+                .about-title {
+                    font-size: clamp(30px, 8vw, 45px);
+                    margin-bottom: 10px;
+                }
+                
+                .about-text {
+                    margin-bottom: 15px;
+                    padding: 10px;
+                }
+                
+                .about-text p {
+                    font-size: 14px;
+                    line-height: 1.4;
+                }
+                
+                .about-footer {
+                    margin-bottom: 20px;
+                    padding: 10px;
+                }
+                
+                .about-subtitle {
+                    font-size: 18px;
+                    margin-bottom: 5px;
+                }
+                
+                .about-background {
+                    padding: 10px;
+                    justify-content: flex-start;
+                }
+                
+                .card-close-button {
+                    top: 10px;
+                    right: 10px;
                 }
             }
         `;
@@ -242,16 +403,46 @@ export class AboutSystem {
      * Setup event listeners for about card
      */
     setupEventListeners() {
-        // Close button
-        const closeButton = this.aboutCard.querySelector('.card-close-button');
+        // Close button - using multiple approaches to ensure it works
+        const closeButton = document.getElementById('about-close-btn');
         if (closeButton) {
+            // Method 1: Direct onclick assignment
+            closeButton.onclick = () => {
+                this.hideAboutCard();
+            };
+            
+            // Method 2: Standard event listener
             closeButton.addEventListener('click', () => {
                 this.hideAboutCard();
             });
+            
+            // Method 3: Direct event handler with no prevent default 
+            closeButton.addEventListener('mousedown', () => {
+                this.hideAboutCard();
+            });
+            
+            // Method 4: Handle touch events for mobile
+            closeButton.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Prevent double tap zoom
+                closeButton.style.opacity = '0.7';
+            }, { passive: false });
+            
+            closeButton.addEventListener('touchend', (e) => {
+                e.preventDefault(); // Prevent double tap zoom
+                closeButton.style.opacity = '1';
+                this.hideAboutCard();
+            }, { passive: false });
         }
         
-        // Close when clicking outside the content (optional)
+        // Close when clicking outside the content
         this.aboutCard.addEventListener('click', (e) => {
+            if (e.target === this.aboutCard) {
+                this.hideAboutCard();
+            }
+        });
+        
+        // Handle touch events outside content for mobile
+        this.aboutCard.addEventListener('touchend', (e) => {
             if (e.target === this.aboutCard) {
                 this.hideAboutCard();
             }
@@ -263,22 +454,76 @@ export class AboutSystem {
                 this.hideAboutCard();
             }
         });
+        
+        // Make sure the close button works after DOM is fully loaded
+        window.addEventListener('load', () => {
+            const reCheckCloseBtn = document.getElementById('about-close-btn');
+            if (reCheckCloseBtn) {
+                reCheckCloseBtn.onclick = () => this.hideAboutCard();
+            }
+        });
+        
+        // Handle orientation changes for mobile
+        window.addEventListener('orientationchange', () => {
+            // Small delay to allow the browser to complete the orientation change
+            setTimeout(() => {
+                // Re-center content if needed
+                if (this.aboutCard.classList.contains('visible')) {
+                    // For landscape, adjust scrolling
+                    if (window.innerHeight < 500) {
+                        this.aboutCard.style.overflowY = 'auto';
+                    } else {
+                        this.aboutCard.style.overflowY = '';
+                    }
+                }
+            }, 300);
+        });
+    }
+    
+    /**
+     * Toggle footer visibility
+     */
+    toggleFooterVisibility(show) {
+        const footer = document.querySelector('.footer');
+        if (footer) {
+            footer.style.visibility = show ? 'visible' : 'hidden';
+            footer.style.opacity = show ? '1' : '0';
+        }
     }
     
     /**
      * Show about card
      */
     showAboutCard() {
-        console.log("Showing about card");
         this.aboutCard.classList.add('visible');
+        
+        // Keep header visible
+        const header = document.querySelector('.header');
+        if (header) {
+            header.style.zIndex = '5';
+            header.style.position = 'relative';
+        }
+        
+        // Hide the footer
+        this.toggleFooterVisibility(false);
+        
+        // For mobile, adjust scrolling based on orientation
+        if (window.innerWidth <= 768) {
+            // Check if in landscape mode with low height
+            if (window.innerHeight < 500) {
+                this.aboutCard.style.overflowY = 'auto';
+            }
+        }
     }
     
     /**
      * Hide about card
      */
     hideAboutCard() {
-        console.log("Hiding about card");
         this.aboutCard.classList.remove('visible');
+        
+        // Restore footer visibility
+        this.toggleFooterVisibility(true);
     }
     
     /**
@@ -292,7 +537,6 @@ export class AboutSystem {
      * Method to be called when resources are ready (kept for compatibility)
      */
     onResourcesReady() {
-        // Nothing to do, we're using a static image
-        console.log("Resources ready, but we're using a static image in AboutSystem");
+        // Nothing to do, we're using static decoration elements
     }
 }
