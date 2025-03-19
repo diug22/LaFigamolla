@@ -95,6 +95,53 @@ export class UI {
     addStyles() {
         const style = document.createElement('style');
         style.textContent = `
+
+
+            /* Ajustes para el contenido más compacto */
+            .info-title {
+                font-size: 22px;
+                margin-bottom: 12px;
+            }
+
+            .info-separator {
+                margin-bottom: 15px;
+            }
+
+            .info-description {
+                font-size: 14px;
+                line-height: 1.5;
+                margin-bottom: 20px;
+            }
+
+            .info-details {
+                font-size: 12px;
+                line-height: 1.6;
+                margin-bottom: 10px;
+            }
+
+            .info-field {
+                margin: 5px 0;
+            }
+
+            /* Ajustes para móviles */
+            @media (max-width: 768px) {
+                .info-panel {
+                    width: 100%;
+                    padding: 20px;
+                    bottom: 70px; /* Ligeramente más arriba en móviles */
+                    max-height: 40vh; /* Altura máxima más reducida en móviles */
+                }
+                
+                .info-title {
+                    font-size: 18px;
+                }
+                
+                .info-description {
+                    font-size: 13px;
+                    margin-bottom: 15px;
+                }
+            }
+
             .ui-container {
                 position: fixed;
                 top: 0;
@@ -147,16 +194,6 @@ export class UI {
                 object-fit: contain;
             }
 
-            /* Responsive para dispositivos móviles */
-            @media (max-width: 768px) {
-                .logo-container img {
-                    width: 150px; /* Tamaño reducido para móviles */
-                }
-                
-                .subtitle {
-                    font-size: 12px;
-                }
-            }
 
             /* Para pantallas muy pequeñas */
             @media (max-width: 380px) {
@@ -238,6 +275,66 @@ export class UI {
                 100% { transform: translateX(0); opacity: 1; }
             }
             
+            /* Info panel */
+            .info-panel {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background-color: rgba(43, 46, 31, 0.2);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                padding: 30px 40px;
+                transform: translateY(100%);
+                transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 20;
+                max-height: 60vh;
+                overflow-y: auto;
+            }
+            
+            .info-panel.active {
+                transform: translateY(0);
+            }
+            
+            .close-btn {
+                position: absolute;
+                top: 20px;
+                right: 40px;
+                background: none;
+                border: none;
+                color: #e4e3d3;
+                font-size: 24px;
+                cursor: pointer;
+            }
+            
+            .info-title {
+                font-size: 24px;
+                font-weight: 300;
+                letter-spacing: 1px;
+                margin-bottom: 15px;
+            }
+            
+            .info-separator {
+                width: 40px;
+                height: 1px;
+                background-color: #a6a995;
+                margin-bottom: 15px;
+            }
+            
+            .info-description {
+                font-size: 16px;
+                line-height: 1.6;
+                margin-bottom: 30px;
+                max-width: 800px;
+                color: #c1c4b1;
+            }
+            
+            .info-details {
+                font-size: 14px;
+                color: #a6a995;
+                line-height: 1.8;
+            }
+            
             /* Zoom indicator */
             .zoom-indicator {
                 position: fixed;
@@ -284,7 +381,7 @@ export class UI {
                 }
                 
                 .subtitle {
-                    font-size: 12px;
+                    font-size: 17px;
                 }
                 
                 .nav-link {
@@ -293,6 +390,33 @@ export class UI {
                 
                 .footer {
                     padding: 15px 20px;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .info-panel-mobile {
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    max-height: 80vh; /* Increased from 50vh */
+                    padding: 20px;
+                    transform: translateY(100%);
+                    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+                    z-index: 20;
+                }
+                
+                .info-panel-mobile.active {
+                    transform: translateY(0);
+                    height: auto;
+                    max-height: 80vh;
+                }
+                
+                .info-panel-content {
+                    padding: 0 10px;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
                 }
             }
         `;
