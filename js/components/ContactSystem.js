@@ -13,6 +13,9 @@ export class ContactSystem {
         
         // Setup event listeners
         this.setupEventListeners();
+        
+        // Styles for clipboard notification
+        this.addClipboardStyles();
     }
 
     /**
@@ -45,8 +48,8 @@ export class ContactSystem {
         card.innerHTML = `
             <div class="contact-card-content">
                 <button type="button" id="contact-close-btn" class="contact-card-close-button">&times;</button>
-                <div class="about-background">
-                    <div class="about-header">
+                <div class="contact-background">
+                    <div class="contact-header">
                         <h3>CONTACTO</h3>
                     </div>
                     
@@ -105,35 +108,12 @@ export class ContactSystem {
                 background-color: rgba(225, 226, 202, 0.9);
                 backdrop-filter: blur(5px);
                 -webkit-backdrop-filter: blur(5px);
-                z-index: 8;
+                z-index: 9;
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 0.5s ease;
                 padding-top: 0;
                 overflow: hidden;
-            }
-            
-            .about-background-container {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 120%;
-                height: 120%;
-                overflow: hidden;
-                z-index: 1;
-            }
-            
-            .about-background-image {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-image: url('public/images/about-background.png');
-                background-size: cover;
-                background-position: center center;
-                opacity: 0.8;
-                transform: translateY(17%) translateX(-15%);
             }
             
             .contact-card.visible {
@@ -169,10 +149,10 @@ export class ContactSystem {
                 border: none;
                 color: #2b2e1f;
                 font-size: 28px;
-                cursor: pointer; /* Asegúrate de que el cursor cambie a pointer */
+                cursor: pointer;
                 z-index: 101;
-                width: 50px;  /* Aumenta el área de clic */
-                height: 50px; /* Aumenta el área de clic */
+                width: 50px;
+                height: 50px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -180,21 +160,21 @@ export class ContactSystem {
                 line-height: 1;
                 font-weight: bold;
                 -webkit-tap-highlight-color: transparent;
-                user-select: none; /* Prevenir selección de texto */
-                pointer-events: auto; /* Asegurar que los eventos del puntero estén activos */
+                user-select: none;
+                pointer-events: auto;
                 transition: transform 0.2s ease, opacity 0.2s ease;
             }
             
             .contact-card-close-button:hover {
-                transform: scale(1.2); /* Efecto de hover más pronunciado */
+                transform: scale(1.2);
                 opacity: 0.8;
             }
 
             .contact-card-close-button:active {
-                transform: scale(0.9); /* Efecto de clic */
+                transform: scale(0.9);
             }
             
-            .about-background {
+            .contact-background {
                 width: 100%;
                 height: 100%;
                 display: flex;
@@ -206,14 +186,14 @@ export class ContactSystem {
                 z-index: 15;
             }
             
-            .about-header {
+            .contact-header {
                 text-align: center;
                 position: relative;
                 z-index: 16;
                 margin-bottom: 40px;
             }
             
-            .about-header h3 {
+            .contact-header h3 {
                 font-size: 32px;
                 font-weight: 300;
                 letter-spacing: 3px;
@@ -237,10 +217,13 @@ export class ContactSystem {
                 gap: 15px;
                 cursor: pointer;
                 transition: transform 0.3s ease;
+                padding: 10px;
+                border-radius: 8px;
             }
             
             .contact-detail:hover {
                 transform: translateY(-3px);
+                background-color: rgba(255, 255, 255, 0.2);
             }
             
             .contact-detail svg {
@@ -272,7 +255,7 @@ export class ContactSystem {
             
             /* Responsive adjustments */
             @media (max-width: 768px) {
-                .contact-card-close-button {
+                .contact-background {
                     padding: 10px;
                     height: auto;
                     min-height: auto;
@@ -286,16 +269,6 @@ export class ContactSystem {
                     font-size: 24px;
                     width: 40px;
                     height: 40px;
-                }
-                
-                .about-background-container {
-                    width: 150%;
-                    height: 150%;
-                }
-                
-                .about-background-image {
-                    transform: translateY(6%) translateX(-30%);
-                    opacity: 0.9;
                 }
                 
                 .contact-details {
@@ -312,6 +285,44 @@ export class ContactSystem {
         document.body.appendChild(card);
         
         this.contactCard = card;
+    }
+
+    /**
+     * Add styles for clipboard notification
+     */
+    addClipboardStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .clipboard-notification {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%) translateY(100%);
+                background-color: rgba(43, 46, 31, 0.9);
+                color: #e4e3d3;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease;
+                z-index: 1000;
+            }
+            
+            .clipboard-notification.visible {
+                transform: translateX(-50%) translateY(0);
+            }
+            
+            .clipboard-icon {
+                color: #a6a995;
+            }
+            
+            .clipboard-notification span {
+                font-size: 14px;
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     /**
@@ -340,15 +351,15 @@ export class ContactSystem {
         document.body.appendChild(notification);
 
         // Trigger visibility
-        requestAnimationFrame(() => {
+        setTimeout(() => {
             notification.classList.add('visible');
-        });
+        }, 10);
 
         // Remove notification after 2 seconds
         setTimeout(() => {
             notification.classList.remove('visible');
             setTimeout(() => {
-                document.body.removeChild(notification);
+                notification.remove();
             }, 300);
         }, 2000);
     }
@@ -359,20 +370,41 @@ export class ContactSystem {
      */
     copyToClipboard(text) {
         try {
-            // Create a temporary textarea element to copy text
+            // Use modern clipboard API if available
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text)
+                    .then(() => this.createClipboardNotification('Email copiado al portapapeles'))
+                    .catch(err => {
+                        console.error('Failed to copy using Clipboard API:', err);
+                        this.fallbackCopyToClipboard(text);
+                    });
+            } else {
+                this.fallbackCopyToClipboard(text);
+            }
+        } catch (err) {
+            console.error('Failed to copy text:', err);
+            this.createClipboardNotification('Error al copiar email');
+        }
+    }
+    
+    /**
+     * Fallback method to copy text to clipboard
+     * @param {string} text - Text to copy
+     */
+    fallbackCopyToClipboard(text) {
+        try {
             const tempTextArea = document.createElement('textarea');
             tempTextArea.value = text;
+            tempTextArea.style.position = 'fixed';
+            tempTextArea.style.opacity = '0';
             document.body.appendChild(tempTextArea);
             tempTextArea.select();
             document.execCommand('copy');
             document.body.removeChild(tempTextArea);
-
-            // Show success notification
             this.createClipboardNotification('Email copiado al portapapeles');
         } catch (err) {
-            // Show error notification if copying fails
+            console.error('Fallback copy failed:', err);
             this.createClipboardNotification('Error al copiar email');
-            console.error('Failed to copy text:', err);
         }
     }
     
@@ -380,21 +412,9 @@ export class ContactSystem {
      * Setup event listeners for contact card
      */
     setupEventListeners() {
-        // Close button
-        console.log('YOPOOO223243222')
-        const closeButton = document.getElementById('contact-close-btn');
-        if (closeButton) {
-            console.log('YOPOOO222')
-            const handleClose = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.hideContactCard();
-            };
-    
-            // Universal close event
-            closeButton.addEventListener('click', handleClose);
-            closeButton.addEventListener('touchend', handleClose);
-        }
+        // Use a more robust method to ensure close button works
+        this.attachCloseButtonListener();
+        
         // Email detail
         const emailDetail = document.getElementById('email-detail');
         if (emailDetail) {
@@ -429,17 +449,66 @@ export class ContactSystem {
         
         // Close with Escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape' && this.contactCard.classList.contains('visible')) {
                 this.hideContactCard();
             }
         });
     }
     
     /**
+     * Attach event listener to close button with retry
+     */
+    attachCloseButtonListener() {
+        const attachListener = () => {
+            const closeButton = document.getElementById('contact-close-btn');
+            if (closeButton) {
+                // Remove any existing listeners to prevent duplicates
+                const newButton = closeButton.cloneNode(true);
+                closeButton.parentNode.replaceChild(newButton, closeButton);
+                
+                // Add click event
+                newButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.hideContactCard();
+                });
+                
+                // Add touch event for mobile
+                newButton.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.hideContactCard();
+                }, { passive: false });
+                
+                return true;
+            }
+            return false;
+        };
+        
+        // Try to attach immediately
+        if (!attachListener()) {
+            // If it fails, retry after DOM is fully loaded
+            window.addEventListener('load', attachListener);
+            
+            // Also retry after a short delay
+            setTimeout(attachListener, 500);
+        }
+    }
+    
+    /**
      * Show contact card
      */
     showContactCard() {
+        // Make sure AboutSystem is hidden first (if it exists)
+        const aboutCard = document.getElementById('about-card');
+        if (aboutCard && aboutCard.classList.contains('visible')) {
+            aboutCard.classList.remove('visible');
+        }
+        
         this.contactCard.classList.add('visible');
+        
+        // Ensure close button is working after display
+        setTimeout(() => this.attachCloseButtonListener(), 100);
         
         // Keep header visible
         const header = document.querySelector('.header');
@@ -456,7 +525,6 @@ export class ContactSystem {
      * Hide contact card
      */
     hideContactCard() {
-        console.log('ÉNTROOOO')
         this.contactCard.classList.remove('visible');
         
         // Restore footer visibility
