@@ -12,6 +12,7 @@ import { Resources } from './Resources.js';
 import { World } from '../scenes/World.js';
 import { UI } from '../components/UI.js';
 import { Controls } from './Controls.js';
+import { AudioSystem } from './AudioSystem.js'; // Importar el sistema de audio
 
 export class Experience {
     constructor(canvas, loadingCallback) {
@@ -45,6 +46,7 @@ export class Experience {
         this.controls = new Controls(this);
         this.world = new World(this);
         this.ui = new UI(this);
+        this.audio = new AudioSystem(this); // Inicializar el sistema de audio
         
         // Handle resize event
         this.sizes.on('resize', () => {
@@ -67,7 +69,8 @@ export class Experience {
             hasCamera: !!this.camera,
             hasCameraInstance: this.camera && !!this.camera.instance,
             hasRenderer: !!this.renderer,
-            hasWorld: !!this.world
+            hasWorld: !!this.world,
+            hasAudio: !!this.audio // Verificar sistema de audio
         });
     }
     
@@ -90,6 +93,20 @@ export class Experience {
                 console.log(`Controls configured with ${this.world.items.length} items`);
             }
         });
+        
+        // Conectar eventos de navegación con el sistema de audio
+        if (this.controls) {
+            this.controls.on('horizontalTransition', (direction) => {
+                // Notificar al sistema de audio sobre la transición
+                if (this.audio) {
+                    this.audio.handleNavigation(direction);
+                }
+                
+                if (this.ambienceParticles) {
+                    this.ambienceParticles.animateParticlesForHorizontalNavigation(direction);
+                }
+            });
+        }
     }
     
     /**
@@ -102,7 +119,6 @@ export class Experience {
             { name: 'obj2', type: 'glb', path: 'public/models/obra2.glb' },
             { name: 'lamina1', type: 'glb', path: 'public/models/lamina1.glb' },
             { name: 'about-model', type: 'glb', path: 'public/models/about.glb' }
-
         ];
         
         // Start loading
@@ -144,6 +160,11 @@ export class Experience {
         // Remove event listeners
         this.sizes.off('resize');
         this.time.off('tick');
+        
+        // Limpiar sistema de audio
+        if (this.audio) {
+            this.audio.destroy();
+        }
         
         // Remove canvas
         if (this.canvas.parentNode) {
