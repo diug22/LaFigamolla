@@ -43,7 +43,7 @@ export class Controls {
         this.cameraZoom = 1;
         
         // Swipe detection
-        this.swipeThreshold = 'ontouchstart' in window ? 70 : 50; // Mayor umbral en móviles
+        this.swipeThreshold = 'ontouchstart' in window ? 170 : 150; // Mayor umbral en móviles
         this.swipeVerticalThreshold = 'ontouchstart' in window ? 70 : 50;
         this.swipeDirection = null;
         this.swipeVerticalDirection = null;

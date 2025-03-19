@@ -66,36 +66,20 @@ export class World {
         
         // Inicializar el sistema de partículas ambientales
         this.ambienceParticles = new AmbienceParticles(this.scene, this.experience, {
-            // Reducir drásticamente la cantidad de constelaciones
-            minConstellations: this.experience.sizes.isMobile ? 3 : 5,
-            maxConstellations: this.experience.sizes.isMobile ? 5 : 8,
-            
-            // Posicionamiento extremadamente atrás y muy separado de la escena principal
+            // Aquí puedes configurar las opciones personalizadas
+            minConstellations: this.experience.sizes.isMobile ? 10 : 18,
+            maxConstellations: this.experience.sizes.isMobile ? 15 : 25,
             globalZPosition: -2,
-            
-            // Distribuir las constelaciones a los lados, evitando el centro
-            avoidCenter: true,  // Nueva opción para evitar el área central
-            centerAvoidanceRadius: 40, // Radio para evitar el centro (donde está la obra)
-            
-            // Rangos de posición más controlados y enfocados a los lados/bordes
-            positionX: { min: -0, max: 200 },
-            positionY: { min: -0, max: 150 },
-            positionZ: { min: -10, max: -2 }, 
-            
-            // Estrellas muy pequeñas y sutiles
-            starSize: { min: 0.05, max: 0.12 },
-            
-            // Movimientos extremadamente lentos
-            movementSpeed: { min: 0.00002, max: 0.00008 },
-            rotationSpeed: { min: 0.000001, max: 0.000005 },
-            
-            // Menor opacidad para ser más sutil
-            starOpacity: { min: 0.4, max: 0.6 },
-            lineOpacity: { min: 0.2, max: 0.35 },
-            
-            // Animación muy sutil
-            pulseSpeed: { min: 0.01, max: 0.05 },
-            
+            positionX: { min: -10, max: 10 },
+            positionY: { min: 0, max: 0 },
+            backgroundPlane: {
+                enabled: true,
+                width: 120,
+                height: 80,
+                color: 0x1a1a1a,
+                opacity: 0.5,
+                zPosition: -45
+            }
         });
     }
     
