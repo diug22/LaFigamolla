@@ -71,16 +71,16 @@ export class World {
             maxConstellations: this.experience.sizes.isMobile ? 5 : 8,
             
             // Posicionamiento extremadamente atrás y muy separado de la escena principal
-            globalZPosition: -800,
+            globalZPosition: -2,
             
             // Distribuir las constelaciones a los lados, evitando el centro
             avoidCenter: true,  // Nueva opción para evitar el área central
             centerAvoidanceRadius: 40, // Radio para evitar el centro (donde está la obra)
             
             // Rangos de posición más controlados y enfocados a los lados/bordes
-            positionX: { min: -200, max: 200 },
-            positionY: { min: -150, max: 150 },
-            positionZ: { min: -100, max: -50 }, 
+            positionX: { min: -0, max: 200 },
+            positionY: { min: -0, max: 150 },
+            positionZ: { min: -10, max: -2 }, 
             
             // Estrellas muy pequeñas y sutiles
             starSize: { min: 0.05, max: 0.12 },
@@ -96,15 +96,6 @@ export class World {
             // Animación muy sutil
             pulseSpeed: { min: 0.01, max: 0.05 },
             
-            // Un fondo muy profundo
-            backgroundPlane: {
-                enabled: true,
-                width: 2000,
-                height: 1500,
-                color: 0x0a0a0a, // Casi negro para mayor contraste
-                opacity: 1.0, // Completamente opaco
-                zPosition: -150 // Muy atrás pero por delante de las partículas
-            }
         });
     }
     
