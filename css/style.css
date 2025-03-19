@@ -23,6 +23,7 @@ body {
     -webkit-touch-callout: none; /* Deshabilitar menú contextual en iOS */
     -webkit-user-select: none; /* Deshabilitar selección de texto */
     user-select: none;
+    font-family: 'Inter';
 }
 
 canvas {
@@ -167,7 +168,7 @@ canvas {
 }
 
 .loading-logo {
-    font-family: 'Optima', 'Segoe UI', sans-serif;
+    font-family: 'Optima';
     font-size: 3.5rem;
     font-weight: 300;
     letter-spacing: 4px;
@@ -180,7 +181,7 @@ canvas {
 }
 
 .loading-logo .highlight {
-    font-weight: bold;
+    font-weight: italic;
     color: #EBECCB
 }
 

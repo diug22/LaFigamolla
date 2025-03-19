@@ -59,7 +59,7 @@ export class UI {
             <div class="header">
                 <a href="#" class="nav-link contact-link">Contact</a>
                 <div class="logo-container">
-                    <h1 class="title">Laque<span class="highlight">no</span>.</h1>
+                    <h1 class="title">Laque<span class="highlight">no.</span></h1>
                     <p class="subtitle">Constelaciones de Objetos</p>
                 </div>
                 <a href="#" class="nav-link about-link">About</a>
@@ -260,6 +260,8 @@ export class UI {
             
             .highlight {
                 color: #c1c4b1;
+                font-style: italic;
+                font-weight: 700;
             }
             
             .subtitle {

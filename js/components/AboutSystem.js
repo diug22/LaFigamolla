@@ -41,7 +41,7 @@ export class AboutSystem {
                 <button type="button" id="about-close-btn" class="card-close-button">&times;</button>
                 <div class="about-background">
                     <div class="about-header">
-                        <h1 class="about-title">Paula Román</h1>
+                        <h1 class="about-title">Paula Roman</h1>
                     </div>
                     <div class="about-text">
                         <p>Lorem Ipsum dolor suit amebar lorum ameburti<br>
@@ -77,7 +77,7 @@ export class AboutSystem {
                 background-color: rgba(225, 226, 202, 0.9);
                 backdrop-filter: blur(5px);
                 -webkit-backdrop-filter: blur(5px);
-                z-index: 3; /* Lower z-index to keep header visible */
+                z-index: 8; /* Lower z-index to keep header visible */
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 0.5s ease;
@@ -134,7 +134,7 @@ export class AboutSystem {
             }
             
             .card-close-button {
-                position: absolute;
+                position: fixed;
                 top: 100px;
                 right: 20px;
                 background: none;
@@ -142,7 +142,7 @@ export class AboutSystem {
                 color: #2b2e1f;
                 font-size: 28px;
                 cursor: pointer;
-                z-index: 100;
+                z-index: 101;
                 width: 40px;
                 height: 40px;
                 display: flex;
@@ -172,7 +172,6 @@ export class AboutSystem {
             }
             
             .about-header {
-                margin-bottom: 40px;
                 text-align: center;
                 position: relative;
                 z-index: 16;
@@ -182,7 +181,7 @@ export class AboutSystem {
                 color: #B9BAAC;
                 font-family: Optima, 'Segoe UI', sans-serif;
                 font-weight: 400;
-                font-size: clamp(60px, 15vw, 179.29px);
+                font-size: clamp(60px, 15vw, 130.00px);
                 line-height: 100%;
                 letter-spacing: 0%;
                 text-align: center;
@@ -202,10 +201,13 @@ export class AboutSystem {
             }
             
             .about-text p {
-                font-size: 18px;
-                line-height: 1.6;
-                color: #2b2e1f;
-                font-weight: 500;
+                font-family: 'Inter', sans-serif;
+                font-weight: 400;
+                font-size: 25px;
+                line-height: 100%;
+                letter-spacing: 0%;
+                text-align: center;
+                color: #EBECCB;
                 margin: 0;
             }
             
@@ -220,14 +222,14 @@ export class AboutSystem {
             .about-subtitle {
                 font-size: 32px;
                 font-weight: 400;
-                color: #2b2e1f;
+                color: #EBECCB;
                 margin: 0 0 10px 0;
             }
             
             .about-subtext {
                 font-size: 16px;
                 line-height: 1.5;
-                color: #2b2e1f;
+                color: #EBECCB;
                 font-weight: 300;
                 margin: 0;
             }
@@ -256,46 +258,45 @@ export class AboutSystem {
                 }
             }
             
-            /* Mobile Phones Portrait */
-            @media (max-width: 768px) {
+             @media (max-width: 768px) {
                 .about-card {
-                    padding-top: 60px;
-                    align-items: flex-start;
+                    padding: 20px;
+                    align-items: center;
                     overflow-y: auto;
                 }
                 
                 .about-card-content {
-                    padding: 15px;
+                    padding: 10px;
                     height: auto;
-                    min-height: 100%;
-                    justify-content: flex-start;
-                    padding-top: 40px;
+                    min-height: auto;
+                    justify-content: center;
+                    padding-top: 20px;
                 }
                 
                 .about-background {
-                    padding: 20px 15px;
+                    padding: 10px;
                 }
                 
                 .about-title {
-                    font-size: clamp(40px, 13vw, 60px);
-                    margin-bottom: 20px;
+                    font-size: 36px;
+                    margin-bottom: 10px;
                 }
                 
                 .about-text {
-                    padding: 15px;
+                    padding: 10px;
                     width: 100%;
-                    margin-bottom: 30px;
+                    margin-bottom: 20px;
                 }
                 
                 .about-text p {
-                    font-size: 16px;
-                    line-height: 1.5;
+                    font-size: 18px;
+                    line-height: 1.4;
                 }
                 
                 .about-footer {
-                    padding: 15px;
+                    padding: 10px;
                     width: 100%;
-                    margin-bottom: 80px;
+                    margin-bottom: 20px;
                 }
                 
                 .about-subtitle {
@@ -303,36 +304,36 @@ export class AboutSystem {
                 }
                 
                 .about-subtext {
-                    font-size: 14px;
+                    font-size: 16px;
                 }
                 
                 .card-close-button {
                     top: 15px;
                     right: 15px;
-                    font-size: 28px;
-                    width: 50px;
-                    height: 50px;
+                    font-size: 24px;
+                    width: 40px;
+                    height: 40px;
                 }
                 
-                /* Adjust background image for mobile */
+                /* Ajuste de imagen de fondo para evitar desbordamiento excesivo */
                 .about-background-container {
                     width: 150%;
                     height: 150%;
                 }
                 
                 .about-background-image {
-                    transform: translateY(15%) translateX(-5%);
+                    transform:  translateY(6%) translateX(-30%);
+                    opacity: 0.9;
                 }
             }
             
-            /* Small Mobile Phones */
             @media (max-width: 380px) {
                 .about-title {
-                    font-size: 36px;
+                    font-size: 28px;
                 }
                 
                 .about-text p {
-                    font-size: 14px;
+                    font-size: 16px;
                 }
                 
                 .about-subtitle {
@@ -340,19 +341,14 @@ export class AboutSystem {
                 }
                 
                 .about-subtext {
-                    font-size: 13px;
-                }
-                
-                .about-background-container {
-                    width: 170%;
-                    height: 170%;
+                    font-size: 14px;
                 }
             }
             
-            /* Mobile Landscape Mode */
+            /* Modo Landscape para móviles con poca altura */
             @media (max-height: 500px) and (orientation: landscape) {
                 .about-card-content {
-                    padding-top: 20px;
+                    padding-top: 10px;
                     overflow-y: auto;
                 }
                 
@@ -374,16 +370,6 @@ export class AboutSystem {
                 .about-footer {
                     margin-bottom: 20px;
                     padding: 10px;
-                }
-                
-                .about-subtitle {
-                    font-size: 18px;
-                    margin-bottom: 5px;
-                }
-                
-                .about-background {
-                    padding: 10px;
-                    justify-content: flex-start;
                 }
                 
                 .card-close-button {
