@@ -67,8 +67,8 @@ export class World {
         // Inicializar el sistema de partículas ambientales
         this.ambienceParticles = new AmbienceParticles(this.scene, this.experience, {
             // Aquí puedes configurar las opciones personalizadas
-            minConstellations: this.experience.sizes.isMobile ? 50 : 50,
-            maxConstellations: this.experience.sizes.isMobile ? 50 : 50,
+            minConstellations: this.experience.sizes.isMobile ? 10 : 15,
+            maxConstellations: this.experience.sizes.isMobile ? 30 : 25,
             globalZPosition: -80,
             positionX: { min: -60, max: 60 },
             positionY: { min: -40, max: 40 },
