@@ -34,23 +34,23 @@ export class ContactSystem {
         card.innerHTML = `
             <div class="contact-card-content">
                 <button class="card-close-button">&times;</button>
-                <h2>LAQUENO</h2>
+                 <h1 class="title">Laque<span class="highlight">no.</span></h1>
                 <div class="card-separator"></div>
                 <h3>CONTACTO</h3>
                 
-                <div class="contact-details">
-                    <div class="contact-detail">
+               <div class="contact-details">
+                    <div class="contact-detail" onclick="navigator.clipboard.writeText('paulacacahuete@gmail.com');">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                             <polyline points="22,6 12,13 2,6"></polyline>
                         </svg>
                         <div>
                             <strong>Email</strong>
-                            <span>info@laqueno.com</span>
+                            <span>paulacacahuete@gmail.com</span>
                         </div>
                     </div>
                     
-                    <div class="contact-detail">
+                    <div class="contact-detail" onclick="window.open('https://www.instagram.com/laaqueno', '_blank');">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                             <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -58,41 +58,21 @@ export class ContactSystem {
                         </svg>
                         <div>
                             <strong>Instagram</strong>
-                            <span>@laqueno.studio</span>
+                            <span>@laaqueno</span>
                         </div>
                     </div>
                     
-                    <div class="contact-detail">
+                    <div class="contact-detail" onclick="window.open('https://www.linkedin.com/in/paula-román/', '_blank');">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
+                            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                            <rect x="2" y="9" width="4" height="12"></rect>
+                            <circle cx="4" cy="4" r="2"></circle>
                         </svg>
                         <div>
-                            <strong>Estudio</strong>
-                            <span>Calle Cerámica, 23 - Barcelona</span>
+                            <strong>LinkedIn</strong>
+                            <span>Paula Román</span>
                         </div>
                     </div>
-                </div>
-                
-                <div class="social-links">
-                    <a href="https://instagram.com/laqueno.studio" class="social-link" aria-label="Instagram">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                        </svg>
-                    </a>
-                    <a href="mailto:info@laqueno.com" class="social-link" aria-label="Email">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                            <polyline points="22,6 12,13 2,6"></polyline>
-                        </svg>
-                    </a>
-                    <a href="https://wa.me/34600000000" class="social-link" aria-label="WhatsApp">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                        </svg>
-                    </a>
                 </div>
             </div>
         `;
@@ -119,7 +99,7 @@ export class ContactSystem {
             }
             
             .contact-card.visible {
-                opacity: 1;
+                opacity: 0.9;
                 pointer-events: auto;
             }
             
@@ -250,6 +230,27 @@ export class ContactSystem {
                     height: 45px;
                 }
             }
+
+            .clipboard-notification {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: rgba(43, 46, 31, 0.9);
+                color: #e4e3d3;
+                padding: 15px 30px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(10px);
+                z-index: 1000;
+                opacity: 0;
+                transition: opacity 0.3s ease, transform 0.3s ease;
+            }
+            
+            .clipboard-notification.visible {
+                opacity: 1;
+                transform: translate(-50%, -20px);
+            }
         `;
         
         document.head.appendChild(style);
@@ -257,6 +258,61 @@ export class ContactSystem {
         
         this.contactCard = card;
     }
+
+    /**
+     * Create notification for clipboard
+     * @param {string} message - Message to display
+     */
+    createClipboardNotification(message) {
+        // Remove any existing notifications
+        const existingNotification = document.querySelector('.clipboard-notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'clipboard-notification';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        // Trigger visibility
+        requestAnimationFrame(() => {
+            notification.classList.add('visible');
+        });
+
+        // Remove notification after 2 seconds
+        setTimeout(() => {
+            notification.classList.remove('visible');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 2000);
+    }
+
+    /**
+     * Copy text to clipboard with custom notification
+     * @param {string} text - Text to copy
+     */
+    copyToClipboard(text) {
+        try {
+            // Create a temporary textarea element to copy text
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = text;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            // Show success notification
+            this.createClipboardNotification('Email copiado al portapapeles');
+        } catch (err) {
+            // Show error notification if copying fails
+            this.createClipboardNotification('Error al copiar email');
+            console.error('Failed to copy text:', err);
+        }
+    }
+
     
     /**
      * Setup event listeners for contact card
@@ -267,6 +323,30 @@ export class ContactSystem {
         if (closeButton) {
             closeButton.addEventListener('click', () => {
                 this.hideContactCard();
+            });
+        }
+
+        const emailDetail = this.contactCard.querySelector('.contact-detail:first-child');
+        if (emailDetail) {
+            emailDetail.addEventListener('click', (e) => {
+                const email = emailDetail.querySelector('span').textContent;
+                this.copyToClipboard(email);
+            });
+        }
+
+        // Instagram link
+        const instagramDetail = this.contactCard.querySelector('.contact-detail:nth-child(2)');
+        if (instagramDetail) {
+            instagramDetail.addEventListener('click', () => {
+                window.open('https://www.instagram.com/laaqueno', '_blank');
+            });
+        }
+
+        // LinkedIn link
+        const linkedinDetail = this.contactCard.querySelector('.contact-detail:last-child');
+        if (linkedinDetail) {
+            linkedinDetail.addEventListener('click', () => {
+                window.open('https://www.linkedin.com/in/paula-román/', '_blank');
             });
         }
         

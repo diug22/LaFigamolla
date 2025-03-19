@@ -451,6 +451,25 @@ export class World {
                     '#5e634d', // Laqueno dark
                     '#2b2e1f'  // Laqueno background
                 ]
+            },
+            {
+                name: 'lamina1',
+                title: 'Acuarela Otoñal',
+                description: 'Técnica mixta sobre papel, capturando la esencia de los bosques en otoño con tonos cálidos y texturas.',
+                dimensions: '40 × 30 cm',
+                material: 'Técnica mixta sobre papel',
+                year: '2024',
+                position: new THREE.Vector3(0, 0, 0),
+                rotation: new THREE.Euler(0, 0, 0),
+                scale: new THREE.Vector3(1, 1, 1),
+                model: this.resources.getItem('lamina1'),
+                particleColors: [
+                    '#e4e3d3', // Laqueno cream
+                    '#c1c4b1', // Laqueno light
+                    '#a6a995', // Laqueno medium
+                    '#5e634d', // Laqueno dark
+                    '#2b2e1f'  // Laqueno background
+                ]
             }
         ];
         
