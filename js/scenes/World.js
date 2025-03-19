@@ -65,94 +65,71 @@ export class World {
         this.addAmbientParticles();
     }
 
-    /**
+        /**
      * Animate particles for transitions between artworks
      */
     animateParticlesForHorizontalNavigation(direction) {
-        // Only continue if we have constellations
+        // Solo continuar si tenemos constelaciones
         if (!this.particles) return;
         
         console.log(`Animating constellations for horizontal navigation ${direction}`);
         
-        // Animation speed and direction
-        const speed = direction === 'left' ? -0.25 : 0.25;
-        const targetX = direction === 'left' ? -15 : 15;
-        
-        // Save original positions to restore later
-        if (!this.originalParticlePositions) {
-            this.originalParticlePositions = [];
-            
-            this.particles.children.forEach(constellation => {
-                const constellationData = {
-                    position: constellation.position.clone(),
-                    children: []
-                };
-                
-                // Save data for each child (stars and lines)
-                constellation.children.forEach(child => {
-                    if (child.isMesh) {
-                        constellationData.children.push({
-                            index: child.userData.index,
-                            position: child.position.clone(),
-                            scale: child.scale.clone(),
-                            opacity: child.material.opacity
-                        });
-                    }
-                });
-                
-                this.originalParticlePositions.push(constellationData);
-            });
+        // Detener animaciones previas
+        if (this.particleAnimationRequest) {
+            cancelAnimationFrame(this.particleAnimationRequest);
+            this.particleAnimationRequest = null;
         }
         
-        // Active animation
-        let animating = true;
+        // Preparar para animación con valores más seguros
+        const speed = direction === 'left' ? -0.12 : 0.12; // Velocidad reducida
+        const maxDistance = 8; // Distancia máxima reducida para evitar escape
+        let animationStartTime = Date.now();
+        const animationDuration = 800; // ms
         
-        // Function to animate constellations each frame
+        // Establecer flag para control de animación
+        this.particlesAnimating = true;
+        
+        // Función para animar constellations cada frame con límite de tiempo
         const animateConstellations = () => {
-            if (!animating) return;
+            if (!this.particlesAnimating) return;
             
-            let allConstellationsReached = true;
+            const elapsed = Date.now() - animationStartTime;
+            const progress = Math.min(elapsed / animationDuration, 1.0);
             
-            // Move each constellation toward the target
+            // Mover cada constelación con velocidad controlada
             this.particles.children.forEach(constellation => {
-                // Move in the navigation direction
+                // Aplicar movimiento limitado
                 constellation.position.x += speed;
                 
-                // Add gradual fade-out effect
+                // Añadir desvanecimiento gradual
                 constellation.children.forEach(child => {
                     if (child.material) {
-                        child.material.opacity *= 0.95;
+                        child.material.opacity *= 0.98;
                     }
                 });
-                
-                // Check if the constellation has reached its destination
-                if ((direction === 'left' && constellation.position.x > targetX) || 
-                    (direction === 'right' && constellation.position.x < targetX)) {
-                    allConstellationsReached = false;
-                }
             });
             
-            // Also animate the current item's particles if they exist
-            if (this.items[this.currentIndex] && this.items[this.currentIndex].particles) {
-                this.items[this.currentIndex].particles.children.forEach(particle => {
-                    if (particle.isMesh) {
-                        particle.position.x += speed * 1.5; // Slightly faster
-                        particle.material.opacity *= 0.9; // Faster fade-out
-                    }
-                });
+            // Si la animación ha terminado o ha pasado demasiado tiempo, resetear
+            if (progress >= 1.0) {
+                this.particlesAnimating = false;
+                this.resetParticlePositions();
+                return;
             }
             
-            // If all constellations have reached their destination, restore positions
-            if (allConstellationsReached) {
-                animating = false;
-                this.resetParticlePositions();
-            } else {
-                requestAnimationFrame(animateConstellations);
-            }
+            // Continuar animación
+            this.particleAnimationRequest = requestAnimationFrame(animateConstellations);
         };
         
-        // Start animation
+        // Iniciar animación
         animateConstellations();
+        
+        // Forzar reseteo después de un tiempo máximo como precaución
+        setTimeout(() => {
+            if (this.particlesAnimating) {
+                this.particlesAnimating = false;
+                this.resetParticlePositions();
+            }
+        }, animationDuration + 200); // Un poco más de tiempo que la duración para seguridad
     }
     
     /**
@@ -161,55 +138,92 @@ export class World {
     resetParticlePositions() {
         if (!this.particles) return;
         
-        // For each constellation
+        // Detener todas las animaciones pendientes
+        if (this.particleAnimationRequest) {
+            cancelAnimationFrame(this.particleAnimationRequest);
+            this.particleAnimationRequest = null;
+        }
+        
+        // Restablecer posición global del grupo
+        this.particles.position.set(0, 0, -80);
+        
+        // Para cada constelación
         this.particles.children.forEach((constellation, index) => {
-            // Calculate new random position on the right side
+            // Detener cualquier movimiento existente
+            constellation.userData.movementSpeed = {
+                x: 0, y: 0, z: 0
+            };
+            
+            // Generar nueva posición aleatoria dentro de límites seguros
             const newPosition = new THREE.Vector3(
-                (Math.random() * 20) + 10, // Position on the right side
-                (Math.random() - 0.5) * 30,
-                -30 - Math.random() * 20
+                (Math.random() - 0.5) * 120,  // Distribuir horizontalmente
+                (Math.random() - 0.5) * 80,  // Distribuir verticalmente
+                (Math.random() - 0.5) * 10   // Pequeña variación en profundidad
             );
             
-            // Apply new position with a small variation
-            constellation.position.x = newPosition.x;
-            constellation.position.y = newPosition.y;
-            constellation.position.z = newPosition.z;
+            // Aplicar nueva posición inmediatamente
+            constellation.position.copy(newPosition);
             
-            // Reset movement speeds with random direction
+            // Reiniciar velocidades de movimiento con valores conservadores
             constellation.userData.movementSpeed = {
-                x: (Math.random() - 0.5) * 0.002,
-                y: (Math.random() - 0.5) * 0.002,
-                z: (Math.random() - 0.5) * 0.001
+                x: (Math.random() - 0.5) * 0.001, // Velocidad más lenta para evitar escape
+                y: (Math.random() - 0.5) * 0.001,
+                z: (Math.random() - 0.5) * 0.0005
             };
             
-            // Reset rotation speeds
+            // Resetear rotaciones
+            constellation.rotation.set(0, 0, 0);
             constellation.userData.rotationSpeed = {
-                x: (Math.random() - 0.5) * 0.0001,
-                y: (Math.random() - 0.5) * 0.0001,
-                z: (Math.random() - 0.5) * 0.0001
+                x: (Math.random() - 0.5) * 0.00005,
+                y: (Math.random() - 0.5) * 0.00005,
+                z: (Math.random() - 0.5) * 0.00005
             };
             
-            // Reset animation phase for each star and line
+            // Resetear cada estrella y línea
             constellation.children.forEach(child => {
                 if (child.isMesh) {
-                    // Update pulse phase
+                    // Actualizar fase de animación
                     child.userData.pulsePhase = Math.random() * Math.PI * 2;
                     
-                    // If original position has been saved, reset it
+                    // Si tenía posición original, resetearla
                     if (child.userData.originalPosition) {
                         child.position.copy(child.userData.originalPosition);
                     }
+                    
+                    // Restablecer opacidad
+                    child.material.opacity = child.userData.originalOpacity || 0.7;
+                    
+                    // Restablecer escala
+                    child.scale.set(1, 1, 1);
                 }
                 else if (child.isLine) {
+                    // Actualizar fase de animación
                     child.userData.pulsePhase = Math.random() * Math.PI * 2;
+                    
+                    // Restablecer opacidad
+                    child.material.opacity = child.userData.originalOpacity || 0.4;
+                    
+                    // Actualizar geometría de la línea si es necesario
+                    if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
+                        const star1 = constellation.children[child.userData.star1];
+                        const star2 = constellation.children[child.userData.star2];
+                        
+                        if (star1 && star2) {
+                            const points = [
+                                star1.position.clone(),
+                                star2.position.clone()
+                            ];
+                            
+                            child.geometry.setFromPoints(points);
+                            child.geometry.attributes.position.needsUpdate = true;
+                        }
+                    }
                 }
             });
         });
         
-        // Also restore stars of current items if they exist
-        if (this.items[this.currentIndex] && this.items[this.currentIndex].resetParticles) {
-            this.items[this.currentIndex].resetParticles();
-        }
+        // Marcar el sistema como estable
+        this.particlesNeedStabilization = false;
     }
 
     /**
@@ -247,26 +261,30 @@ export class World {
     }
 
     /**
-     * Add ambient particles to the environment - positioned on the right side
+     * Add ambient particles to the environment - positioned in the background
      */
     addAmbientParticles() {
         // Create group to contain all constellations
         const constellationsGroup = new THREE.Group();
+        
+        // Importante: posicionar todo el grupo detrás de las obras
+        constellationsGroup.position.z = -80; // Mover todo el grupo hacia atrás
+        
         this.scene.add(constellationsGroup);
         
-        // Number of constellations to create
-        const numConstellations = this.experience.sizes.isMobile ? 5 : 8;
+        // Number of constellations to create - aumentar para mayor densidad
+        const numConstellations = this.experience.sizes.isMobile ? 12 : 20;
         
         // Create each constellation
         for (let c = 0; c < numConstellations; c++) {
             // Create a group for this constellation
             const constellationGroup = new THREE.Group();
             
-            // Random position for the constellation center - placed on the right side
+            // Random position for the constellation distributed en un área más amplia
             const centerPosition = new THREE.Vector3(
-                (Math.random() * 20) + 10, // Position on the right side (x > 0)
-                (Math.random() - 0.5) * 30,
-                -30 - Math.random() * 20
+                (Math.random() - 0.5) * 120, // Distribuir horizontalmente
+                (Math.random() - 0.5) * 80, // Distribuir verticalmente
+                (Math.random() - 0.5) * 10  // Pequeña variación en profundidad
             );
             
             constellationGroup.position.copy(centerPosition);
@@ -277,19 +295,19 @@ export class World {
             // Array to store the stars in this constellation
             const stars = [];
             
-            // Create material for the stars - use Laqueno color palette
+            // Create material for the stars - use brighter colors and more opacity
             const starMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0xe4e3d3, // Cream color to match Laqueno theme
+                color: 0xffffff, // Color blanco puro para mayor brillo
                 transparent: true,
-                opacity: 0.8
+                opacity: 0.9 // Mayor opacidad
             });
             
-            // Geometry for the stars - different sizes
+            // Geometry for the stars - different sizes with bigger stars
             const starGeometries = [
-                new THREE.SphereGeometry(0.05, 8, 8),
                 new THREE.SphereGeometry(0.08, 8, 8),
-                new THREE.SphereGeometry(0.1, 8, 8),
-                new THREE.SphereGeometry(0.15, 8, 8)
+                new THREE.SphereGeometry(0.12, 8, 8),
+                new THREE.SphereGeometry(0.15, 8, 8),
+                new THREE.SphereGeometry(0.2, 8, 8)
             ];
             
             // Create stars for this constellation
@@ -304,15 +322,20 @@ export class World {
                 // Select a random geometry
                 const geometry = starGeometries[Math.floor(Math.random() * starGeometries.length)];
                 
-                // Create the star
-                const star = new THREE.Mesh(geometry, starMaterial.clone());
+                // Create the star with more vibrant colors
+                const starColors = [0xffffff, 0xe4e3d3, 0xf5f5f5, 0xececec]; // Variaciones de blanco
+                const color = starColors[Math.floor(Math.random() * starColors.length)];
+                const material = starMaterial.clone();
+                material.color.set(color);
+                
+                const star = new THREE.Mesh(geometry, material);
                 star.position.copy(position);
                 
-                // Add animation properties
-                star.userData.originalOpacity = 0.6 + Math.random() * 0.4;
+                // Add animation properties with increased values
+                star.userData.originalOpacity = 0.7 + Math.random() * 0.3; // Mayor opacidad base
                 star.userData.pulseSpeed = 0.3 + Math.random() * 0.5;
                 star.userData.pulsePhase = Math.random() * Math.PI * 2;
-                star.userData.movementAmplitude = 0.05 + Math.random() * 0.1;
+                star.userData.movementAmplitude = 0.08 + Math.random() * 0.15; // Mayor amplitud
                 star.userData.movementSpeed = 0.2 + Math.random() * 0.3;
                 star.userData.movementOffset = Math.random() * Math.PI * 2;
                 star.material.opacity = star.userData.originalOpacity;
@@ -322,15 +345,15 @@ export class World {
                 stars.push(star);
             }
             
-            // Create lines to connect the stars with Laqueno colors
+            // Create lines to connect the stars with more visible colors
             const lineMaterial = new THREE.LineBasicMaterial({ 
-                color: 0xa6a995, // Soft gray-green to match Laqueno theme
+                color: 0xe4e3d3, // Color más claro y visible
                 transparent: true,
-                opacity: 0.3,
-                linewidth: 1
+                opacity: 0.6, // Mayor opacidad para las líneas
+                linewidth: 1.5 // Líneas más gruesas (aunque no funciona en WebGL)
             });
             
-            // Generate connections - each star connects to 1-2 nearby stars
+            // Generate connections - cada estrella conecta con 1-2 cercanas
             for (let i = 0; i < stars.length; i++) {
                 // Decide how many connections this star will have
                 const connectionCount = Math.min(stars.length - 1, 1 + Math.floor(Math.random() * 2));
@@ -364,8 +387,8 @@ export class World {
                         const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
                         const line = new THREE.Line(lineGeometry, lineMaterial.clone());
                         
-                        // Animation properties for the line
-                        line.userData.originalOpacity = 0.1 + Math.random() * 0.3;
+                        // Animation properties for the line with more visibility
+                        line.userData.originalOpacity = 0.3 + Math.random() * 0.3; // Mayor opacidad
                         line.userData.pulseSpeed = 0.2 + Math.random() * 0.4;
                         line.userData.pulsePhase = Math.random() * Math.PI * 2;
                         line.material.opacity = line.userData.originalOpacity;
@@ -388,8 +411,8 @@ export class World {
             };
             
             constellationGroup.userData.movementSpeed = {
-                x: (Math.random() - 0.5) * 0.002,
-                y: (Math.random() - 0.5) * 0.002,
+                x: (Math.random() - 0.5) * 0.003, // Movimiento más pronunciado
+                y: (Math.random() - 0.5) * 0.003,
                 z: (Math.random() - 0.5) * 0.001
             };
             
@@ -399,6 +422,18 @@ export class World {
         
         // Save reference to the constellations group
         this.particles = constellationsGroup;
+        
+        // Añadir un plano oscuro y transparente para dar profundidad
+        const bgPlaneGeometry = new THREE.PlaneGeometry(120, 80);
+        const bgPlaneMaterial = new THREE.MeshBasicMaterial({
+            color: 0x1a1a1a,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide
+        });
+        const bgPlane = new THREE.Mesh(bgPlaneGeometry, bgPlaneMaterial);
+        bgPlane.position.z = -45;
+        this.scene.add(bgPlane);
     }
     
     /**
@@ -586,9 +621,9 @@ export class World {
                 constellation.position.z += constellation.userData.movementSpeed.z;
                 
                 // Movement boundaries - make them return to the visible area on the right side
-                const maxDistanceX = 50;
-                const maxDistanceY = 40;
-                const maxDistanceZ = 60;
+                const maxDistanceX = 120;
+                const maxDistanceY = 60;
+                const maxDistanceZ = 15;
                 
                 // Keep particles mainly on the right side
                 if (constellation.position.x < 0) {
@@ -608,24 +643,23 @@ export class World {
                     constellation.userData.movementSpeed.z *= -1;
                 }
                 
-                // For each element of the constellation (stars and lines)
                 constellation.children.forEach(child => {
                     const time = this.experience.time.elapsed / 1000; // time in seconds
                     
                     if (child.isMesh) {
-                        // Star - animate pulsating brightness
-                        const pulseValue = 0.5 + 0.5 * Math.sin(
+                        // Star - animate pulsating brightness with higher intensity
+                        const pulseValue = 0.7 + 0.3 * Math.sin(
                             time * child.userData.pulseSpeed + child.userData.pulsePhase
                         );
                         
-                        // Apply pulsating opacity
-                        child.material.opacity = child.userData.originalOpacity * pulseValue;
+                        // Apply pulsating opacity with higher base value
+                        child.material.opacity = Math.max(0.4, child.userData.originalOpacity * pulseValue);
                         
-                        // Small oscillation movement
-                        const xMove = child.userData.movementAmplitude * Math.sin(
+                        // Small oscillation movement with more visible motion
+                        const xMove = child.userData.movementAmplitude * 1.5 * Math.sin(
                             time * child.userData.movementSpeed + child.userData.movementOffset
                         );
-                        const yMove = child.userData.movementAmplitude * Math.cos(
+                        const yMove = child.userData.movementAmplitude * 1.5 * Math.cos(
                             time * child.userData.movementSpeed * 0.8 + child.userData.movementOffset
                         );
                         
@@ -638,17 +672,17 @@ export class World {
                         child.position.x = child.userData.originalPosition.x + xMove;
                         child.position.y = child.userData.originalPosition.y + yMove;
                         
-                        // Add small pulsating scale effect
-                        const scaleFactor = 0.9 + 0.2 * pulseValue;
+                        // Add small pulsating scale effect for more visual interest
+                        const scaleFactor = 0.8 + 0.4 * pulseValue;
                         child.scale.set(scaleFactor, scaleFactor, scaleFactor);
                     } 
                     else if (child.isLine) {
-                        // Line - make its opacity follow the stars
-                        const pulseValue = 0.5 + 0.5 * Math.sin(
+                        // Line - make its opacity follow the stars with higher values
+                        const pulseValue = 0.6 + 0.4 * Math.sin(
                             time * child.userData.pulseSpeed + child.userData.pulsePhase
                         );
                         
-                        child.material.opacity = child.userData.originalOpacity * pulseValue;
+                        child.material.opacity = Math.max(0.2, child.userData.originalOpacity * pulseValue);
                         
                         // Update line points to follow star movement
                         if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
