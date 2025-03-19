@@ -424,7 +424,7 @@ export class World {
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
-                model: this.resources.getItem('obj2'),
+                model: this.resources.getItem('about-model'),
                 particleColors: [
                     '#c1c4b1', // Laqueno light
                     '#a6a995', // Laqueno medium

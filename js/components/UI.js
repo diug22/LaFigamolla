@@ -3,6 +3,8 @@
  * Handles user interface elements and interactions
  */
 import { ContactSystem } from './ContactSystem.js';
+import { AboutSystem } from './AboutSystem.js';
+
 
 export class UI {
     constructor(experience) {
@@ -31,6 +33,8 @@ export class UI {
         
         // Initialize contact system
         this.contactSystem = new ContactSystem(this.experience);
+        this.aboutSystem = new AboutSystem(this.experience);
+
 
         // Setup event listeners
         this.setupEventListeners();
@@ -495,7 +499,7 @@ export class UI {
         if (this.elements.aboutLink) {
             this.elements.aboutLink.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.toggleUIElements();
+                this.aboutSystem.showAboutCard();
             });
         }
         
@@ -515,6 +519,9 @@ export class UI {
                 this.updateZoomIndicator(zoomLevel);
             });
         }
+
+        
+        
     }
     
     /**
@@ -772,6 +779,8 @@ export class UI {
      * Update on each frame
      */
     update() {
-        // Any animations or updates needed for UI elements
+        if (this.aboutSystem && typeof this.aboutSystem.update === 'function') {
+            this.aboutSystem.update();
+        }
     }
 }
