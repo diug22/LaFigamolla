@@ -4,7 +4,8 @@
  */
 import { ContactSystem } from './ContactSystem.js';
 import { AboutSystem } from './AboutSystem.js';
-
+import { InfoPanelSystem } from './InfoPanelSystem.js';
+import { InfoPanelMobileSystem } from './InfoPanelMobileSystem.js';
 
 export class UI {
     constructor(experience) {
@@ -24,17 +25,21 @@ export class UI {
         
         // UI state
         this.uiVisible = true;
-        this.infoPanelVisible = false;
         
         // Create main UI elements with Laqueno design
         this.createMainUI();
-        this.createInfoPanel();
         this.createZoomUI();
         
-        // Initialize contact system
+        // Initialize component systems
         this.contactSystem = new ContactSystem(this.experience);
         this.aboutSystem = new AboutSystem(this.experience);
-
+        
+        // Initialize the appropriate info panel system based on device
+        if (this.isMobileDevice()) {
+            this.infoPanelSystem = new InfoPanelMobileSystem(this.experience);
+        } else {
+            this.infoPanelSystem = new InfoPanelSystem(this.experience);
+        }
 
         // Setup event listeners
         this.setupEventListeners();
@@ -71,7 +76,6 @@ export class UI {
             </div>
         `;
 
-
         document.body.appendChild(uiContainer);
         
         // Store references to new elements
@@ -84,52 +88,6 @@ export class UI {
         // Add Laqueno styles
         this.addStyles();
     }
-
-    
-    
-    /**
-     * Create info panel with Laqueno design
-     */
-    createInfoPanel() {
-        // Remove existing panel if present
-        const existingPanel = document.getElementById('info-panel');
-        if (existingPanel) {
-            existingPanel.remove();
-        }
-        
-        // Create new info panel
-        const infoPanel = document.createElement('div');
-        infoPanel.id = 'info-panel';
-        infoPanel.className = 'info-panel';
-        
-        infoPanel.innerHTML = `
-            <button class="close-btn" id="close-info">&times;</button>
-            <h2 class="info-title" id="info-title">Nombre de la pieza</h2>
-            <div class="info-separator"></div>
-            <p class="info-description" id="info-description">Descripción detallada de la obra...</p>
-            <div class="info-details">
-                <p id="info-dimensions" class="info-field">Dimensiones: 30cm x 20cm x 15cm</p>
-                <p id="info-material" class="info-field">Material: Cerámica artesanal</p>
-                <p id="info-year" class="info-field">Año: 2025</p>
-            </div>
-        `;
-        
-        document.body.appendChild(infoPanel);
-        
-        // Store references to panel elements
-        this.elements.infoPanel = infoPanel;
-        this.elements.closeInfoBtn = infoPanel.querySelector('.close-btn');
-        this.elements.infoTitle = infoPanel.querySelector('#info-title');
-        this.elements.infoDescription = infoPanel.querySelector('#info-description');
-        this.elements.infoDimensions = infoPanel.querySelector('#info-dimensions');
-        this.elements.infoMaterial = infoPanel.querySelector('#info-material');
-        this.elements.infoYear = infoPanel.querySelector('#info-year');
-
-        // Auto-close timer reference
-        this.infoPanelTimer = null;
-    }
-
-    
     
     /**
      * Add Laqueno styles to the document
@@ -137,75 +95,6 @@ export class UI {
     addStyles() {
         const style = document.createElement('style');
         style.textContent = `
-
-        .info-panel {
-                position: fixed;
-                bottom: 80px; /* Posicionado por encima del botón del carrusel */
-                left: 50%;
-                transform: translateX(-50%) translateY(100%); /* Centrado horizontal y fuera de pantalla inicialmente */
-                width: 90%;
-                max-width: 500px; /* Ancho máximo reducido */
-                background-color: rgba(43, 46, 31, 0.9);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                padding: 25px 30px;
-                border-radius: 8px; /* Bordes redondeados */
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Sombra sutil */
-                transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-                z-index: 20;
-                max-height: 50vh; /* Altura máxima reducida */
-                overflow-y: auto;
-            }
-
-            .info-panel.active {
-                transform: translateX(-50%) translateY(0); /* Solo mueve hacia arriba, mantiene centrado */
-            }
-
-            /* Ajustes para el contenido más compacto */
-            .info-title {
-                font-size: 22px;
-                margin-bottom: 12px;
-            }
-
-            .info-separator {
-                margin-bottom: 15px;
-            }
-
-            .info-description {
-                font-size: 14px;
-                line-height: 1.5;
-                margin-bottom: 20px;
-            }
-
-            .info-details {
-                font-size: 12px;
-                line-height: 1.6;
-                margin-bottom: 10px;
-            }
-
-            .info-field {
-                margin: 5px 0;
-            }
-
-            /* Ajustes para móviles */
-            @media (max-width: 768px) {
-                .info-panel {
-                    width: 85%;
-                    padding: 20px;
-                    bottom: 70px; /* Ligeramente más arriba en móviles */
-                    max-height: 40vh; /* Altura máxima más reducida en móviles */
-                }
-                
-                .info-title {
-                    font-size: 18px;
-                }
-                
-                .info-description {
-                    font-size: 13px;
-                    margin-bottom: 15px;
-                }
-            }
-
             .ui-container {
                 position: fixed;
                 top: 0;
@@ -241,11 +130,8 @@ export class UI {
             .nav-link:hover {
                 color: #ffffff;
             }
-
-            .info-link {
-            }
             
-             .logo-container {
+            .logo-container {
                 text-align: center;
                 display: flex;
                 flex-direction: column;
@@ -253,7 +139,6 @@ export class UI {
                 justify-content: center;
             }
             
-
             /* Estilo para la imagen del logo */
             .logo-container img {
                 height: auto;
@@ -287,7 +172,6 @@ export class UI {
                 line-height: 100%;
                 letter-spacing: 0%;
                 text-align: center;
-
                 color: #EBECCB;
             }
             
@@ -310,7 +194,6 @@ export class UI {
                 align-items: center;
                 width: 100%;
             }
-            
             
             .nav-dots {
                 display: flex;
@@ -353,66 +236,6 @@ export class UI {
             @keyframes slideLeft {
                 0% { transform: translateX(-15px); opacity: 0.7; }
                 100% { transform: translateX(0); opacity: 1; }
-            }
-            
-            /* Info panel */
-            .info-panel {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                background-color: rgba(43, 46, 31, 0.9);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                padding: 30px 40px;
-                transform: translateY(100%);
-                transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-                z-index: 20;
-                max-height: 60vh;
-                overflow-y: auto;
-            }
-            
-            .info-panel.active {
-                transform: translateY(0);
-            }
-            
-            .close-btn {
-                position: absolute;
-                top: 20px;
-                right: 40px;
-                background: none;
-                border: none;
-                color: #e4e3d3;
-                font-size: 24px;
-                cursor: pointer;
-            }
-            
-            .info-title {
-                font-size: 24px;
-                font-weight: 300;
-                letter-spacing: 1px;
-                margin-bottom: 15px;
-            }
-            
-            .info-separator {
-                width: 40px;
-                height: 1px;
-                background-color: #a6a995;
-                margin-bottom: 15px;
-            }
-            
-            .info-description {
-                font-size: 16px;
-                line-height: 1.6;
-                margin-bottom: 30px;
-                max-width: 800px;
-                color: #c1c4b1;
-            }
-            
-            .info-details {
-                font-size: 14px;
-                color: #a6a995;
-                line-height: 1.8;
             }
             
             /* Zoom indicator */
@@ -471,14 +294,6 @@ export class UI {
                 .footer {
                     padding: 15px 20px;
                 }
-                
-                .info-panel {
-                    padding: 20px;
-                }
-                
-                .close-btn {
-                    right: 20px;
-                }
             }
         `;
         
@@ -505,29 +320,7 @@ export class UI {
         // Info button - show/hide info panel
         if (this.elements.infoButton) {
             this.elements.infoButton.addEventListener('click', () => {
-                this.toggleInfoPanel();
-            });
-        }
-        
-        // Close info panel button
-        if (this.elements.closeInfoBtn) {
-            this.elements.closeInfoBtn.addEventListener('click', () => {
-                this.hideInfoPanel();
-            });
-        }
-
-        // Reset auto-close timer when interacting with info panel
-        if (this.elements.infoPanel) {
-            this.elements.infoPanel.addEventListener('mousemove', () => {
-                if (this.infoPanelVisible) {
-                    this.resetInfoPanelTimer();
-                }
-            });
-            
-            this.elements.infoPanel.addEventListener('touchstart', () => {
-                if (this.infoPanelVisible) {
-                    this.resetInfoPanelTimer();
-                }
+                this.infoPanelSystem.toggleInfoPanel();
             });
         }
         
@@ -539,7 +332,7 @@ export class UI {
             });
         }
         
-        // About link - now functions as UI toggle (eye icon functionality)
+        // About link
         if (this.elements.aboutLink) {
             this.elements.aboutLink.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -551,11 +344,11 @@ export class UI {
         if (this.controls) {
             // Item change event
             this.controls.on('itemChange', (index) => {
-                this.updateInfoForItem(index);
+                this.infoPanelSystem.updateForItem(index);
                 this.updateNavDots();
                 
                 // Hide info panel when changing items
-                this.hideInfoPanel();
+                this.infoPanelSystem.hideInfoPanel();
             });
             
             // Zoom change event
@@ -563,74 +356,21 @@ export class UI {
                 this.updateZoomIndicator(zoomLevel);
             });
         }
-
-        
-        
     }
     
     /**
-     * Toggle info panel visibility
+     * Event handler for info panel visibility changes
      */
-    toggleInfoPanel() {
-        if (this.infoPanelVisible) {
-            this.hideInfoPanel();
-        } else {
-            this.showInfoPanel();
+    onInfoPanelVisibilityChange(isVisible) {
+        // Update info button visibility based on info panel state
+        if (this.elements.infoButton) {
+            this.elements.infoButton.style.opacity = isVisible ? '0' : '1';
+            this.elements.infoButton.style.pointerEvents = isVisible ? 'none' : 'auto';
         }
     }
     
     /**
-     * Show info panel
-     */
-    showInfoPanel() {
-        if (this.elements.infoPanel) {
-            this.elements.infoPanel.classList.add('active');
-            this.infoPanelVisible = true;
-            
-            // Ensure "Info pieza" button is hidden when panel is showing
-            if (this.elements.infoButton) {
-                this.elements.infoButton.style.opacity = '0';
-                this.elements.infoButton.style.pointerEvents = 'none';
-            }
-        }
-        this.resetInfoPanelTimer();
-    }
-    
-    resetInfoPanelTimer() {
-        // Clear any existing timer
-        if (this.infoPanelTimer) {
-            clearTimeout(this.infoPanelTimer);
-        }
-        
-        // Set new timer for 10 seconds
-        this.infoPanelTimer = setTimeout(() => {
-            this.hideInfoPanel();
-        }, 10000);
-    }
-    /**
-     * Hide info panel
-     */
-    hideInfoPanel() {
-        if (this.elements.infoPanel) {
-            this.elements.infoPanel.classList.remove('active');
-            this.infoPanelVisible = false;
-            
-            // Make "Info pieza" button visible again
-            if (this.elements.infoButton) {
-                this.elements.infoButton.style.opacity = '1';
-                this.elements.infoButton.style.pointerEvents = 'auto';
-            }
-            
-            // Clear auto-close timer
-            if (this.infoPanelTimer) {
-                clearTimeout(this.infoPanelTimer);
-                this.infoPanelTimer = null;
-            }
-        }
-    }
-    
-    /**
-     * Toggle UI elements visibility (triggered by About/eye icon)
+     * Toggle UI elements visibility
      */
     toggleUIElements() {
         if (this.uiVisible) {
@@ -680,7 +420,14 @@ export class UI {
      * Show gesture hint
      */
     showGestureHint(text) {
-        if (!this.elements.gestureHint) return;
+        if (!this.elements.gestureHint) {
+            // If gesture hint doesn't exist yet, create it
+            const hintElement = document.createElement('div');
+            hintElement.className = 'gesture-hint';
+            hintElement.id = 'gesture-hint';
+            document.body.appendChild(hintElement);
+            this.elements.gestureHint = hintElement;
+        }
         
         this.elements.gestureHint.textContent = text;
         this.elements.gestureHint.classList.add('visible');
@@ -695,9 +442,8 @@ export class UI {
      * Update navigation dots
      */
     updateNavDots(direction) {
-        console.log('JOA NAV 0')
         if (!this.elements.navDots || !this.controls) return;
-        console.log('JOA NAV')
+        
         const totalItems = this.controls.totalItems;
         const currentIndex = this.controls.currentIndex;
         
@@ -759,48 +505,11 @@ export class UI {
     }
     
     /**
-     * Update info panel content for current item
+     * Update info panel content for current item (adapter method)
      */
     updateInfoForItem(index) {
-        if (!this.world || !this.world.items || index >= this.world.items.length) return;
-        
-        const item = this.world.items[index];
-        
-        // Set basic fields that should always be present
-        if (this.elements.infoTitle) {
-            this.elements.infoTitle.textContent = item.title || 'Sin título';
-        }
-        
-        if (this.elements.infoDescription) {
-            this.elements.infoDescription.textContent = item.description || 'Sin descripción';
-        }
-        
-        // Set optional fields and hide them if not available
-        if (this.elements.infoDimensions) {
-            if (item.dimensions) {
-                this.elements.infoDimensions.textContent = `Dimensiones: ${item.dimensions}`;
-                this.elements.infoDimensions.style.display = 'block';
-            } else {
-                this.elements.infoDimensions.style.display = 'none';
-            }
-        }
-        
-        if (this.elements.infoMaterial) {
-            if (item.material) {
-                this.elements.infoMaterial.textContent = `Material: ${item.material}`;
-                this.elements.infoMaterial.style.display = 'block';
-            } else {
-                this.elements.infoMaterial.style.display = 'none';
-            }
-        }
-        
-        if (this.elements.infoYear) {
-            if (item.year) {
-                this.elements.infoYear.textContent = `Año: ${item.year}`;
-                this.elements.infoYear.style.display = 'block';
-            } else {
-                this.elements.infoYear.style.display = 'none';
-            }
+        if (this.infoPanelSystem) {
+            this.infoPanelSystem.updateForItem(index);
         }
     }
     
@@ -841,6 +550,18 @@ export class UI {
                 this.elements.instructions.style.display = 'none';
             }, 500);
         }
+    }
+    
+    /**
+     * Detect if the current device is mobile
+     */
+    isMobileDevice() {
+        return (
+            window.innerWidth <= 768 || 
+            'ontouchstart' in window || 
+            navigator.maxTouchPoints > 0 ||
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        );
     }
     
     /**
