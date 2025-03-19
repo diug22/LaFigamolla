@@ -114,15 +114,15 @@ export class ArtworkItem {
             
             // Bubble count - fewer on mobile
             bubbleCount: {
-                min: isMobile ? 8 : 15,
-                max: isMobile ? 15 : 30,
-                initial: isMobile ? 10 : 20
+                min: isMobile ? 1 : 1,
+                max: isMobile ? 1 : 3,
+                initial: isMobile ? 1 : 1
             },
             
             // Bubble size
             bubbleSize: { 
-                min: 0.015, 
-                max: 0.06
+                min: 0.0015, 
+                max: 0.006
             },
             
             // Bubble speed
@@ -131,18 +131,6 @@ export class ArtworkItem {
                 max: 0.02 
             },
             
-            // Foam settings
-            resetInterval: 12000, // 12 seconds
-            foamHeight: 0.7, // Position for foam formation (above model)
-            foamWidth: 1.2, // Width of foam area
-            foamResetThreshold: 0.65, // When to reset foam
-            
-            // Define emission area at bottom of model
-            emissionArea: {
-                width: 0.7, // Width of emission area
-                height: 0.15, // Height of emission area
-                yOffset: -0.3 // Position below model center
-            }
         };
         
         // Create bubble effect attached to artwork container

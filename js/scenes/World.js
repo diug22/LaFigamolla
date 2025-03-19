@@ -6,6 +6,7 @@
 
 import * as THREE from 'three';
 import { ArtworkItem } from './ArtworkItem.js';
+import { BackgroundParticles } from '../components/BackgroundParticles.js';
 import { AmbienceParticles } from '../components/AmbienceParticles.js';
 
 export class World {
@@ -65,6 +66,14 @@ export class World {
         this.scene.add(this.environment);
         
         // Inicializar el sistema de partículas ambientales
+        this.backgroundParticles = new BackgroundParticles(this.scene, this.experience, {
+            particleCount: this.experience.sizes.isMobile ? 30 : 50,
+            particleSize: { min: 0.02, max: 0.08 },
+            opacity: { min: 0.3, max: 0.6 },
+            globalZPosition: -3
+        });
+        
+        // Inicializar el sistema de partículas ambientales (círculos alrededor de obras)
         this.ambienceParticles = new AmbienceParticles(this.scene, this.experience, {
             // Aquí puedes configurar las opciones personalizadas
             minConstellations: this.experience.sizes.isMobile ? 2 : 5,

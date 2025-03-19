@@ -15,9 +15,9 @@ export class BubbleEffect {
         // Default configuration
         this.config = {
             // Bubble count control
-            bubbleCount: { min: 15, max: 35, initial: 20 },
+            bubbleCount: { min: 1, max: 3, initial: 1 },
             // Bubble appearance
-            bubbleSize: { min: 0.02, max: 0.08 },
+            bubbleSize: { min: 0.0001, max:0.0002 },
             bubbleSpeed: { min: 0.01, max: 0.03 },
             // Foam controls
             resetInterval: 15000, // 15 seconds
@@ -75,7 +75,7 @@ export class BubbleEffect {
         this.createBubbles();
         
         // Create foam system
-        this.createFoam();
+        //this.createFoam();
     }
     
     /**
@@ -543,7 +543,7 @@ export class BubbleEffect {
         this.updateBubbles();
         
         // Update foam
-        this.updateFoam();
+        //this.updateFoam();
         
         // Check if foam needs to be reset based on configurable threshold
         if (Date.now() - this.lastFoamReset > this.config.resetInterval && 
