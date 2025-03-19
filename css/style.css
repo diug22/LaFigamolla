@@ -64,11 +64,16 @@ canvas {
 }
 
 .subtitle {
-    font-size: 0.9rem;
-    opacity: 0.8;
-    font-weight: 300;
-    letter-spacing: 1px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    width: 571;
+    height: 43.63739776611328;
+    top: 138.69px;
+    left: 315px;
+    font-family: Inter;
+    font-weight: 400;
+    font-size: 27.85px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    text-align: center;       
 }
 
 /* Pie de página */

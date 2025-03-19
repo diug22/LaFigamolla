@@ -482,6 +482,10 @@ export class World {
         // Show first item
         if (this.items.length > 0) {
             this.showItem(0);
+
+            if (this.experience.ui) {
+                this.experience.ui.updateInfoForItem(0);
+            }
         }
     }
     
