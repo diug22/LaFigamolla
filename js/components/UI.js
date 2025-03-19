@@ -134,72 +134,72 @@ export class UI {
         style.textContent = `
 
         .info-panel {
-    position: fixed;
-    bottom: 80px; /* Posicionado por encima del botón del carrusel */
-    left: 50%;
-    transform: translateX(-50%) translateY(100%); /* Centrado horizontal y fuera de pantalla inicialmente */
-    width: 90%;
-    max-width: 500px; /* Ancho máximo reducido */
-    background-color: rgba(43, 46, 31, 0.9);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 25px 30px;
-    border-radius: 8px; /* Bordes redondeados */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Sombra sutil */
-    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 20;
-    max-height: 50vh; /* Altura máxima reducida */
-    overflow-y: auto;
-}
+                position: fixed;
+                bottom: 80px; /* Posicionado por encima del botón del carrusel */
+                left: 50%;
+                transform: translateX(-50%) translateY(100%); /* Centrado horizontal y fuera de pantalla inicialmente */
+                width: 90%;
+                max-width: 500px; /* Ancho máximo reducido */
+                background-color: rgba(43, 46, 31, 0.9);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                padding: 25px 30px;
+                border-radius: 8px; /* Bordes redondeados */
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Sombra sutil */
+                transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 20;
+                max-height: 50vh; /* Altura máxima reducida */
+                overflow-y: auto;
+            }
 
-.info-panel.active {
-    transform: translateX(-50%) translateY(0); /* Solo mueve hacia arriba, mantiene centrado */
-}
+            .info-panel.active {
+                transform: translateX(-50%) translateY(0); /* Solo mueve hacia arriba, mantiene centrado */
+            }
 
-/* Ajustes para el contenido más compacto */
-.info-title {
-    font-size: 22px;
-    margin-bottom: 12px;
-}
+            /* Ajustes para el contenido más compacto */
+            .info-title {
+                font-size: 22px;
+                margin-bottom: 12px;
+            }
 
-.info-separator {
-    margin-bottom: 15px;
-}
+            .info-separator {
+                margin-bottom: 15px;
+            }
 
-.info-description {
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 20px;
-}
+            .info-description {
+                font-size: 14px;
+                line-height: 1.5;
+                margin-bottom: 20px;
+            }
 
-.info-details {
-    font-size: 12px;
-    line-height: 1.6;
-    margin-bottom: 10px;
-}
+            .info-details {
+                font-size: 12px;
+                line-height: 1.6;
+                margin-bottom: 10px;
+            }
 
-.info-field {
-    margin: 5px 0;
-}
+            .info-field {
+                margin: 5px 0;
+            }
 
-/* Ajustes para móviles */
-@media (max-width: 768px) {
-    .info-panel {
-        width: 85%;
-        padding: 20px;
-        bottom: 70px; /* Ligeramente más arriba en móviles */
-        max-height: 40vh; /* Altura máxima más reducida en móviles */
-    }
-    
-    .info-title {
-        font-size: 18px;
-    }
-    
-    .info-description {
-        font-size: 13px;
-        margin-bottom: 15px;
-    }
-}
+            /* Ajustes para móviles */
+            @media (max-width: 768px) {
+                .info-panel {
+                    width: 85%;
+                    padding: 20px;
+                    bottom: 70px; /* Ligeramente más arriba en móviles */
+                    max-height: 40vh; /* Altura máxima más reducida en móviles */
+                }
+                
+                .info-title {
+                    font-size: 18px;
+                }
+                
+                .info-description {
+                    font-size: 13px;
+                    margin-bottom: 15px;
+                }
+            }
             /* Laqueno UI styles */
             body {
                 background-color: #2b2e1f;
@@ -295,24 +295,45 @@ export class UI {
                 color: #ffffff;
             }
             
-            /* Navigation dots */
             .nav-dots {
                 display: flex;
                 gap: 8px;
                 pointer-events: auto;
+                position: relative;
+                transition: transform 0.3s ease;
             }
-            
+
             .nav-dot {
                 width: 12px;
                 height: 12px;
                 border-radius: 50%;
                 background-color: rgba(228, 227, 211, 0.3);
                 cursor: pointer;
-                transition: background-color 0.3s ease;
+                transition: background-color 0.3s ease, transform 0.3s ease;
             }
-            
+
             .nav-dot.active {
                 background-color: #e4e3d3;
+                transform: scale(1.2);
+            }
+
+            /* Dot animation for direction changes */
+            .nav-dots.slide-right {
+                animation: slideRight 0.4s ease-out;
+            }
+
+            .nav-dots.slide-left {
+                animation: slideLeft 0.4s ease-out;
+            }
+
+            @keyframes slideRight {
+                0% { transform: translateX(15px); opacity: 0.7; }
+                100% { transform: translateX(0); opacity: 1; }
+            }
+
+            @keyframes slideLeft {
+                0% { transform: translateX(-15px); opacity: 0.7; }
+                100% { transform: translateX(0); opacity: 1; }
             }
             
             /* Info panel */
@@ -655,27 +676,63 @@ export class UI {
     /**
      * Update navigation dots
      */
-    updateNavDots() {
+    updateNavDots(direction) {
+        console.log('JOA NAV 0')
         if (!this.elements.navDots || !this.controls) return;
-        
+        console.log('JOA NAV')
         const totalItems = this.controls.totalItems;
         const currentIndex = this.controls.currentIndex;
         
+        // Clear existing dots
         this.elements.navDots.innerHTML = '';
         
-        for (let i = 0; i < totalItems; i++) {
+        // Apply transition class based on direction if provided
+        if (direction) {
+            this.elements.navDots.classList.remove('slide-left', 'slide-right');
+            void this.elements.navDots.offsetWidth; // Force reflow
+            this.elements.navDots.classList.add(`slide-${direction}`);
+        }
+        
+        // Always create exactly 3 dots
+        for (let i = 0; i < 3; i++) {
             const dot = document.createElement('div');
             dot.className = 'nav-dot';
-            if (i === currentIndex) {
+            
+            // The middle dot (i=1) is always active, representing the current item
+            if (i === 1) {
                 dot.classList.add('active');
             }
             
+            // Calculate which item this dot represents
+            // For a 3-dot system: [prev, current, next]
+            let itemIndex;
+            if (i === 0) { // Previous item
+                itemIndex = (currentIndex - 1 + totalItems) % totalItems;
+            } else if (i === 1) { // Current item
+                itemIndex = currentIndex;
+            } else { // Next item
+                itemIndex = (currentIndex + 1) % totalItems;
+            }
+            
+            // Store item index as data attribute
+            dot.dataset.index = itemIndex;
+            
+            // Add click event
             dot.addEventListener('click', () => {
                 if (this.controls) {
-                    this.controls.currentIndex = i;
-                    this.controls.emit('itemChange', i);
-                    this.controls.resetCameraView();
-                    this.updateNavDots();
+                    const clickedIndex = parseInt(dot.dataset.index);
+                    
+                    // Determine direction based on clicked dot
+                    const direction = (i === 0) ? 'left' : 
+                                     (i === 2) ? 'right' : null;
+                    
+                    // Only navigate if clicked dot is not the current one
+                    if (clickedIndex !== currentIndex) {
+                        this.controls.currentIndex = clickedIndex;
+                        this.controls.emit('itemChange', clickedIndex);
+                        this.controls.resetCameraView();
+                        this.updateNavDots(direction);
+                    }
                 }
             });
             

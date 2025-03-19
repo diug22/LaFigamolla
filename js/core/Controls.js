@@ -926,42 +926,50 @@ export class Controls {
      * Navigate to the next item
      */
     nextItem() {
-        if (this.currentIndex < this.totalItems - 1) {
-            const oldIndex = this.currentIndex;
+        const oldIndex = this.currentIndex;
+    
+        // Toroidal navigation: If at the last item, loop to the first item
+        if (this.currentIndex >= this.totalItems - 1) {
+            this.currentIndex = 0;
+        } else {
             this.currentIndex++;
-            
-            this.emit('itemChange', this.currentIndex);
-            
-            // Reset camera position and rotation with a horizontal transition
-            this.resetCameraViewHorizontal('left');
-            
-            // Update UI
-            this.updateNavDots();
-            
-            // Show gesture hint
-            this.showGestureHint("Swipe left/right to navigate");
         }
+        
+        this.emit('itemChange', this.currentIndex);
+        
+        // Direction is always 'left' for next item transitions
+        this.resetCameraViewHorizontal('left');
+        
+        // Update UI
+        this.updateNavDots('right'); // Pass navigation direction to updateNavDots
+        
+        // Show gesture hint
+        this.showGestureHint("Swipe left/right to navigate");
     }
     
     /**
      * Navigate to the previous item
      */
     previousItem() {
-        if (this.currentIndex > 0) {
-            const oldIndex = this.currentIndex;
+        const oldIndex = this.currentIndex;
+    
+        // Toroidal navigation: If at the first item, loop to the last item
+        if (this.currentIndex <= 0) {
+            this.currentIndex = this.totalItems - 1;
+        } else {
             this.currentIndex--;
-            
-            this.emit('itemChange', this.currentIndex);
-            
-            // Reset camera position and rotation with a horizontal transition
-            this.resetCameraViewHorizontal('right');
-            
-            // Update UI
-            this.updateNavDots();
-            
-            // Show gesture hint
-            this.showGestureHint("Swipe left/right to navigate");
         }
+        
+        this.emit('itemChange', this.currentIndex);
+        
+        // Direction is always 'right' for previous item transitions
+        this.resetCameraViewHorizontal('right');
+        
+        // Update UI
+        this.updateNavDots('left'); // Pass navigation direction to updateNavDots
+        
+        // Show gesture hint
+        this.showGestureHint("Swipe left/right to navigate");
     }
     
     
@@ -1012,26 +1020,54 @@ export class Controls {
     updateNavDots() {
         const navDots = document.getElementById('nav-dots');
         if (!navDots) return;
-        
+        const currentIndex = this.currentIndex;
+        const totalItems = this.totalItems;
         // Clear existing dots
         navDots.innerHTML = '';
         
         // Create new dots
-        for (let i = 0; i < this.totalItems; i++) {
+        for (let i = 0; i < 3; i++) {
             const dot = document.createElement('div');
             dot.className = 'nav-dot';
-            if (i === this.currentIndex) {
+            
+            // The middle dot (i=1) is always active, representing the current item
+            if (this.currentIndex % 3 == i) {
                 dot.classList.add('active');
             }
             
+            // Calculate which item this dot represents
+            // For a 3-dot system: [prev, current, next]
+            let itemIndex;
+            if (i === 0) { // Previous item
+                itemIndex = (currentIndex - 1 + totalItems) % totalItems;
+            } else if (i === 1) { // Current item
+                itemIndex = currentIndex;
+            } else { // Next item
+                itemIndex = (currentIndex + 1) % totalItems;
+            }
+            
+            // Store item index as data attribute
+            dot.dataset.index = itemIndex;
+            
             // Add click event
             dot.addEventListener('click', () => {
-                this.currentIndex = i;
-                this.emit('itemChange', this.currentIndex);
-                this.resetCameraView();
-                this.updateNavDots();
+                if (this.controls) {
+                    const clickedIndex = parseInt(dot.dataset.index);
+                    
+                    // Determine direction based on clicked dot
+                    const direction = (i === 0) ? 'left' : 
+                                     (i === 2) ? 'right' : null;
+                    
+                    // Only navigate if clicked dot is not the current one
+                    if (clickedIndex !== currentIndex) {
+                        this.currentIndex = clickedIndex;
+                        this.emit('itemChange', clickedIndex);
+                        this.resetCameraView();
+                        this.updateNavDots(direction);
+                    }
+                }
             });
-            
+
             navDots.appendChild(dot);
         }
     }
