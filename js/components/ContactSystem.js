@@ -54,38 +54,42 @@ export class ContactSystem {
                     </div>
                     
                     <div class="contact-details">
-                        <div class="contact-detail" id="email-detail">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                <polyline points="22,6 12,13 2,6"></polyline>
-                            </svg>
-                            <div>
-                                <strong>Email</strong>
-                                <span>paulacacahuete@gmail.com</span>
-                            </div>
-                        </div>
-                        
-                        <div class="contact-detail" id="instagram-detail">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                            </svg>
-                            <div>
-                                <strong>Instagram</strong>
-                                <span>@laaqueno</span>
-                            </div>
-                        </div>
-                        
-                        <div class="contact-detail" id="linkedin-detail">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                                <rect x="2" y="9" width="4" height="12"></rect>
-                                <circle cx="4" cy="4" r="2"></circle>
-                            </svg>
-                            <div>
-                                <strong>LinkedIn</strong>
-                                <span>Paula Román</span>
+                            <!-- New wrapper div with black transparent background -->
+                            <div class="contact-details-wrapper">
+                                <div class="contact-detail" id="email-detail">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B9BAAC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                        <polyline points="22,6 12,13 2,6"></polyline>
+                                    </svg>
+                                    <div>
+                                        <strong>Email</strong>
+                                        <span>paulacacahuete@gmail.com</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="contact-detail" id="instagram-detail">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B9BAAC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                    </svg>
+                                    <div>
+                                        <strong>Instagram</strong>
+                                        <span>@laaqueno</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="contact-detail" id="linkedin-detail">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B9BAAC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                                        <rect x="2" y="9" width="4" height="12"></rect>
+                                        <circle cx="4" cy="4" r="2"></circle>
+                                    </svg>
+                                    <div>
+                                        <strong>LinkedIn</strong>
+                                        <span>Paula Román</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -105,16 +109,17 @@ export class ContactSystem {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background-color: rgba(225, 226, 202, 0.9);
+                background-color: rgba(0, 0, 0, 0.2);
                 backdrop-filter: blur(5px);
                 -webkit-backdrop-filter: blur(5px);
                 z-index: 0;
-                opacity: 0;
+                opacity: 0.3;
                 pointer-events: none;
                 transition: opacity 0.5s ease;
                 padding-top: 0;
                 overflow: hidden;
             }
+                
             
             .contact-card.visible {
                 opacity: 1;
@@ -147,7 +152,7 @@ export class ContactSystem {
                 right: 20px;
                 background: none;
                 border: none;
-                color: #2b2e1f;
+                color: #B9BAAC;
                 font-size: 28px;
                 cursor: pointer;
                 z-index: 101;
@@ -191,27 +196,18 @@ export class ContactSystem {
                 position: relative;
                 z-index: 16;
                 margin-bottom: 40px;
+                
             }
             
             .contact-header h3 {
                 font-size: 32px;
                 font-weight: 300;
                 letter-spacing: 3px;
-                color: #2b2e1f;
-                margin-bottom: 40px;
+                color: #B9BAAC;
+                font-weight: bold;
             }
             
-            .contact-details {
-                display: flex;
-                flex-direction: column;
-                gap: 20px;
-                margin-bottom: 40px;
-                text-align: left;
-                max-width: 400px;
-                width: 100%;
-            }
-            
-            .contact-detail {
+             .contact-detail {
                 display: flex;
                 align-items: flex-start;
                 gap: 15px;
@@ -232,7 +228,7 @@ export class ContactSystem {
                 height: 20px;
                 flex-shrink: 0;
                 margin-top: 2px;
-                color: #2b2e1f;
+                color: #B9BAAC;
             }
             
             .contact-detail div {
@@ -244,13 +240,13 @@ export class ContactSystem {
             .contact-detail strong {
                 font-size: 14px;
                 font-weight: 500;
-                color: #5e634d;
+                color: #B9BAAC;
                 letter-spacing: 1px;
             }
             
             .contact-detail span {
                 font-size: 18px;
-                color: #2b2e1f;
+                color: #B9BAAC;
             }
             
             /* Responsive adjustments */

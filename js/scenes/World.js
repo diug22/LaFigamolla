@@ -55,10 +55,9 @@ export class World {
      */
     setupEnvironment() {
         // Set background color
-        this.scene.background = new THREE.Color('#2b2e1f'); // Laqueno theme color
+        this.scene.background = new THREE.Color('#1a1b12'); // Laqueno theme color
         
         // Add subtle fog
-        this.scene.fog = new THREE.FogExp2('#2b2e1f', 0.035);
         
         // Create environment group
         this.environment = new THREE.Group();

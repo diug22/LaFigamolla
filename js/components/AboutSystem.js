@@ -75,7 +75,7 @@ export class AboutSystem {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background-color: rgba(225, 226, 202, 0.9);
+                background-color: rgba(0, 0, 0, 0.2);
                 backdrop-filter: blur(5px);
                 -webkit-backdrop-filter: blur(5px);
                 z-index: 0; /* Lower z-index to keep header visible */
@@ -215,7 +215,7 @@ export class AboutSystem {
                 line-height: 100%;
                 letter-spacing: 0%;
                 text-align: center;
-                color: #EBECCB;
+                color: #B9BAAC;
                 margin: 0;
             }
             
@@ -230,14 +230,14 @@ export class AboutSystem {
             .about-subtitle {
                 font-size: 32px;
                 font-weight: 400;
-                color: #EBECCB;
+                color: #B9BAAC;
                 margin: 0 0 10px 0;
             }
             
             .about-subtext {
                 font-size: 16px;
                 line-height: 1.5;
-                color: #EBECCB;
+                color: #B9BAAC;
                 font-weight: 300;
                 margin: 0;
             }

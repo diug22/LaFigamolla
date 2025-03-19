@@ -8,7 +8,6 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #fff;
 }
 
@@ -63,18 +62,7 @@ canvas {
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
-.subtitle {
-    width: 571;
-    height: 43.63739776611328;
-    top: 138.69px;
-    left: 315px;
-    font-family: Inter;
-    font-weight: 400;
-    font-size: 27.85px;
-    line-height: 100%;
-    letter-spacing: 0%;
-    text-align: center;       
-}
+
 
 /* Pie de página */
 .footer {
@@ -527,6 +515,45 @@ canvas {
     }
 }
 
+.logo-container {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Estilo para la imagen del logo */
+.logo-container img {
+    height: auto;
+    width: 200px; /* Ajusta este valor según el tamaño original que necesites */
+    margin-bottom: 5px;
+    object-fit: contain;
+}
+
+/* Mantener el estilo del subtítulo */
+
+
+/* Responsive para dispositivos móviles */
+@media (max-width: 768px) {
+    .logo-container img {
+        width: 150px; /* Tamaño reducido para móviles */
+    }
+    
+
+    
+    .nav-link {
+        font-size: 14px;
+    }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 380px) {
+    .logo-container img {
+        width: 120px;
+    }
+}
+
 /* Para orientación horizontal en móviles */
 @media (max-height: 500px) and (max-width: 900px) {
     .instructions-grid {
@@ -872,9 +899,7 @@ info-button {
         font-size: 1.4rem;
     }
     
-    .subtitle {
-        font-size: 0.8rem;
-    }
+
     
     .instructions {
         padding: 20px;

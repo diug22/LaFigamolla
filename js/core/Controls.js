@@ -43,7 +43,7 @@ export class Controls {
         this.cameraZoom = 1;
         
         // Swipe detection
-        this.swipeThreshold = 'ontouchstart' in window ? 170 : 150; // Mayor umbral en móviles
+        this.swipeThreshold = this.isMobileDevice() ? 70 : 150;  // Mayor umbral en móviles
         this.swipeVerticalThreshold = 'ontouchstart' in window ? 70 : 50;
         this.swipeDirection = null;
         this.swipeVerticalDirection = null;
@@ -1013,7 +1013,17 @@ export class Controls {
             );
         }
     }
-    
+    /**
+     * Detect if the current device is mobile
+     * @returns {boolean} True if the device is mobile, false otherwise
+     */
+    isMobileDevice() {
+        return (
+            'ontouchstart' in window || 
+            navigator.maxTouchPoints > 0 || 
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        );
+    }
     /**
      * Update navigation dots in the UI
      */

@@ -59,23 +59,24 @@ export class UI {
             <div class="header">
                 <a href="#" class="nav-link contact-link">Contact</a>
                 <div class="logo-container">
-                    <h1 class="title">Laque<span class="highlight">no.</span></h1>
+                    <img src="public/images/logo.png" alt="Planta">
                     <p class="subtitle">Constelaciones de Objetos</p>
                 </div>
                 <a href="#" class="nav-link about-link">About</a>
             </div>
             
             <div class="footer">
-                <button class="info-button">Info piezas</button>
+                <a href="#" class="nav-link info-link">Info piezas</a>
                 <div class="nav-dots" id="nav-dots"></div>
             </div>
         `;
-        
+
+
         document.body.appendChild(uiContainer);
         
         // Store references to new elements
         this.elements.uiContainer = uiContainer;
-        this.elements.infoButton = uiContainer.querySelector('.info-button');
+        this.elements.infoButton = uiContainer.querySelector('.info-link');
         this.elements.contactLink = uiContainer.querySelector('.contact-link');
         this.elements.aboutLink = uiContainer.querySelector('.about-link');
         this.elements.navDots = uiContainer.querySelector('#nav-dots');
@@ -83,6 +84,8 @@ export class UI {
         // Add Laqueno styles
         this.addStyles();
     }
+
+    
     
     /**
      * Create info panel with Laqueno design
@@ -125,6 +128,8 @@ export class UI {
         // Auto-close timer reference
         this.infoPanelTimer = null;
     }
+
+    
     
     /**
      * Add Laqueno styles to the document
@@ -200,13 +205,7 @@ export class UI {
                     margin-bottom: 15px;
                 }
             }
-            /* Laqueno UI styles */
-            body {
-                background-color: #2b2e1f;
-                font-family: 'Segoe UI', sans-serif;
-                color: #e4e3d3;
-            }
-            
+
             .ui-container {
                 position: fixed;
                 top: 0;
@@ -242,9 +241,43 @@ export class UI {
             .nav-link:hover {
                 color: #ffffff;
             }
+
+            .info-link {
+            }
             
-            .logo-container {
+             .logo-container {
                 text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            
+
+            /* Estilo para la imagen del logo */
+            .logo-container img {
+                height: auto;
+                width: 200px; /* Ajusta este valor según el tamaño que necesites */
+                margin-bottom: 5px;
+                object-fit: contain;
+            }
+
+            /* Responsive para dispositivos móviles */
+            @media (max-width: 768px) {
+                .logo-container img {
+                    width: 150px; /* Tamaño reducido para móviles */
+                }
+                
+                .subtitle {
+                    font-size: 12px;
+                }
+            }
+
+            /* Para pantallas muy pequeñas */
+            @media (max-width: 380px) {
+                .logo-container img {
+                    width: 120px;
+                }
             }
             
             .title {
@@ -265,9 +298,8 @@ export class UI {
             }
             
             .subtitle {
-                font-size: 16px;
+                font-size: 26px;
                 font-weight: 300;
-                letter-spacing: 3px;
                 color: #a6a995;
             }
             
@@ -279,21 +311,6 @@ export class UI {
                 width: 100%;
             }
             
-            .info-button {
-                background: none;
-                border: none;
-                color: #e4e3d3;
-                font-size: 16px;
-                cursor: pointer;
-                pointer-events: auto;
-                letter-spacing: 1px;
-                transition: color 0.3s ease;
-                text-transform: lowercase;
-            }
-            
-            .info-button:hover {
-                color: #ffffff;
-            }
             
             .nav-dots {
                 display: flex;
@@ -310,11 +327,13 @@ export class UI {
                 background-color: rgba(228, 227, 211, 0.3);
                 cursor: pointer;
                 transition: background-color 0.3s ease, transform 0.3s ease;
+                transform: scale(0.6);
             }
 
             .nav-dot.active {
                 background-color: #e4e3d3;
                 transform: scale(1.2);
+                transform: scale(0.8);
             }
 
             /* Dot animation for direction changes */
@@ -443,7 +462,6 @@ export class UI {
                 
                 .subtitle {
                     font-size: 12px;
-                    letter-spacing: 2px;
                 }
                 
                 .nav-link {
