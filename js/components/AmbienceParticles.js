@@ -11,6 +11,7 @@ export class AmbienceParticles {
         this.experience = experience;
         this.time = experience.time;
         this.sizes = experience.sizes;
+        this.camera = experience.camera;
         
         // Configuración por defecto
         this.config = {
@@ -22,6 +23,13 @@ export class AmbienceParticles {
             positionX: { min: -60, max: 60 },
             positionY: { min: -40, max: 40 },
             positionZ: { min: -5, max: 5 },
+            
+            // Evitar el centro donde está la obra
+            avoidCenter: false,
+            centerAvoidanceRadius: 30,
+            
+            // Tamaños de estrellas
+            starSize: { min: 0.06, max: 0.15 },
             
             // Velocidades de movimiento
             movementSpeed: { min: 0.0005, max: 0.003 },
@@ -98,76 +106,87 @@ export class AmbienceParticles {
     }
     
     /**
-     * Crear una constelación individual
-     * @param {THREE.Group} parent - Grupo padre donde añadir la constelación
+     * Create a constellation individual
+     * @param {THREE.Group} parent - Group where the constellation will be added
      */
     createConstellation(parent) {
         // Crear un grupo para esta constelación
         const constellationGroup = new THREE.Group();
         
-        // Posición aleatoria para la constelación dentro de los límites configurados
-        const centerPosition = new THREE.Vector3(
-            this.getRandomInRange(this.config.positionX.min, this.config.positionX.max),
-            this.getRandomInRange(this.config.positionY.min, this.config.positionY.max),
-            this.getRandomInRange(this.config.positionZ.min, this.config.positionZ.max)
-        );
+        // Determinar posición para evitar el centro si está configurado
+        let centerPosition;
+        
+        if (this.config.avoidCenter) {
+            // Generar posición que evite el centro
+            centerPosition = this.generatePositionAvoidingCenter();
+        } else {
+            // Posición aleatoria normal
+            centerPosition = new THREE.Vector3(
+                this.getRandomInRange(this.config.positionX.min, this.config.positionX.max),
+                this.getRandomInRange(this.config.positionY.min, this.config.positionY.max),
+                this.getRandomInRange(this.config.positionZ.min, this.config.positionZ.max)
+            );
+        }
         
         constellationGroup.position.copy(centerPosition);
         
-        // Número aleatorio de estrellas (3-7 por constelación)
-        const starCount = 3 + Math.floor(Math.random() * 5);
+        // Número aleatorio de estrellas - REDUCIDO
+        const starCount = 3 + Math.floor(Math.random() * 3); // 3-5 estrellas
         
         // Array para almacenar las estrellas en esta constelación
         const stars = [];
         
-        // Crear material para las estrellas
+        // Crear material para las estrellas - MÁS SUTIL
         const starMaterial = new THREE.MeshBasicMaterial({ 
             color: 0xffffff,
             transparent: true,
             opacity: this.getRandomInRange(this.config.starOpacity.min, this.config.starOpacity.max)
         });
         
-        // Geometrías para las estrellas - diferentes tamaños
+        // Geometrías para las estrellas - tamaños configurables
+        const minSize = this.config.starSize.min;
+        const maxSize = this.config.starSize.max;
         const starGeometries = [
-            new THREE.SphereGeometry(0.08, 8, 8),
-            new THREE.SphereGeometry(0.12, 8, 8),
-            new THREE.SphereGeometry(0.15, 8, 8),
-            new THREE.SphereGeometry(0.2, 8, 8)
+            new THREE.SphereGeometry(minSize, 6, 6),
+            new THREE.SphereGeometry(minSize + (maxSize - minSize) * 0.33, 6, 6),
+            new THREE.SphereGeometry(minSize + (maxSize - minSize) * 0.66, 6, 6),
+            new THREE.SphereGeometry(maxSize, 6, 6)
         ];
         
-        // Crear estrellas para esta constelación
+        // Crear estrellas para esta constelación - MÁS COMPACTAS
         for (let i = 0; i < starCount; i++) {
-            // Posición aleatoria dentro del radio de la constelación
+            // Posición aleatoria dentro del radio de la constelación (más compacta)
             const position = new THREE.Vector3(
-                (Math.random() - 0.5) * 8,
-                (Math.random() - 0.5) * 8,
-                (Math.random() - 0.5) * 4
+                (Math.random() - 0.5) * 4, // Más compacto
+                (Math.random() - 0.5) * 4, // Más compacto
+                // Importante: Z siempre negativo o cero para asegurar que esté detrás
+                -(Math.random() * 2)
             );
             
             // Seleccionar geometría aleatoria
             const geometry = starGeometries[Math.floor(Math.random() * starGeometries.length)];
             
-            // Crear estrella con colores más vibrantes
-            const starColors = [0xffffff, 0xe4e3d3, 0xf5f5f5, 0xececec]; // Variaciones de blanco
-            const color = starColors[Math.floor(Math.random() * starColors.length)];
+            // Color más sutil - variaciones de gris claro/blanco
+            const colorValue = 0.8 + Math.random() * 0.2; // Valores entre 0.8 y 1.0
+            const color = new THREE.Color(colorValue, colorValue, colorValue);
             const material = starMaterial.clone();
-            material.color.set(color);
+            material.color = color;
             
             const star = new THREE.Mesh(geometry, material);
             star.position.copy(position);
             
-            // Añadir propiedades de animación
+            // Añadir propiedades de animación - MÁS SUTILES
             star.userData.originalOpacity = this.getRandomInRange(
                 this.config.starOpacity.min,
                 this.config.starOpacity.max
-            );
+            ) * 0.8; // Reducir opacidad un 20%
             star.userData.pulseSpeed = this.getRandomInRange(
                 this.config.pulseSpeed.min,
                 this.config.pulseSpeed.max
-            );
+            ) * 0.5; // Pulso 50% más lento
             star.userData.pulsePhase = Math.random() * Math.PI * 2;
-            star.userData.movementAmplitude = 0.08 + Math.random() * 0.15;
-            star.userData.movementSpeed = 0.2 + Math.random() * 0.3;
+            star.userData.movementAmplitude = 0.01 + Math.random() * 0.04; // Amplitud mucho más pequeña
+            star.userData.movementSpeed = 0.05 + Math.random() * 0.1; // Velocidad mucho más lenta
             star.userData.movementOffset = Math.random() * Math.PI * 2;
             star.material.opacity = star.userData.originalOpacity;
             
@@ -176,93 +195,123 @@ export class AmbienceParticles {
             stars.push(star);
         }
         
-        // Crear líneas para conectar las estrellas
-        const lineMaterial = new THREE.LineBasicMaterial({ 
-            color: 0xe4e3d3,
-            transparent: true,
-            opacity: this.getRandomInRange(this.config.lineOpacity.min, this.config.lineOpacity.max),
-            linewidth: 1.5
-        });
-        
-        // Generar conexiones - cada estrella conecta con 1-2 cercanas
-        for (let i = 0; i < stars.length; i++) {
-            // Decidir cuántas conexiones tendrá esta estrella
-            const connectionCount = Math.min(stars.length - 1, 1 + Math.floor(Math.random() * 2));
+        // Crear líneas SOLO para algunas estrellas - no todas
+        if (stars.length >= 3 && Math.random() < 0.7) { // 70% de probabilidad
+            // Líneas más tenues
+            const lineMaterial = new THREE.LineBasicMaterial({ 
+                color: 0xe4e3d3,
+                transparent: true,
+                opacity: this.getRandomInRange(this.config.lineOpacity.min, this.config.lineOpacity.max) * 0.5, // 50% más tenue
+            });
             
-            // Calcular distancias a todas las demás estrellas
-            const distances = [];
-            for (let j = 0; j < stars.length; j++) {
-                if (i !== j) {
-                    distances.push({
-                        index: j,
-                        distance: stars[i].position.distanceTo(stars[j].position)
-                    });
+            // Número reducido de conexiones
+            const maxConnections = Math.min(stars.length - 1, 2); // Máximo 2 conexiones
+            
+            // Conectar solo algunas estrellas
+            for (let i = 0; i < stars.length && i < maxConnections; i++) {
+                // Solo un subconjunto de estrellas tienen conexiones
+                if (Math.random() < 0.5) continue; // 50% de probabilidad de saltarse una estrella
+                
+                // Calcular distancias a todas las demás estrellas
+                const distances = [];
+                for (let j = 0; j < stars.length; j++) {
+                    if (i !== j) {
+                        distances.push({
+                            index: j,
+                            distance: stars[i].position.distanceTo(stars[j].position)
+                        });
+                    }
                 }
-            }
-            
-            // Ordenar por distancia
-            distances.sort((a, b) => a.distance - b.distance);
-            
-            // Conectar con las estrellas más cercanas
-            for (let c = 0; c < connectionCount; c++) {
-                // Evitar líneas duplicadas (solo conectar si j > i)
-                const targetIndex = distances[c].index;
-                if (targetIndex > i) {
-                    // Crear puntos para la línea
-                    const points = [
-                        stars[i].position.clone(),
-                        stars[targetIndex].position.clone()
-                    ];
-                    
-                    // Crear geometría y mesh para la línea
-                    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-                    const line = new THREE.Line(lineGeometry, lineMaterial.clone());
-                    
-                    // Propiedades de animación para la línea
-                    line.userData.originalOpacity = this.getRandomInRange(
-                        this.config.lineOpacity.min / 2,
-                        this.config.lineOpacity.max / 2
-                    );
-                    line.userData.pulseSpeed = this.getRandomInRange(
-                        this.config.pulseSpeed.min,
-                        this.config.pulseSpeed.max
-                    );
-                    line.userData.pulsePhase = Math.random() * Math.PI * 2;
-                    line.material.opacity = line.userData.originalOpacity;
-                    
-                    // Añadir referencia a las estrellas que conecta
-                    line.userData.star1 = i;
-                    line.userData.star2 = targetIndex;
-                    
-                    // Añadir al grupo
-                    constellationGroup.add(line);
+                
+                // Ordenar por distancia
+                distances.sort((a, b) => a.distance - b.distance);
+                
+                // Conectar solo con la estrella más cercana
+                if (distances.length > 0) {
+                    const targetIndex = distances[0].index;
+                    // Evitar líneas duplicadas (solo conectar si j > i)
+                    if (targetIndex > i) {
+                        // Crear puntos para la línea
+                        const points = [
+                            stars[i].position.clone(),
+                            stars[targetIndex].position.clone()
+                        ];
+                        
+                        // Crear geometría y mesh para la línea
+                        const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                        const line = new THREE.Line(lineGeometry, lineMaterial.clone());
+                        
+                        // Propiedades de animación para la línea - MUY SUTILES
+                        line.userData.originalOpacity = this.getRandomInRange(
+                            this.config.lineOpacity.min / 3,
+                            this.config.lineOpacity.max / 3
+                        );
+                        line.userData.pulseSpeed = this.getRandomInRange(
+                            this.config.pulseSpeed.min / 3,
+                            this.config.pulseSpeed.max / 3
+                        );
+                        line.userData.pulsePhase = Math.random() * Math.PI * 2;
+                        line.material.opacity = line.userData.originalOpacity;
+                        
+                        // Añadir referencia a las estrellas que conecta
+                        line.userData.star1 = i;
+                        line.userData.star2 = targetIndex;
+                        
+                        // Añadir al grupo
+                        constellationGroup.add(line);
+                    }
                 }
             }
         }
         
-        // Añadir movimiento global a la constelación
+        // Movimientos extremadamente lentos
         constellationGroup.userData.rotationSpeed = {
-            x: this.getRandomInRange(-this.config.rotationSpeed.max, this.config.rotationSpeed.max),
-            y: this.getRandomInRange(-this.config.rotationSpeed.max, this.config.rotationSpeed.max),
-            z: this.getRandomInRange(-this.config.rotationSpeed.max, this.config.rotationSpeed.max)
+            x: this.getRandomInRange(-this.config.rotationSpeed.max/10, this.config.rotationSpeed.max/10),
+            y: this.getRandomInRange(-this.config.rotationSpeed.max/10, this.config.rotationSpeed.max/10),
+            z: this.getRandomInRange(-this.config.rotationSpeed.max/20, this.config.rotationSpeed.max/20)
         };
         
         constellationGroup.userData.movementSpeed = {
-            x: this.getRandomInRange(-this.config.movementSpeed.max, this.config.movementSpeed.max),
-            y: this.getRandomInRange(-this.config.movementSpeed.max, this.config.movementSpeed.max),
-            z: this.getRandomInRange(-this.config.movementSpeed.max/2, this.config.movementSpeed.max/2)
+            x: this.getRandomInRange(-this.config.movementSpeed.max/10, this.config.movementSpeed.max/10),
+            y: this.getRandomInRange(-this.config.movementSpeed.max/10, this.config.movementSpeed.max/10),
+            z: 0 // No movimiento en Z
         };
         
         // Añadir el grupo de la constelación al grupo principal
         parent.add(constellationGroup);
     }
+
+    generatePositionAvoidingCenter() {
+        const radius = this.config.centerAvoidanceRadius;
+        let x, y, z;
+        let isValid = false;
+        
+        // Intentar hasta encontrar una posición válida
+        while (!isValid) {
+            // Generar posición candidata
+            x = this.getRandomInRange(this.config.positionX.min, this.config.positionX.max);
+            y = this.getRandomInRange(this.config.positionY.min, this.config.positionY.max);
+            z = this.getRandomInRange(this.config.positionZ.min, this.config.positionZ.max);
+            
+            // Comprobar si está fuera del radio central
+            const distanceFromCenter = Math.sqrt(x * x + y * y);
+            
+            // Si está fuera del radio o a veces en los bordes
+            if (distanceFromCenter > radius || Math.random() < 0.1) {
+                isValid = true;
+            }
+        }
+        
+        return new THREE.Vector3(x, y, z);
+    }
+    
     
     /**
      * Añadir plano de fondo para dar profundidad
      */
     addBackgroundPlane() {
         const config = this.config.backgroundPlane;
-        
+    
         const bgPlaneGeometry = new THREE.PlaneGeometry(config.width, config.height);
         const bgPlaneMaterial = new THREE.MeshBasicMaterial({
             color: config.color,
@@ -439,12 +488,131 @@ export class AmbienceParticles {
         // Marcar el sistema como estable
         this.particlesNeedStabilization = false;
     }
-    
+
+    /**
+     * Método para ser llamado desde el update, que comprueba y corrige problemas
+     * de acumulación de estrellas periódicamente
+     */
+    checkAndResetIfNeeded() {
+        // Verificar si ha pasado suficiente tiempo desde el último reset
+        const currentTime = Date.now();
+        
+        // Inicializar el tiempo del último reset si es la primera vez
+        if (!this.lastResetTime) {
+            this.lastResetTime = currentTime;
+            return;
+        }
+        
+        // Resetear posiciones cada 30 segundos para prevenir acumulación
+        const resetInterval = 10000; // 30 segundos
+        
+        if (currentTime - this.lastResetTime > resetInterval) {
+            this.resetConstellationPositions();
+            this.lastResetTime = currentTime;
+        }
+    }
+
+    resetConstellationPositions() {
+        console.log("Reseteando posiciones de constelaciones para prevenir acumulación");
+        
+        if (!this.particles) return;
+        
+        // Para cada constelación
+        this.particles.children.forEach((constellation, index) => {
+            // Generar nueva posición evitando el centro
+            let newPosition;
+            
+            if (this.config.avoidCenter) {
+                newPosition = this.generatePositionAvoidingCenter();
+            } else {
+                newPosition = new THREE.Vector3(
+                    this.getRandomInRange(this.config.positionX.min, this.config.positionX.max),
+                    this.getRandomInRange(this.config.positionY.min, this.config.positionY.max),
+                    this.getRandomInRange(this.config.positionZ.min, this.config.positionZ.max)
+                );
+            }
+            
+            // Aplicar nueva posición
+            constellation.position.copy(newPosition);
+            
+            // Reiniciar velocidades de movimiento con valores muy lentos
+            constellation.userData.movementSpeed = {
+                x: this.getRandomInRange(-this.config.movementSpeed.max/10, this.config.movementSpeed.max/10),
+                y: this.getRandomInRange(-this.config.movementSpeed.max/10, this.config.movementSpeed.max/10),
+                z: 0
+            };
+            
+            // Resetear rotaciones
+            constellation.rotation.set(0, 0, 0);
+            constellation.userData.rotationSpeed = {
+                x: this.getRandomInRange(-this.config.rotationSpeed.max/10, this.config.rotationSpeed.max/10),
+                y: this.getRandomInRange(-this.config.rotationSpeed.max/10, this.config.rotationSpeed.max/10),
+                z: this.getRandomInRange(-this.config.rotationSpeed.max/20, this.config.rotationSpeed.max/20)
+            };
+            
+            // Resetear cada estrella y línea
+            constellation.children.forEach(child => {
+                if (child.isMesh) {
+                    // Generar nueva posición local
+                    const newLocalPosition = new THREE.Vector3(
+                        (Math.random() - 0.5) * 4, // Más compacto
+                        (Math.random() - 0.5) * 4, // Más compacto
+                        -(Math.random() * 2)       // Siempre negativo
+                    );
+                    
+                    // Actualizar posición
+                    child.position.copy(newLocalPosition);
+                    
+                    // Actualizar posición original
+                    child.userData.originalPosition = newLocalPosition.clone();
+                    
+                    // Actualizar fase de animación
+                    child.userData.pulsePhase = Math.random() * Math.PI * 2;
+                    
+                    // Resetear escala
+                    child.scale.set(1, 1, 1);
+                    
+                    // Restablecer opacidad
+                    child.material.opacity = child.userData.originalOpacity || 0.5;
+                }
+            });
+            
+            // Actualizar líneas después de mover estrellas
+            constellation.children.forEach(child => {
+                if (child.isLine) {
+                    // Actualizar fase de animación
+                    child.userData.pulsePhase = Math.random() * Math.PI * 2;
+                    
+                    // Restablecer opacidad
+                    child.material.opacity = child.userData.originalOpacity || 0.2;
+                    
+                    // Actualizar geometría de la línea
+                    if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
+                        const star1 = constellation.children[child.userData.star1];
+                        const star2 = constellation.children[child.userData.star2];
+                        
+                        if (star1 && star2) {
+                            const points = [
+                                star1.position.clone(),
+                                star2.position.clone()
+                            ];
+                            
+                            child.geometry.setFromPoints(points);
+                            child.geometry.attributes.position.needsUpdate = true;
+                        }
+                    }
+                }
+            });
+        });
+    }
+        
     /**
      * Actualizar partículas en cada frame
      */
     update() {
         // Actualizar cada constelación
+        this.checkAndResetIfNeeded();
+
         if (this.particles) {
             for (const constellation of this.particles.children) {
                 // Aplicar rotación y movimiento global a la constelación
@@ -454,74 +622,84 @@ export class AmbienceParticles {
                 
                 constellation.position.x += constellation.userData.movementSpeed.x;
                 constellation.position.y += constellation.userData.movementSpeed.y;
-                constellation.position.z += constellation.userData.movementSpeed.z;
+                // No aplicamos movimiento en Z
                 
-                // Límites de movimiento - hacer que regresen al área visible
-                const maxDistanceX = Math.max(Math.abs(this.config.positionX.min), Math.abs(this.config.positionX.max));
-                const maxDistanceY = Math.max(Math.abs(this.config.positionY.min), Math.abs(this.config.positionY.max));
-                const maxDistanceZ = Math.max(Math.abs(this.config.positionZ.min), Math.abs(this.config.positionZ.max));
+                // Aplicar límites más estrictos
+                const maxDistanceX = Math.max(Math.abs(this.config.positionX.min), Math.abs(this.config.positionX.max)) * 0.7;
+                const maxDistanceY = Math.max(Math.abs(this.config.positionY.min), Math.abs(this.config.positionY.max)) * 0.7;
                 
-                // Mantener partículas principalmente en el área definida
-                if (constellation.position.x < this.config.positionX.min) {
-                    constellation.position.x = this.config.positionX.max * Math.random();
-                    constellation.userData.movementSpeed.x = Math.abs(constellation.userData.movementSpeed.x);
-                }
-                
-                if (constellation.position.x > this.config.positionX.max) {
-                    constellation.userData.movementSpeed.x *= -1;
+                // Asegurar que se mantengan en los límites
+                if (Math.abs(constellation.position.x) > maxDistanceX) {
+                    constellation.userData.movementSpeed.x *= -0.8; // Invertir y reducir velocidad
+                    constellation.position.x = Math.sign(constellation.position.x) * maxDistanceX * 0.95;
                 }
                 
                 if (Math.abs(constellation.position.y) > maxDistanceY) {
-                    constellation.userData.movementSpeed.y *= -1;
+                    constellation.userData.movementSpeed.y *= -0.8; // Invertir y reducir velocidad
+                    constellation.position.y = Math.sign(constellation.position.y) * maxDistanceY * 0.95;
                 }
                 
-                if (Math.abs(constellation.position.z) > maxDistanceZ) {
-                    constellation.userData.movementSpeed.z *= -1;
-                }
-                
-                // Actualizar cada estrella y línea en la constelación
-                constellation.children.forEach(child => {
-                    const time = this.time.elapsed / 1000; // tiempo en segundos
+                // Si se acerca demasiado al centro, alejar
+                if (this.config.avoidCenter) {
+                    const distanceFromCenter = Math.sqrt(
+                        constellation.position.x * constellation.position.x + 
+                        constellation.position.y * constellation.position.y
+                    );
                     
-                    if (child.isMesh) {
-                        // Estrella - animar brillo pulsante
-                        const pulseValue = 0.7 + 0.3 * Math.sin(
+                    if (distanceFromCenter < this.config.centerAvoidanceRadius) {
+                        // Calcular vector desde el centro
+                        const angle = Math.atan2(constellation.position.y, constellation.position.x);
+                        const pushFactor = 0.05; // Factor de empuje suave
+                        
+                        // Empujar gradualmente hacia afuera
+                        constellation.position.x += Math.cos(angle) * pushFactor;
+                        constellation.position.y += Math.sin(angle) * pushFactor;
+                    }
+                }
+                
+                // Actualizar cada estrella y línea con animaciones muy sutiles
+                constellation.children.forEach(child => {
+                    const time = this.time.elapsed / 2000; // tiempo en segundos pero más lento
+                    
+                    if (child.isMesh) { // Estrella
+                        // Pulsación muy sutil
+                        const pulseValue = 0.8 + 0.2 * Math.sin(
                             time * child.userData.pulseSpeed + child.userData.pulsePhase
                         );
                         
                         // Aplicar opacidad pulsante
-                        child.material.opacity = Math.max(0.4, child.userData.originalOpacity * pulseValue);
+                        child.material.opacity = Math.max(0.2, child.userData.originalOpacity * pulseValue);
                         
-                        // Pequeño movimiento oscilatorio
-                        const xMove = child.userData.movementAmplitude * 1.5 * Math.sin(
-                            time * child.userData.movementSpeed + child.userData.movementOffset
-                        );
-                        const yMove = child.userData.movementAmplitude * 1.5 * Math.cos(
-                            time * child.userData.movementSpeed * 0.8 + child.userData.movementOffset
-                        );
-                        
-                        // Guardar posición original si es la primera vez
-                        if (!child.userData.originalPosition) {
+                        // Pequeño movimiento oscilatorio (extremadamente sutil)
+                        if (child.userData.originalPosition) {
+                            const xMove = child.userData.movementAmplitude * Math.sin(
+                                time * child.userData.movementSpeed + child.userData.movementOffset
+                            );
+                            const yMove = child.userData.movementAmplitude * Math.cos(
+                                time * child.userData.movementSpeed * 0.5 + child.userData.movementOffset
+                            );
+                            
+                            // Aplicar movimiento muy sutil
+                            child.position.x = child.userData.originalPosition.x + xMove;
+                            child.position.y = child.userData.originalPosition.y + yMove;
+                        } else {
+                            // Guardar posición original si es la primera vez
                             child.userData.originalPosition = child.position.clone();
                         }
                         
-                        // Aplicar movimiento basado en posición original
-                        child.position.x = child.userData.originalPosition.x + xMove;
-                        child.position.y = child.userData.originalPosition.y + yMove;
-                        
-                        // Añadir pequeño efecto de escala pulsante
-                        const scaleFactor = 0.8 + 0.4 * pulseValue;
+                        // Efecto de escala mínimo
+                        const scaleFactor = 0.95 + 0.1 * pulseValue;
                         child.scale.set(scaleFactor, scaleFactor, scaleFactor);
                     } 
-                    else if (child.isLine) {
-                        // Línea - hacer que su opacidad siga a las estrellas
-                        const pulseValue = 0.6 + 0.4 * Math.sin(
+                    else if (child.isLine) { // Línea
+                        // Opacidad pulsante muy sutil
+                        const pulseValue = 0.85 + 0.15 * Math.sin(
                             time * child.userData.pulseSpeed + child.userData.pulsePhase
                         );
                         
-                        child.material.opacity = Math.max(0.2, child.userData.originalOpacity * pulseValue);
+                        child.material.opacity = Math.max(0.05, child.userData.originalOpacity * pulseValue);
                         
-                        // Actualizar puntos de la línea para seguir el movimiento de las estrellas
+                        // Actualizar geometría para seguir a las estrellas
                         if (child.userData.star1 !== undefined && child.userData.star2 !== undefined) {
                             const star1 = constellation.children[child.userData.star1];
                             const star2 = constellation.children[child.userData.star2];

@@ -66,20 +66,44 @@ export class World {
         
         // Inicializar el sistema de partículas ambientales
         this.ambienceParticles = new AmbienceParticles(this.scene, this.experience, {
-            // Aquí puedes configurar las opciones personalizadas
-            minConstellations: this.experience.sizes.isMobile ? 10 : 15,
-            maxConstellations: this.experience.sizes.isMobile ? 30 : 25,
-            globalZPosition: -80,
-            positionX: { min: -60, max: 60 },
-            positionY: { min: -40, max: 40 },
-            positionZ: { min: -20, max: -10 },
+            // Reducir drásticamente la cantidad de constelaciones
+            minConstellations: this.experience.sizes.isMobile ? 3 : 5,
+            maxConstellations: this.experience.sizes.isMobile ? 5 : 8,
+            
+            // Posicionamiento extremadamente atrás y muy separado de la escena principal
+            globalZPosition: -800,
+            
+            // Distribuir las constelaciones a los lados, evitando el centro
+            avoidCenter: true,  // Nueva opción para evitar el área central
+            centerAvoidanceRadius: 40, // Radio para evitar el centro (donde está la obra)
+            
+            // Rangos de posición más controlados y enfocados a los lados/bordes
+            positionX: { min: -200, max: 200 },
+            positionY: { min: -150, max: 150 },
+            positionZ: { min: -100, max: -50 }, 
+            
+            // Estrellas muy pequeñas y sutiles
+            starSize: { min: 0.05, max: 0.12 },
+            
+            // Movimientos extremadamente lentos
+            movementSpeed: { min: 0.00002, max: 0.00008 },
+            rotationSpeed: { min: 0.000001, max: 0.000005 },
+            
+            // Menor opacidad para ser más sutil
+            starOpacity: { min: 0.4, max: 0.6 },
+            lineOpacity: { min: 0.2, max: 0.35 },
+            
+            // Animación muy sutil
+            pulseSpeed: { min: 0.01, max: 0.05 },
+            
+            // Un fondo muy profundo
             backgroundPlane: {
                 enabled: true,
-                width: 120,
-                height: 80,
-                color: 0x1a1a1a,
-                opacity: 0.5,
-                zPosition: -45
+                width: 2000,
+                height: 1500,
+                color: 0x0a0a0a, // Casi negro para mayor contraste
+                opacity: 1.0, // Completamente opaco
+                zPosition: -150 // Muy atrás pero por delante de las partículas
             }
         });
     }
