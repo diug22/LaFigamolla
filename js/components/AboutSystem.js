@@ -135,16 +135,16 @@ export class AboutSystem {
             
             .card-close-button {
                 position: fixed;
-                top: 100px;
+                top: 150px;
                 right: 20px;
                 background: none;
                 border: none;
                 color: #2b2e1f;
                 font-size: 28px;
-                cursor: pointer;
+                cursor: pointer; /* Asegúrate de que el cursor cambie a pointer */
                 z-index: 101;
-                width: 40px;
-                height: 40px;
+                width: 50px;  /* Aumenta el área de clic */
+                height: 50px; /* Aumenta el área de clic */
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -152,11 +152,18 @@ export class AboutSystem {
                 line-height: 1;
                 font-weight: bold;
                 -webkit-tap-highlight-color: transparent;
+                user-select: none; /* Prevenir selección de texto */
+                pointer-events: auto; /* Asegurar que los eventos del puntero estén activos */
+                transition: transform 0.2s ease, opacity 0.2s ease;
             }
             
             .card-close-button:hover {
-                color: #000;
-                transform: scale(1.1);
+                transform: scale(1.2); /* Efecto de hover más pronunciado */
+                opacity: 0.8;
+            }
+
+            .card-close-button:active {
+                transform: scale(0.9); /* Efecto de clic */
             }
             
             .about-background {
@@ -392,32 +399,22 @@ export class AboutSystem {
         // Close button - using multiple approaches to ensure it works
         const closeButton = document.getElementById('about-close-btn');
         if (closeButton) {
-            // Method 1: Direct onclick assignment
-            closeButton.onclick = () => {
+            const handleClose = (e) => {
+                e.preventDefault(); // Prevent any default behavior
+                e.stopPropagation(); // Stop event from bubbling
+                
+                // Visual feedback
+                closeButton.style.opacity = '0.7';
+                setTimeout(() => {
+                    closeButton.style.opacity = '1';
+                }, 100);
+                
                 this.hideAboutCard();
             };
-            
-            // Method 2: Standard event listener
-            closeButton.addEventListener('click', () => {
-                this.hideAboutCard();
-            });
-            
-            // Method 3: Direct event handler with no prevent default 
-            closeButton.addEventListener('mousedown', () => {
-                this.hideAboutCard();
-            });
-            
-            // Method 4: Handle touch events for mobile
-            closeButton.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // Prevent double tap zoom
-                closeButton.style.opacity = '0.7';
-            }, { passive: false });
-            
-            closeButton.addEventListener('touchend', (e) => {
-                e.preventDefault(); // Prevent double tap zoom
-                closeButton.style.opacity = '1';
-                this.hideAboutCard();
-            }, { passive: false });
+    
+            // Universal close event
+            closeButton.addEventListener('click', handleClose);
+            closeButton.addEventListener('touchend', handleClose, { passive: false });
         }
         
         // Close when clicking outside the content
