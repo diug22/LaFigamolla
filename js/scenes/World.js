@@ -76,14 +76,14 @@ export class World {
         // Inicializar el sistema de partículas ambientales (círculos alrededor de obras)
         this.ambienceParticles = new AmbienceParticles(this.scene, this.experience, {
             // Aquí puedes configurar las opciones personalizadas
-            minConstellations: this.experience.sizes.isMobile ? 2 : 5,
-            maxConstellations: this.experience.sizes.isMobile ? 6 : 8,
+            minConstellations: this.experience.sizes.isMobile ? 4 : 8,
+            maxConstellations: this.experience.sizes.isMobile ? 8 : 12,
             globalZPosition: -2,
             positionX: { min: -10, max: 10 },
             positionY: { min: -5, max: 5 },
             positionZ: { min: -10, max: -5 },
             backgroundPlane: {
-                enabled: true,
+                enabled: false,
                 width: 120,
                 height: 80,
                 color: 0x1a1a1a,
@@ -137,8 +137,8 @@ export class World {
         const artworkData = [
             {
                 name: 'ceramic1',
-                title: 'Vasija Otoñal',
-                description: 'Cerámica artesanal con esmaltes en tonos tierra y ocre, inspirada en las formas orgánicas de la naturaleza.',
+                title: 'Yo',
+                description: 'No somos perfectos, lo importante es aceptarnos.',
                 dimensions: '30 × 15 × 15 cm',
                 material: 'Cerámica esmaltada',
                 year: '2025',
@@ -157,11 +157,68 @@ export class World {
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
-                model: this.resources.getItem('about-model'),
+                model: this.resources.getItem('obj5'),
                 particleColors: [
                     '#c1c4b1', // Laqueno light
                     '#a6a995', // Laqueno medium
                     '#e4e3d3', // Laqueno cream
+                    '#5e634d', // Laqueno dark
+                    '#2b2e1f'  // Laqueno background
+                ]
+            },
+            {
+                name: 'ceramic2',
+                title: 'Cuenco Textural',
+                description: 'Pieza de cerámica con relieves táctiles que evocan la corteza de los árboles en otoño.',
+                dimensions: '25 × 20 × 20 cm',
+                material: 'Arcilla blanca con óxidos',
+                year: '2025',
+                position: new THREE.Vector3(0, 0, 0),
+                rotation: new THREE.Euler(0, 0, 0),
+                scale: new THREE.Vector3(1, 1, 1),
+                model: this.resources.getItem('obj3'),
+                particleColors: [
+                    '#c1c4b1', // Laqueno light
+                    '#a6a995', // Laqueno medium
+                    '#e4e3d3', // Laqueno cream
+                    '#5e634d', // Laqueno dark
+                    '#2b2e1f'  // Laqueno background
+                ]
+            },
+            {
+                name: 'ceramic2',
+                title: 'Cuenco Textural',
+                description: 'Pieza de cerámica con relieves táctiles que evocan la corteza de los árboles en otoño.',
+                dimensions: '25 × 20 × 20 cm',
+                material: 'Arcilla blanca con óxidos',
+                year: '2025',
+                position: new THREE.Vector3(0, 0, 0),
+                rotation: new THREE.Euler(0, 0, 0),
+                scale: new THREE.Vector3(1, 1, 1),
+                model: this.resources.getItem('obj4'),
+                particleColors: [
+                    '#c1c4b1', // Laqueno light
+                    '#a6a995', // Laqueno medium
+                    '#e4e3d3', // Laqueno cream
+                    '#5e634d', // Laqueno dark
+                    '#2b2e1f'  // Laqueno background
+                ]
+            },
+            {
+                name: 'lamina1',
+                title: 'Acuarela Otoñal',
+                description: 'Técnica mixta sobre papel, capturando la esencia de los bosques en otoño con tonos cálidos y texturas.',
+                dimensions: '40 × 30 cm',
+                material: 'Técnica mixta sobre papel',
+                year: '2024',
+                position: new THREE.Vector3(0, 0, 0),
+                rotation: new THREE.Euler(0, 0, 0),
+                scale: new THREE.Vector3(1, 1, 1),
+                model: this.resources.getItem('obj2'),
+                particleColors: [
+                    '#e4e3d3', // Laqueno cream
+                    '#c1c4b1', // Laqueno light
+                    '#a6a995', // Laqueno medium
                     '#5e634d', // Laqueno dark
                     '#2b2e1f'  // Laqueno background
                 ]
@@ -195,7 +252,7 @@ export class World {
                 position: new THREE.Vector3(0, 0, 0),
                 rotation: new THREE.Euler(0, 0, 0),
                 scale: new THREE.Vector3(1, 1, 1),
-                model: this.resources.getItem('lamina1'),
+                model: this.resources.getItem('lamina2'),
                 particleColors: [
                     '#e4e3d3', // Laqueno cream
                     '#c1c4b1', // Laqueno light
@@ -226,36 +283,47 @@ export class World {
      * Setup lights
      */
     setupLights() {
-        // Ambient light
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        // Ambient light - softer and slightly warmer
+        const ambientLight = new THREE.AmbientLight(0xe4e3d3, 0.7); // Using Laqueno cream color for warmth
         this.scene.add(ambientLight);
         
-        // Main directional light
-        const mainLight = new THREE.DirectionalLight(0xffffff, 1);
-        mainLight.position.set(5, 5, 5);
+        // Main directional light - more intense and detailed
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1.5); // Increased intensity
+        mainLight.position.set(5, 7, 5); // Slightly higher position for better coverage
         mainLight.castShadow = true;
         
-        // Configure shadow
-        mainLight.shadow.mapSize.width = 1024;
-        mainLight.shadow.mapSize.height = 1024;
+        // Enhanced shadow configuration
+        mainLight.shadow.mapSize.width = 2048; // Increased resolution
+        mainLight.shadow.mapSize.height = 2048;
         mainLight.shadow.camera.near = 0.5;
         mainLight.shadow.camera.far = 50;
-        mainLight.shadow.camera.left = -10;
-        mainLight.shadow.camera.right = 10;
-        mainLight.shadow.camera.top = 10;
-        mainLight.shadow.camera.bottom = -10;
+        mainLight.shadow.camera.left = -15; // Wider shadow area
+        mainLight.shadow.camera.right = 15;
+        mainLight.shadow.camera.top = 15;
+        mainLight.shadow.camera.bottom = -15;
+        mainLight.shadow.bias = -0.001; // Reduce shadow acne
         
         this.scene.add(mainLight);
         
-        // Fill light
-        const fillLight = new THREE.DirectionalLight(0xe4e3d3, 0.7); // Laqueno cream color
-        fillLight.position.set(-5, 3, -5);
+        // Fill light - softer and more nuanced
+        const fillLight = new THREE.DirectionalLight(0xc1c4b1, 0.9); // Laqueno light color, increased intensity
+        fillLight.position.set(-5, 4, -3); // Adjusted position for better coverage
         this.scene.add(fillLight);
         
-        // Rim light
-        const rimLight = new THREE.DirectionalLight(0xc1c4b1, 0.5); // Laqueno light color
-        rimLight.position.set(0, -5, -5);
+        // Rim light - more subtle and precise
+        const rimLight = new THREE.DirectionalLight(0xb2bb5c, 0.6); // Slightly different Laqueno palette color
+        rimLight.position.set(0, -6, -4);
         this.scene.add(rimLight);
+        
+        // Additional soft backlight for depth and detail
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        backLight.position.set(-3, 2, -5);
+        this.scene.add(backLight);
+        
+        // Point light for extra highlight detail
+        const highlightLight = new THREE.PointLight(0xffffff, 0.5, 10);
+        highlightLight.position.set(3, 5, 3);
+        this.scene.add(highlightLight);
     }
     
     /**

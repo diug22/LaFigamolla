@@ -169,8 +169,6 @@ export class UI {
             /* Ajustes para móviles */
             @media (max-width: 768px) {
                 .info-panel {
-                    width: 85%;
-                    padding: 20px;
                     bottom: 70px; /* Ligeramente más arriba en móviles */
                     max-height: 40vh; /* Altura máxima más reducida en móviles */
                 }
@@ -352,6 +350,9 @@ export class UI {
             
             .info-panel.active {
                 transform: translateY(0);
+                padding-left: 20px;
+                padding-top: 10px;
+                bottom: 4%;
             }
             
             .close-btn {

@@ -122,11 +122,11 @@ export class ContactSystem {
             
             .contact-close{
                 position: absolute;
-                top: 15px;
-                right: 15px;
+                top: 0px;
+                right: 0px;
                 height: 100%;
                 width: 100%;
-                z-index: -2;
+                z-index: 2;
             }
             
             .contact-card.visible {
@@ -166,14 +166,12 @@ export class ContactSystem {
             
 
             .contact-background {
-                width: 100%;
-                height: 100%;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 40px;
                 position: relative;
+                z-index:3;
             }
             
             .contact-header {
@@ -242,6 +240,7 @@ export class ContactSystem {
                     min-height: auto;
                     justify-content: center;
                     padding-top: 20px;
+                    z-index:3;
                 }
                 
                 .contact-card-close-button {
@@ -258,6 +257,7 @@ export class ContactSystem {
                 
                 .contact-detail span {
                     font-size: 16px;
+                    color: #B9BAAC;
                 }
             }
         `;
@@ -393,45 +393,40 @@ export class ContactSystem {
      * Setup event listeners for contact card
      */
     setupEventListeners() {
-        // Use a more robust method to ensure close button works
-        console.log('HJOALSDFA')
+        console.log('ENTRYY')
         // Email detail
         const emailDetail = document.getElementById('email-detail');
         if (emailDetail) {
             emailDetail.addEventListener('click', (e) => {
-                e.stopPropagation(); // Añadir esta línea
+                e.stopPropagation(); // Detiene la propagación del evento
                 const email = emailDetail.querySelector('span').textContent;
                 this.copyToClipboard(email);
             });
         }
-
+    
         // Instagram link
-
         const instagramDetail = document.getElementById('instagram-detail');
         if (instagramDetail) {
             instagramDetail.addEventListener('click', (e) => {
-                console.log('insta')
-                e.stopPropagation(); // Añadir esta línea
+                e.stopPropagation(); // Detiene la propagación del evento
                 window.open('https://www.instagram.com/laaqueno', '_blank');
             });
         }
-
+    
         // LinkedIn link
         const linkedinDetail = document.getElementById('linkedin-detail');
         if (linkedinDetail) {
             linkedinDetail.addEventListener('click', (e) => {
-                e.stopPropagation(); // Añadir esta línea
+                e.stopPropagation(); // Detiene la propagación del evento
                 window.open('https://www.linkedin.com/in/paula-román/', '_blank');
             });
         }
         
-        // Close when clicking outside the content
-        this.contactCard.addEventListener('click', (e) => {
-            console.log(this.contactCard)
-            console.log('JB!!!')
-            if (e.target === this.contactCard && e.target != linkedinDetail ) {
+        // Importante: Maneja el clic en los elementos internos para evitar cierre
+        // Close when clicking on the card (outside of the content)
+        const closeButton = document.getElementById('contact-close-btn');
+        closeButton.addEventListener('click', (e) => {
                 this.hideContactCard();
-            }
         });
         
         // Close with Escape key
@@ -440,47 +435,6 @@ export class ContactSystem {
                 this.hideContactCard();
             }
         });
-
-        this.attachCloseButtonListener();
-
-    }
-    
-    /**
-     * Attach event listener to close button with retry
-     */
-    attachCloseButtonListener() {
-        const attachListener = () => {
-            const closeButton = document.getElementById('contact-close-btn');
-            if (closeButton) {
-                // Remove any existing listeners to prevent duplicates
-                const newButton = closeButton.cloneNode(true);
-                closeButton.parentNode.replaceChild(newButton, closeButton);
-                
-                // Add click event
-                newButton.addEventListener('click', (e) => {
-
-                    this.hideContactCard();
-                });
-                
-                // Add touch event for mobile
-                newButton.addEventListener('touchend', (e) => {
-
-                    this.hideContactCard();
-                }, { passive: false });
-                
-                return true;
-            }
-            return false;
-        };
-        
-        // Try to attach immediately
-        if (!attachListener()) {
-            // If it fails, retry after DOM is fully loaded
-            window.addEventListener('load', attachListener);
-            
-            // Also retry after a short delay
-            setTimeout(attachListener, 500);
-        }
     }
     
     /**
@@ -500,7 +454,7 @@ export class ContactSystem {
         }
         
         this.contactCard.classList.add('visible');
-        this.contactCard.style.zIndex = '2';
+        this.contactCard.style.zIndex = '4';
 
         
         // Ensure close button is working after display

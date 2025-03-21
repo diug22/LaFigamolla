@@ -44,12 +44,12 @@ export class AboutSystem {
                         <h1 class="about-title">Paula Roman</h1>
                     </div>
                     <div class="about-text">
-                        <p>Lorem Ipsum dolor suit amebar lorum ameburti<br>
-                        Lorem Ipsum dolor suit amebar lorum ameburti<br>
-                        Lorem Ipsum dolor suit amebar lorum ameburti<br>
-                        Lorem Ipsum dolor suit amebar lorum ameburti<br>
-                        Lorem Ipsum dolor suit amebar lorum ameburti<br>
-                        Lorem Ipsum dolor suiti</p>
+                          <p>
+                            Bienvenidos a mi mundo</br>
+                            Soy una artista apasionada por expresar emociones e ideas mediante mis obras plásticas e ilustraciones.<br>
+                            Cada creación abre una ventana a mi interior.</br>
+                            ¡Gracias por acompañarme!
+                        </p>
                     </div>
                     <div class="about-footer">
                         <h2 class="about-subtitle">Joaquín Brotons</h2>
@@ -135,7 +135,6 @@ export class AboutSystem {
                 opacity: 0;
                 transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
                 z-index: 10;
-                padding-top: 80px; /* Add padding for the header */
                 box-sizing: border-box;
             }
             
@@ -209,7 +208,7 @@ export class AboutSystem {
             }
             
             .about-text {
-                max-width: 800px;
+                max-width: 600px;
                 text-align: center;
                 position: relative;
                 z-index: 16;
@@ -263,7 +262,7 @@ export class AboutSystem {
             /* Tablets and Small Laptops */
             @media (max-width: 1024px) {
                 .about-title {
-                    font-size: clamp(50px, 10vw, 120px);
+                    font-size: clamp(80px, 10vw, 120px);
                 }
                 
                 .about-text {
@@ -296,7 +295,7 @@ export class AboutSystem {
                 }
                 
                 .about-title {
-                    font-size: 36px;
+                    font-size: 50px;
                     margin-bottom: 10px;
                 }
                 

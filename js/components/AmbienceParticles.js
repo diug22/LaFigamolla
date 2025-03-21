@@ -24,7 +24,7 @@ export class AmbienceParticles {
             positionZ: { min: -5, max: 5 },
             
             // Velocidades de movimiento
-            movementSpeed: { min: 0.0005, max: 0.003 },
+            movementSpeed: { min: 0.0005, max: 0.001 },
             rotationSpeed: { min: 0.00001, max: 0.0001 },
             
             // Apariencia
@@ -38,14 +38,14 @@ export class AmbienceParticles {
             globalZPosition: -80,
             
             // Configuración de fondo
-            backgroundPlane: {
-                enabled: true,
+            /*backgroundPlane: {
+                enabled: false,
                 width: 120,
                 height: 80,
                 color: 0x1a1a1a,
                 opacity: 0.5,
                 zPosition: -45
-            }
+            }*/
         };
         
         // Sobrescribir configuración con opciones proporcionadas
@@ -93,7 +93,7 @@ export class AmbienceParticles {
         
         // Añadir plano de fondo si está habilitado
         if (this.config.backgroundPlane.enabled) {
-            this.addBackgroundPlane();
+            //this.addBackgroundPlane();
         }
     }
     
@@ -258,29 +258,7 @@ export class AmbienceParticles {
     }
     
     /**
-     * Añadir plano de fondo para dar profundidad
-     */
-    addBackgroundPlane() {
-        const config = this.config.backgroundPlane;
-        
-        const bgPlaneGeometry = new THREE.PlaneGeometry(config.width, config.height);
-        const bgPlaneMaterial = new THREE.MeshBasicMaterial({
-            color: config.color,
-            transparent: true,
-            opacity: config.opacity,
-            side: THREE.DoubleSide
-        });
-        
-        const bgPlane = new THREE.Mesh(bgPlaneGeometry, bgPlaneMaterial);
-        bgPlane.position.z = config.zPosition;
-        this.scene.add(bgPlane);
-        
-        // Guardar referencia
-        this.backgroundPlane = bgPlane;
-    }
-    
-    /**
-     * Animar partículas para transiciones entre obras
+     * Animar partículas para transiciones entre obras con movimiento muy suave
      * @param {string} direction - Dirección de la transición ('left' o 'right')
      */
     animateParticlesForHorizontalNavigation(direction) {
@@ -295,38 +273,34 @@ export class AmbienceParticles {
             this.particleAnimationRequest = null;
         }
         
-        // Preparar para animación con valores más seguros
-        const speed = direction === 'left' ? -0.12 : 0.12; // Velocidad reducida
+        // Preparar para animación más sutil
+        const speed = direction === 'left' ? -0.04 : 0.04; // Reducción significativa de velocidad
         let animationStartTime = Date.now();
-        const animationDuration = 800; // ms
+        const animationDuration = 600; // ms más corto
         
         // Establecer flag para control de animación
         this.particlesAnimating = true;
         
-        // Función para animar constelaciones cada frame con límite de tiempo
+        // Función para animar constelaciones cada frame
         const animateConstellations = () => {
             if (!this.particlesAnimating) return;
             
             const elapsed = Date.now() - animationStartTime;
             const progress = Math.min(elapsed / animationDuration, 1.0);
             
-            // Mover cada constelación con velocidad controlada
-            this.particles.children.forEach(constellation => {
-                // Aplicar movimiento limitado
-                constellation.position.x += speed;
+            // Mover cada constelación con movimiento extremadamente sutil
+            this.particles.children.forEach((constellation, index) => {
+                // Movimiento base con variación mínima
+                const individualSpeedFactor = 1 + Math.sin(index * 0.3) * 0.1;
+                constellation.position.x += speed * individualSpeedFactor * 0.5;
                 
-                // Añadir desvanecimiento gradual
-                constellation.children.forEach(child => {
-                    if (child.material) {
-                        child.material.opacity *= 0.98;
-                    }
-                });
+                // Movimiento vertical casi imperceptible
+                constellation.position.y += Math.sin(index * 0.2) * speed * 0.1;
             });
             
-            // Si la animación ha terminado o ha pasado demasiado tiempo, resetear
+            // Si la animación ha terminado, detener
             if (progress >= 1.0) {
                 this.particlesAnimating = false;
-                this.resetParticlePositions();
                 return;
             }
             
@@ -337,13 +311,12 @@ export class AmbienceParticles {
         // Iniciar animación
         animateConstellations();
         
-        // Forzar reseteo después de un tiempo máximo como precaución
+        // Forzar detención después de un tiempo máximo
         setTimeout(() => {
             if (this.particlesAnimating) {
                 this.particlesAnimating = false;
-                this.resetParticlePositions();
             }
-        }, animationDuration + 200); // Un poco más de tiempo que la duración para seguridad
+        }, animationDuration + 200);
     }
     
     /**

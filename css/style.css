@@ -837,24 +837,6 @@ info-button {
     }
 }
 
-@media (max-width: 768px) {
-    .info-panel {
-        bottom: 70px;
-        left: 15px;
-        right: 15px;
-        padding: 16px;
-        max-width: 95%;
-        max-height: 50vh;
-    }
-    
-    .info-title {
-        font-size: 1.2rem;
-    }
-    
-    .info-description {
-        font-size: 0.85rem;
-    }
-}
 
 /* Animaciones */
 @keyframes fadeIn {
