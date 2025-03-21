@@ -163,7 +163,7 @@ canvas {
 }
 
 .loading-subtitle {
-    font-size: 1rem;
+    font-size: 18px;
     font-weight: 300;
     letter-spacing: 2px;
     margin-bottom: 30px;
@@ -201,7 +201,7 @@ canvas {
     }
     
     .loading-subtitle {
-        font-size: 0.8rem;
+        font-size: 18px;
     }
     
     .loading-bar-container {

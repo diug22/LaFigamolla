@@ -121,8 +121,8 @@ export class ArtworkItem {
             
             // Bubble size
             bubbleSize: { 
-                min: 0.0015, 
-                max: 0.006
+                min: 0.005, 
+                max: 0.009
             },
             
             // Bubble speed

@@ -34,7 +34,7 @@ export class Experience {
         console.log('Scene created');
         
         // Set the scene background color to match Laqueno theme
-        this.scene.background = new THREE.Color('#2b2e1f');
+        this.scene.background = new THREE.Color('#1a1b12');
         
         // Initialize components
         this.sizes = new Sizes();

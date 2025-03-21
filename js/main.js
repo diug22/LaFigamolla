@@ -89,7 +89,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // Track when we started loading
     const startTime = Date.now();
     // Minimum time to display loading screen (1.5 seconds in milliseconds)
-    const minDisplayTime = 1500;
+    const minDisplayTime = 700;
     
     // Initialize the experience immediately
     const canvas = document.getElementById('experience-canvas');

@@ -17,7 +17,7 @@ export class BubbleEffect {
             // Bubble count control
             bubbleCount: { min: 1, max: 3, initial: 1 },
             // Bubble appearance
-            bubbleSize: { min: 0.0001, max:0.0002 },
+            bubbleSize: { min: 100, max:1000 },
             bubbleSpeed: { min: 0.01, max: 0.03 },
             // Foam controls
             resetInterval: 15000, // 15 seconds

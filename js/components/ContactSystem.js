@@ -46,8 +46,9 @@ export class ContactSystem {
         
         // Create card content with Laqueno styling
         card.innerHTML = `
-            <div class="contact-card-content" id="contact-close-btn">
-                <div class="contact-background">
+            <div class="contact-card-content" >
+                <div id="contact-close-btn" class="contact-close"></div>
+                <div class="contact-background" >
                     <div class="contact-header">
                         <h3>CONTACTO</h3>
                     </div>
@@ -111,14 +112,22 @@ export class ContactSystem {
                 background-color: rgba(0, 0, 0, 0.2);
                 backdrop-filter: blur(5px);
                 -webkit-backdrop-filter: blur(5px);
-                z-index: 0;
+                z-index: -2;
                 opacity: 0.3;
                 pointer-events: none;
                 transition: opacity 0.5s ease;
                 padding-top: 0;
                 overflow: hidden;
             }
-                
+            
+            .contact-close{
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                height: 100%;
+                width: 100%;
+                z-index: -2;
+            }
             
             .contact-card.visible {
                 opacity: 1;
@@ -135,7 +144,6 @@ export class ContactSystem {
                 transform: translateY(20px);
                 opacity: 0;
                 transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-                z-index: 10;
                 padding-top: 80px;
                 box-sizing: border-box;
             }
@@ -166,7 +174,6 @@ export class ContactSystem {
                 justify-content: center;
                 padding: 40px;
                 position: relative;
-                z-index: 15;
             }
             
             .contact-header {
@@ -387,21 +394,24 @@ export class ContactSystem {
      */
     setupEventListeners() {
         // Use a more robust method to ensure close button works
-        this.attachCloseButtonListener();
-        
+        console.log('HJOALSDFA')
         // Email detail
         const emailDetail = document.getElementById('email-detail');
         if (emailDetail) {
-            emailDetail.addEventListener('click', () => {
+            emailDetail.addEventListener('click', (e) => {
+                e.stopPropagation(); // Añadir esta línea
                 const email = emailDetail.querySelector('span').textContent;
                 this.copyToClipboard(email);
             });
         }
 
         // Instagram link
+
         const instagramDetail = document.getElementById('instagram-detail');
         if (instagramDetail) {
-            instagramDetail.addEventListener('click', () => {
+            instagramDetail.addEventListener('click', (e) => {
+                console.log('insta')
+                e.stopPropagation(); // Añadir esta línea
                 window.open('https://www.instagram.com/laaqueno', '_blank');
             });
         }
@@ -409,14 +419,17 @@ export class ContactSystem {
         // LinkedIn link
         const linkedinDetail = document.getElementById('linkedin-detail');
         if (linkedinDetail) {
-            linkedinDetail.addEventListener('click', () => {
+            linkedinDetail.addEventListener('click', (e) => {
+                e.stopPropagation(); // Añadir esta línea
                 window.open('https://www.linkedin.com/in/paula-román/', '_blank');
             });
         }
         
         // Close when clicking outside the content
         this.contactCard.addEventListener('click', (e) => {
-            if (e.target === this.contactCard) {
+            console.log(this.contactCard)
+            console.log('JB!!!')
+            if (e.target === this.contactCard && e.target != linkedinDetail ) {
                 this.hideContactCard();
             }
         });
@@ -427,6 +440,9 @@ export class ContactSystem {
                 this.hideContactCard();
             }
         });
+
+        this.attachCloseButtonListener();
+
     }
     
     /**
@@ -442,15 +458,13 @@ export class ContactSystem {
                 
                 // Add click event
                 newButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+
                     this.hideContactCard();
                 });
                 
                 // Add touch event for mobile
                 newButton.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+
                     this.hideContactCard();
                 }, { passive: false });
                 
@@ -490,7 +504,6 @@ export class ContactSystem {
 
         
         // Ensure close button is working after display
-        setTimeout(() => this.attachCloseButtonListener(), 100);
         
         // Keep header visible
         const header = document.querySelector('.header');
@@ -507,6 +520,7 @@ export class ContactSystem {
      * Hide contact card
      */
     hideContactCard () {
+        console.log('cierra')
         this.contactCard.classList.add('closing');
     
         // Esperar a que termine la animación antes de quitar la visibilidad

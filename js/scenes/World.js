@@ -70,7 +70,7 @@ export class World {
             particleCount: this.experience.sizes.isMobile ? 30 : 50,
             particleSize: { min: 0.02, max: 0.08 },
             opacity: { min: 0.3, max: 0.6 },
-            globalZPosition: -3
+            globalZPosition: 0
         });
         
         // Inicializar el sistema de partículas ambientales (círculos alrededor de obras)

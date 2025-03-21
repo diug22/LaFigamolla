@@ -138,28 +138,7 @@ export class UI {
         const style = document.createElement('style');
         style.textContent = `
 
-        .info-panel {
-                position: fixed;
-                bottom: 80px; /* Posicionado por encima del botón del carrusel */
-                left: 50%;
-                transform: translateX(-50%) translateY(100%); /* Centrado horizontal y fuera de pantalla inicialmente */
-                width: 90%;
-                max-width: 500px; /* Ancho máximo reducido */
-                background-color: rgba(43, 46, 31, 0.9);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                padding: 25px 30px;
-                border-radius: 8px; /* Bordes redondeados */
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Sombra sutil */
-                transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-                z-index: 20;
-                max-height: 50vh; /* Altura máxima reducida */
-                overflow-y: auto;
-            }
-
-            .info-panel.active {
-                transform: translateX(-50%) translateY(0); /* Solo mueve hacia arriba, mantiene centrado */
-            }
+        
 
             /* Ajustes para el contenido más compacto */
             .info-title {
@@ -269,7 +248,7 @@ export class UI {
                 }
                 
                 .subtitle {
-                    font-size: 12px;
+                    font-size: 16px;
                 }
             }
 
@@ -361,10 +340,9 @@ export class UI {
                 bottom: 0;
                 left: 0;
                 width: 100%;
-                background-color: rgba(43, 46, 31, 0.9);
+                background-color: rgba(43, 46, 31, 0.2);
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
-                padding: 30px 40px;
                 transform: translateY(100%);
                 transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
                 z-index: 20;
@@ -461,7 +439,7 @@ export class UI {
                 }
                 
                 .subtitle {
-                    font-size: 12px;
+                    font-size: 16px;
                 }
                 
                 .nav-link {
@@ -472,9 +450,6 @@ export class UI {
                     padding: 15px 20px;
                 }
                 
-                .info-panel {
-                    padding: 20px;
-                }
                 
                 .close-btn {
                     right: 20px;
